@@ -3,7 +3,7 @@
   # Keep unlicensed copies of commercial books off the public site, and don't publish
   # server-side sources. This only affects the deployed copy, not the repository.
   # Each deploy stamps script/style links with the commit, so browsers always load fresh files.
-  command = "rm -f resources/ISC2\\ CISSP\\ Certified*.pdf && rm -rf supabase && sed -i \"s/?v=dev/?v=${COMMIT_REF:-$(date +%s)}/g\" index.html"
+  command = "rm -f resources/ISC2\\ CISSP\\ Certified*.pdf && rm -rf supabase && sed -i \"s/?v=dev/?v=${COMMIT_REF:-$(date +%s)}/g\" index.html && sed -i \"s/__BUILD__/${COMMIT_REF:-$(date +%s)}/\" sw.js"
 
 # Forward database calls through this site so they work even where supabase.co is blocked.
 [[redirects]]
@@ -20,12 +20,22 @@
     X-Frame-Options = "SAMEORIGIN"
     Strict-Transport-Security = "max-age=31536000; includeSubDomains"
     Permissions-Policy = "camera=(), microphone=(), geolocation=(self), payment=()"
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://i.ytimg.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-src 'self' https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://i.ytimg.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-src 'self' https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
 
 [[headers]]
   for = "/assets/*"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Content-Type = "application/manifest+json"
 
 [[headers]]
   for = "/index.html"

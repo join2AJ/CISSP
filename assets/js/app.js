@@ -344,6 +344,8 @@
 
   /* wide tables become stacked cards on phones */
   App.stackTables = (root) => {
+    // wide tables scroll sideways, so keyboard users must be able to focus them
+    (root || view).querySelectorAll(".tbl-wrap").forEach(w => { if (!w.hasAttribute("tabindex")) { w.tabIndex = 0; w.setAttribute("role", "region"); w.setAttribute("aria-label", "Scrollable table"); } });
     (root || view).querySelectorAll(".prose table, .tbl.stackable").forEach(t => {
       if (t.dataset.stacked) return; t.dataset.stacked = "1"; t.classList.add("stack");
       const heads = [...t.querySelectorAll("thead th")].map(th => th.textContent.trim());
@@ -398,7 +400,7 @@
     h += `</ol></details>`
       + G("Learn more", ["glossary", "latest", "resources"], L("glossary", "Aa", "Glossary A-Z") + L("latest", "✦", "What’s new, 2024-2026") + L("resources", "§", "Resources"))
       + G("Practise", ["quiz", "flashcards", "mock", "tactics"], L("quiz", "?", "Quiz by domain or topic") + L("flashcards", "❐", "Flashcards") + L("mock", "◷", "Mock exam") + L("tactics", "◎", "Exam tactics"))
-      + G("Progress", ["plan", "insights", "tracker", "library", "privacy"], L("plan", "▤", "My study plan") + L("insights", "◔", "Insights & time spent") + L("tracker", "▦", "Scores & error log") + L("library", "❏", "My library") + L("privacy", "⚿", "Privacy & trust"));
+      + G("Progress", ["plan", "insights", "tracker", "notes", "library", "privacy"], L("plan", "▤", "My study plan") + L("insights", "◔", "Insights & time spent") + L("tracker", "▦", "Scores & error log") + L("notes", "✎", "My notes") + L("library", "❏", "My library") + L("privacy", "⚿", "Privacy & trust"));
     h += `
     <div class="toc-card"><b>${all.pct}%</b>read · ${all.r} of ${all.t} sections<div class="meter" style="margin-top:10px"><i style="width:${all.pct}%;background:var(--accent)"></i></div></div>`;
     toc.innerHTML = h;
@@ -454,6 +456,43 @@
     }
     return null;
   }
+  /* exam readiness: coverage, accuracy and mock results, weighted by the exam outline */
+  App.readiness = () => {
+    const W = D.reduce((n, d) => n + d.weight, 0);
+    const coverage = D.reduce((n, d) => n + d.weight * domProgress(d).pct, 0) / W;
+    const recent = App.attempts.slice(-600);
+    const perDom = D.map(d => { const r = recent.filter(a => a.domain === d.id), c = r.filter(a => a.correct).length;
+      return { d, n: r.length, acc: (c + 1.25) / (r.length + 5) * 100 }; });  // few answers pull towards a guess (25%)
+    const answered = recent.length >= 5;
+    const accuracy = answered ? perDom.reduce((n, x) => n + x.d.weight * x.acc, 0) / W : 0;
+    const mocks = App.mocks.slice(-3).map(m => m.correct / m.total * 100);
+    const mock = mocks.length ? Math.max(...mocks) : null;
+    let score = mock == null ? Math.min(70, 0.35 * coverage + 0.65 * accuracy) : 0.3 * coverage + 0.4 * accuracy + 0.3 * mock;
+    score = Math.round(Math.max(0, Math.min(100, score)));
+    const label = score >= 75 ? "Exam ready" : score >= 60 ? "Getting close" : score >= 40 ? "Building" : "Early days";
+    const tips = [];
+    const unread = D.slice().sort((a, b) => b.weight * (100 - domProgress(b).pct) - a.weight * (100 - domProgress(a).pct))[0];
+    if (unread && domProgress(unread).pct < 100) tips.push({ t: `Read D${unread.n} ${unread.short} (${domProgress(unread).pct}% done, ${unread.weight}% of the exam)`, h: `#/domain/${unread.id}` });
+    const weak = perDom.filter(x => x.n >= 1).sort((a, b) => a.acc - b.acc)[0] || perDom.slice().sort((a, b) => b.d.weight - a.d.weight)[0];
+    tips.push({ t: weak.n ? `Quiz D${weak.d.n} ${weak.d.short}: your weakest score` : `Start answering questions: try D${weak.d.n} ${weak.d.short}`, h: `#/quiz/run/domain/${weak.d.id}` });
+    if (mock == null) tips.push({ t: coverage >= 50 ? "Take your first mock exam. Readiness is capped at 70 until you do" : "Take a mock once you have read about half the chapters", h: "#/mock" });
+    return { score, label, coverage: Math.round(coverage), accuracy: answered ? Math.round(accuracy) : null, mock: mock == null ? null : Math.round(mock), tips: tips.slice(0, 3) };
+  };
+  function readinessCard() {
+    const r = App.readiness(), C = 2 * Math.PI * 42, band = r.score >= 75 ? "good" : r.score >= 60 ? "ok" : "low";
+    const part = (k, v, w) => `<div class="rd-part"><span>${k} <small>${w}</small></span><span class="meter"><i style="width:${v == null ? 0 : v}%"></i></span><b>${v == null ? "-" : v + "%"}</b></div>`;
+    return `<section class="card rd" aria-label="Exam readiness">
+      <div class="rd-ring ${band}"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="42" class="trk"/><circle cx="50" cy="50" r="42" class="val" stroke-dasharray="${(r.score / 100 * C).toFixed(1)} ${C.toFixed(1)}"/></svg><div><b>${r.score}</b><small>of 100</small></div></div>
+      <div class="rd-body">
+        <span class="kicker">Exam readiness</span><h3>${r.label}</h3>
+        ${part("Chapters read", r.coverage, "30%")}${part("Question accuracy", r.accuracy, "40%")}${part("Best recent mock", r.mock, "30%")}
+        <p class="rd-next"><b>Biggest gains next:</b></p>
+        <ul class="rd-tips">${r.tips.map(t => `<li><a href="${t.h}">${esc(t.t)} →</a></li>`).join("")}</ul>
+        <p class="hint">An estimate from your own activity, weighted like the exam. 75 or more, with mocks at 75%+, is a sensible point to sit the exam.</p>
+      </div>
+    </section>`;
+  }
+
   /* priority matrix: exam weight against how far behind you are in each domain */
   function priorityMatrix() {
     const rows = D.map(d => {
@@ -538,6 +577,7 @@
         </div>
       </section>
 
+      ${readinessCard()}
       <h2 class="h-section">Where you are</h2>
       <div class="dash-grid">
         ${tile({ k: "Reading", v: `${all.r}<small>/${all.t}</small>`, s: "sections understood", pct: all.pct, go: cont ? "Continue" : "Chapters", href: cont ? cont.href : "#/read" })}
@@ -642,9 +682,14 @@
       <div class="prose">
         <section class="sec" data-sec="${s.id}">
           <div class="sec-head"><span class="sec-num">${d.n}.${i + 1}</span><h2>${esc(s.title)}</h2></div>
+          <div class="sec-tools"><span class="sec-time">◷ ${secMins(s)} min read</span>
+            <button class="chip-btn ${(S.marks || {})[k] ? "on" : ""}" id="secMark" aria-pressed="${!!(S.marks || {})[k]}">${(S.marks || {})[k] ? "★ Saved" : "☆ Save for later"}</button>
+            <button class="chip-btn ${((S.notes || {})[k] || {}).t ? "on" : ""}" id="secNoteBtn" aria-expanded="false">✎ ${((S.notes || {})[k] || {}).t ? "My note" : "Add a note"}</button></div>
+          <div class="sec-note" id="secNote" hidden><textarea id="secNoteText" maxlength="4000" placeholder="Your own words help it stick. What is the one thing to remember here?">${esc(((S.notes || {})[k] || {}).t || "")}</textarea><small class="hint" id="secNoteState">Saved automatically. All notes are in <a href="#/notes">My notes</a>.</small></div>
           ${s.body}
           ${s.exam ? `<div class="note tests"><p>${esc(s.exam)}</p></div>` : ""}
         </section>
+        ${quickCheck(d, s)}
       </div>
       <div class="sec-finish">
         <a class="btn primary big-next" id="readNext" href="${nextHref}" data-read-key="${k}">${on ? "Next" : "Got it - next"}: ${esc(nextName)} →</a>
@@ -657,6 +702,94 @@
       </div>
     </article>`;
   }
+  const secMins = s => Math.max(1, Math.round(String(s.body).replace(/<[^>]+>/g, " ").split(/\s+/).filter(Boolean).length / 200));
+  /* retrieval practice: one question at the end of each page, preferring ones not yet answered correctly */
+  function quickCheck(d, s) {
+    const pool = App.questions.filter(q => q.d === d.id && q.t === s.id); if (!pool.length) return "";
+    const right = new Set(App.attempts.filter(a => a.correct).map(a => a.qid));
+    const fresh = pool.filter(q => !right.has(q.id)), list = fresh.length ? fresh : pool;
+    let h = 0; for (const ch of s.id + ymd(today()) + (QC.n || 0)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+    const q = App.shuffleQ(list[h % list.length], "qc" + h), ans = QC.key === q.id ? QC.ans : null;
+    const L = ["A", "B", "C", "D"];
+    return `<div class="qc" id="qc" data-qid="${q.id}" data-a="${q.a}">
+      <div class="qc-head"><span class="kicker" style="--kc:var(--dc)">Quick check</span><small>${fresh.length ? `${pool.length - fresh.length} of ${pool.length} in this topic answered correctly` : "You’ve answered every question here correctly. Keep it fresh"}</small></div>
+      <p class="qc-q">${esc(q.q)}</p>
+      <div class="qc-opts">${q.o.map((o, j) => `<button class="opt ${ans != null ? (j === q.a ? "correct" : j === ans ? "wrong" : "") : ""}" data-qc="${j}" ${ans != null ? "disabled" : ""}><span class="l">${L[j]}</span><span>${esc(o)}</span></button>`).join("")}</div>
+      ${ans != null ? `<div class="why"><b style="color:${ans === q.a ? "var(--good)" : "var(--bad)"}">${ans === q.a ? "Correct." : "Not quite. The answer is " + L[q.a] + "."}</b>${esc(q.w)}
+        <div class="actions"><button class="btn small" id="qcMore">Another question</button><a class="btn small ghost" href="#/quiz/run/topic/${d.id}.${s.id}">Full topic quiz</a></div></div>` : `<p class="hint">Answering from memory, before looking back, is what makes it stick.</p>`}
+    </div>`;
+  }
+  let QC = { key: null, ans: null, n: 0 };
+  function bindQuickCheck() {
+    const box = $("#qc"); if (!box) return;
+    $$("[data-qc]", box).forEach(b => b.addEventListener("click", () => {
+      const j = +b.dataset.qc, q = App.questions.find(x => x.id === box.dataset.qid); if (!q) return;
+      const correct = j === +box.dataset.a;
+      QC.key = q.id; QC.ans = j;
+      const row = { mode: "quiz", qid: q.id, domain: q.d, topic: q.t || null, correct, chosen: j };
+      App.attempts.push(row); db.recordAttempts([row]).catch(() => {});
+      rerenderQC();
+    }));
+    const m = $("#qcMore"); if (m) m.addEventListener("click", () => { QC = { key: null, ans: null, n: (QC.n || 0) + 1 }; rerenderQC(); });
+  }
+  function rerenderQC() {
+    const r = parse(), d = byId[r.a], s = d && d.sections.find(x => x.id === r.b); if (!s) return;
+    const box = $("#qc"); box.outerHTML = quickCheck(d, s); bindQuickCheck();
+  }
+  addEventListener("hashchange", () => { QC = { key: null, ans: null, n: 0 }; });
+  function bindSecTools(k) {
+    const mk = $("#secMark"); if (!mk) return;
+    mk.addEventListener("click", () => {
+      S.marks = S.marks || {}; const on = !S.marks[k];
+      if (on) S.marks[k] = new Date().toISOString(); else delete S.marks[k];
+      save(); mk.classList.toggle("on", on); mk.setAttribute("aria-pressed", on); mk.textContent = on ? "★ Saved" : "☆ Save for later";
+      toast(on ? "Saved. Find it in My notes." : "Removed from saved pages");
+    });
+    const nb = $("#secNoteBtn"), box = $("#secNote"), ta = $("#secNoteText");
+    nb.addEventListener("click", () => { box.hidden = !box.hidden; nb.setAttribute("aria-expanded", String(!box.hidden)); if (!box.hidden) ta.focus(); });
+    let t = null;
+    ta.addEventListener("input", () => {
+      clearTimeout(t); $("#secNoteState").textContent = "Saving…";
+      t = setTimeout(() => {
+        S.notes = S.notes || {}; const v = ta.value.trim();
+        if (v) S.notes[k] = { t: v, at: new Date().toISOString() }; else delete S.notes[k];
+        save(); nb.classList.toggle("on", !!v); nb.textContent = "✎ " + (v ? "My note" : "Add a note");
+        $("#secNoteState").innerHTML = 'Saved. All notes are in <a href="#/notes">My notes</a>.';
+      }, 600);
+    });
+    ta.addEventListener("keydown", e => e.stopPropagation());  // arrow keys move the cursor, not the page
+  }
+
+  /* my notes: every note and saved page, grouped by chapter, exportable */
+  let notesFilter = "all";
+  function viewNotes() {
+    const N = S.notes || {}, M = S.marks || {};
+    const keys = [...new Set(Object.keys(N).concat(Object.keys(M)))].filter(k => { const [d, s] = k.split(":"); return byId[d] && byId[d].sections.some(x => x.id === s); });
+    const shown = keys.filter(k => notesFilter === "all" || (notesFilter === "notes" ? N[k] : M[k]));
+    const byDom = D.map(d => ({ d, items: d.sections.map((s, i) => ({ s, i, k: d.id + ":" + s.id })).filter(x => shown.includes(x.k)) })).filter(g => g.items.length);
+    return `<div class="page-narrow">
+      <div class="kicker">My notes</div>
+      <h1 class="h-display">In your <em>own words</em></h1>
+      <p class="lede">Notes you write on any page, and pages you save for later, collected by chapter. Writing a line in your own words is one of the best ways to remember it.</p>
+      <div class="filters">${[["all", `All (${keys.length})`], ["notes", `Notes (${Object.keys(N).length})`], ["marks", `Saved pages (${Object.keys(M).length})`]].map(([v, l]) => `<button class="chip ${notesFilter === v ? "on" : ""}" data-nf="${v}">${l}</button>`).join("")}
+        ${Object.keys(N).length ? `<button class="btn small" id="notesExport" style="margin-left:auto">Download as a text file</button>` : ""}</div>
+      ${byDom.length ? byDom.map(g => `<h2 class="h-section" style="${dc(g.d)}"><span class="toc-dot" style="display:inline-block;background:var(--${g.d.id});margin-right:8px"></span>D${g.d.n} ${esc(g.d.title)}</h2>
+        ${g.items.map(x => `<div class="card note-card" style="${dc(g.d)}"><div class="note-top"><a href="#/domain/${g.d.id}/${x.s.id}"><b>${g.d.n}.${x.i + 1} ${esc(x.s.title)}</b></a>${M[x.k] ? `<span class="tag plain">★ saved</span>` : ""}${N[x.k] ? `<small>${fmtDY(N[x.k].at)}</small>` : ""}</div>
+          ${N[x.k] ? `<p class="note-text">${esc(N[x.k].t).replace(/\n/g, "<br>")}</p>` : `<p class="hint">No note yet. <a href="#/domain/${g.d.id}/${x.s.id}">Open the page</a> to add one.</p>`}</div>`).join("")}`).join("")
+        : `<div class="card" style="margin-top:24px"><h3>Nothing here yet</h3><p>On any chapter page, use <b>✎ Add a note</b> or <b>☆ Save for later</b> under the title.</p><a class="btn small primary" href="#/read">Open the chapters</a></div>`}
+    </div>`;
+  }
+  function bindNotes() {
+    $$("[data-nf]").forEach(b => b.addEventListener("click", () => { notesFilter = b.dataset.nf; App.rerender(); }));
+    const ex = $("#notesExport"); if (ex) ex.addEventListener("click", () => {
+      const N = S.notes || {}; let out = "StudyCISSP - my notes\n" + new Date().toLocaleDateString("en-GB") + "\n";
+      D.forEach(d => { const items = d.sections.map((s, i) => ({ s, i, n: N[d.id + ":" + s.id] })).filter(x => x.n);
+        if (items.length) { out += `\n# D${d.n} ${d.title}\n`; items.forEach(x => { out += `\n## ${d.n}.${x.i + 1} ${x.s.title}\n${x.n.t}\n`; }); } });
+      const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([out], { type: "text/markdown" })); a.download = `cissp-notes-${ymd(today())}.md`; a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1500); db.logEvent("user.notes_export", {});
+    });
+  }
+
   function viewMemorise(d) {
     const idx = D.indexOf(d), next = D[idx + 1], last = d.sections[d.sections.length - 1];
     const qs = d.questions.map((q, i) => questionCard(d, q, i)).join("");
@@ -1104,6 +1237,7 @@
     const at = Math.max(0, ids.indexOf(r.b || null));
     const href = (id) => id ? `#/domain/${d.id}/${id}` : `#/domain/${d.id}`;
     pageKeys = { prev: at > 0 ? href(ids[at - 1]) : null, next: at < ids.length - 1 ? href(ids[at + 1]) : null };
+    if (currentSec) { bindSecTools(d.id + ":" + currentSec); bindQuickCheck(); }
     // "Got it - next": mark as understood and turn the page
     const rn = $("#readNext"); if (rn) rn.addEventListener("click", () => { if (!S.read[rn.dataset.readKey]) markRead(rn.dataset.readKey, true); });
     $$("[data-read]").forEach(b => b.addEventListener("click", () => {
@@ -1199,6 +1333,7 @@
     bindSchedule();
     if (r.a === "schedule") { const el = $("#schedule"); if (el) requestAnimationFrame(() => el.scrollIntoView({ block: "start" })); }
   } });
+  App.register("notes", { render: viewNotes, bind: bindNotes, title: "My notes", nav: "notes", area: "library" });
   App.register("tracker", { render: viewTracker, bind: bindTracker, title: "Tracker", nav: "insights", area: "insights" });
   App.register("landing", { render: viewLanding, bind: () => { if (window.Anim) window.Anim.mountAll(view); }, title: "CISSP study, made calm", public: true, site: true, nav: "landing" });
   App.register("plans", { render: viewPlans, bind: bindLocked, title: "Plans", nav: "plan", area: "other" });
@@ -1314,6 +1449,14 @@
     g.addEventListener("focusout", (e) => { if (e.relatedTarget && !g.contains(e.relatedTarget)) set(false); });
   });
   document.addEventListener("click", (e) => { if (!e.target.closest(".nav-group")) closeGroups(); });
+  if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !/[?&]nosw/.test(location.search)) {
+    addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
+  }
+  let installEvt = null;
+  addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installEvt = e; const b = $("#installBlock"); if (b) b.hidden = false; });
+  const ib = $("#installApp"); if (ib) ib.addEventListener("click", async () => { if (!installEvt) return; installEvt.prompt(); const r = await installEvt.userChoice; installEvt = null; $("#installBlock").hidden = true; if (r.outcome === "accepted") db.logEvent("user.app_installed", {}); });
+  addEventListener("offline", () => toast("You’re offline. Chapters you’ve opened still work; progress saves on this device."));
+  addEventListener("online", () => { toast("Back online"); if (db.mode === "cloud" && db.user) save(); });
   const killBadge = () => document.querySelectorAll('#nl-badge-frame, iframe[title="Powered by Netlify"]').forEach(x => x.remove());
   new MutationObserver(killBadge).observe(document.body, { childList: true }); killBadge();
   $("#tocToggle").addEventListener("click", () => { toc.classList.add("open"); $("#scrim").classList.add("on"); });

@@ -403,10 +403,21 @@
     const topics = Object.entries(byTopic).sort((a, b) => b[1] - a[1]).slice(0, 10);
     const areaName = { read: "Reading", quiz: "Quizzes", flashcards: "Flashcards", mock: "Mock exams", plan: "Planning", insights: "Insights", library: "Library", other: "Home" };
     const off = A.profile && A.profile.consent_analytics === false;
+    const S0 = A.state(), readN = Object.keys(S0.read || {}).filter(k => S0.read[k]).length, allSecs = D.reduce((n, d) => n + d.sections.length, 0);
+    const chDone = D.filter(d => d.sections.every(s => S0.read[d.id + ":" + s.id])).length;
+    const bestMock = A.mocks.length ? Math.max(...A.mocks.map(m => Math.round(m.correct / m.total * 100))) : 0;
+    const cs = A.cardStats();
+    const MS = [["First page", "Read your first section", readN >= 1], ["First chapter", "Every section of one domain", chDone >= 1], ["Halfway", `${Math.ceil(allSecs / 2)} sections read`, readN >= allSecs / 2],
+      ["Cover to cover", "All eight chapters read", chDone === D.length], ["100 answers", "Answer 100 questions", A.attempts.length >= 100], ["500 answers", "Answer 500 questions", A.attempts.length >= 500],
+      ["A week strong", "Study 7 days in a row", A.streak() >= 7 || (S0.bestStreak || 0) >= 7], ["Card sharp", "Master 50 flashcards", cs.mastered >= 50],
+      ["First mock", "Finish a mock exam", A.mocks.length >= 1], ["Pass mark", "Score 75% or more in a mock", bestMock >= 75]];
+    if (A.streak() > (S0.bestStreak || 0)) { S0.bestStreak = A.streak(); A.save(); }
     return `<div class="page-narrow">
       <div class="kicker">Insights</div>
       <h1 class="h-display">Where your <em>time goes</em></h1>
       <p class="lede">Active study time only: the clock pauses when you switch tabs or stop interacting for 90 seconds.</p>
+      <h2 class="h-section">Milestones <small class="sub">${MS.filter(m => m[2]).length} of ${MS.length}</small></h2>
+      <div class="ms-grid">${MS.map(([t, d, ok]) => `<div class="ms ${ok ? "on" : ""}"><span class="ms-ico" aria-hidden="true">${ok ? "✓" : "○"}</span><b>${t}</b><small>${d}</small></div>`).join("")}</div>
       ${off ? `<div class="warnbox">Study-time analytics is switched off in your privacy settings, so new time isn’t being recorded. <a href="#/privacy">Change this</a>.</div>` : ""}
       <div class="filters">${[[7, "7 days"], [30, "30 days"], [90, "90 days"], [0, "All time"]].map(([v, l]) => `<button class="chip ${range === v ? "on" : ""}" data-range="${v}">${l}</button>`).join("")}</div>
       <section class="facts" style="border-top:1px solid var(--rule)">

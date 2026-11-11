@@ -6,6 +6,14 @@
   <title>StudyCISSP</title>
   <meta name="description" content="StudyCISSP: a calm, book-like way to prepare for the CISSP. Clear chapters, animations for tricky ideas, a plan built around your exam date, quizzes, flashcards and mock exams.">
   <meta name="theme-color" content="#f7f3ea">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="StudyCISSP">
+  <meta property="og:title" content="StudyCISSP: calm, book-like CISSP preparation">
+  <meta property="og:description" content="Short chapters, quizzes with reasons, flashcards, mock exams and a plan built around your exam date.">
+  <meta property="og:image" content="https://studycissp.netlify.app/assets/icons/icon-512.png">
+  <meta property="og:type" content="website">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='16' fill='%231f5c43'/><path d='M32 11l17 7v13c0 10-7 18-17 22-10-4-17-12-17-22V18z' fill='none' stroke='white' stroke-width='4'/><path d='M24 32l6 6 11-12' fill='none' stroke='white' stroke-width='4.5' stroke-linecap='round' stroke-linejoin='round'/></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -56,7 +64,8 @@
           <a href="#/plan" data-nav="plan" role="menuitem"><b>Study plan</b><small>Week by week to your exam date</small></a>
           <a href="#/insights" data-nav="insights" role="menuitem"><b>Insights</b><small>Time spent and weakest areas</small></a>
           <a href="#/tracker" data-nav="tracker" role="menuitem"><b>Scores & error log</b><small>Every miss, so you don’t repeat it</small></a>
-          <a href="#/library" data-nav="library" role="menuitem"><b>My library</b><small>Your own notes and files</small></a>
+          <a href="#/notes" data-nav="notes" role="menuitem"><b>My notes</b><small>Notes and saved pages, in one place</small></a>
+          <a href="#/library" data-nav="library" role="menuitem"><b>My library</b><small>Your own links and files</small></a>
         </div>
       </div>
       <a class="nav-top" href="#/admin" data-nav="admin" id="navAdmin" hidden>Admin</a>
@@ -112,6 +121,11 @@
         <button data-face="sans"><span style="font-family:var(--sans)">Clean</span></button>
       </div>
     </div>
+    <div class="set-block" id="installBlock" hidden>
+      <span class="set-label">App</span>
+      <button class="btn small primary" id="installApp" type="button">Install StudyCISSP on this device</button>
+      <small class="hint" style="display:block;margin-top:6px">Opens like an app and works offline for reading.</small>
+    </div>
   </div>
 
   <div class="shell">
@@ -138,7 +152,7 @@
     <input name="name"><input name="email"><input name="topic"><textarea name="message"></textarea><input name="bot-field">
   </form>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js" integrity="sha384-GFr3yTh5lJznCbZfpTtXnwboFsxqtTQoeTZCRHhE0579KrRmlCzen5AA8ohaB5ug" crossorigin="anonymous"></script>
+  <script src="assets/vendor/supabase-2.45.4.min.js" integrity="sha384-GFr3yTh5lJznCbZfpTtXnwboFsxqtTQoeTZCRHhE0579KrRmlCzen5AA8ohaB5ug"></script>
   <script src="assets/js/config.js?v=dev"></script>
   <script src="assets/js/content-1.js?v=dev"></script>
   <script src="assets/js/content-2.js?v=dev"></script>

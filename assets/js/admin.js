@@ -63,6 +63,12 @@
         <div class="fact"><b>${acc == null ? "-" : acc + "%"}</b><span>quiz accuracy (90 days)</span></div>
       </section>
       ${open ? `<a class="warnbox" href="#/admin/requests" style="display:block;margin-top:18px;text-decoration:none">${open} privacy request${open > 1 ? "s" : ""} waiting. DPDP and GDPR expect a response within 30 days →</a>` : ""}
+      <h2 class="h-section">Learner journey</h2>
+      <p class="sub">Where learners drop off, from sign-up to a mock exam. The biggest drop is where to improve first.</p>
+      <div class="funnel">${(() => { const L = learnersOnly, steps = [["Signed up", L.length], ["Verified email", L.filter(u => u.verified).length], ["Finished set-up", L.filter(u => u.onboarded).length],
+        ["Read a section", L.filter(u => u.sections_read > 0).length], ["10+ questions", L.filter(u => u.attempts >= 10).length], ["Took a mock", L.filter(u => u.mocks > 0).length], ["Mock 75%+", L.filter(u => (u.best_mock || 0) >= 75).length]];
+        const top = Math.max(1, steps[0][1]);
+        return steps.map(([k, v], i) => `<div class="fn-row"><span>${k}</span><div class="meter"><i style="width:${v / top * 100}%"></i></div><b>${v}</b><small>${i ? (steps[i - 1][1] ? Math.round(v / steps[i - 1][1] * 100) + "% of previous" : "-") : ""}</small></div>`).join(""); })()}</div>
       <h2 class="h-section">Daily study time, all learners</h2>
       <div class="daychart">${series.map(d => `<div class="dc-col" title="${fmtD(d)}: ${fmtDur(perDay[d] || 0)} · ${(perDayUsers[d] || new Set()).size} learners"><i style="height:${Math.round((perDay[d] || 0) / maxD * 100)}%"></i></div>`).join("")}</div>
       <div class="dc-axis"><span>${fmtD(series[0])}</span><span>today</span></div>
