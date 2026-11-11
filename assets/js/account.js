@@ -29,7 +29,7 @@
       e.preventDefault(); const b = $("#lGo"); busy(b, true, "Signing in…"); $("#lMsg").innerHTML = "";
       try {
         await db.signIn($("#lId").value, $("#lPw").value);
-        await A.afterLogin(); location.hash = "#/"; A.route();
+        await A.afterLogin(); try { sessionStorage.removeItem("cissp.mode"); } catch (x) {} location.hash = A.isAdmin() ? "#/choose" : "#/"; A.route();
       } catch (err) {
         const m = A.errMsg(err);
         if (/not confirmed/i.test(m)) {

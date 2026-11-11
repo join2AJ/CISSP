@@ -14,7 +14,7 @@ alter table public.app_settings enable row level security;
 
 insert into public.app_settings (key, value) values
   ('admin_username',   'adminjoin2ajkumar'),
-  ('admin_email',      ''),                       -- set once the admin email is known
+  ('admin_email',      'join2ajkumar@gmail.com'),
   ('privileged_emails','join2ajkumar@gmail.com'), -- comma separated, no spaces
   ('privacy_version',  '2026-11-v1')
 on conflict (key) do nothing;

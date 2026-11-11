@@ -9,7 +9,7 @@ window.DOMAINS.push({
   short: "Risk & Governance",
   sybex: "Ch 1 Security Governance · Ch 2 Personnel Security & Risk · Ch 3 Business Continuity · Ch 4 Laws, Regulations & Compliance · Ch 19 Investigations & Ethics",
   lede: "The largest domain, and the lens for every other one. It asks a single question again and again: does this decision serve the business, within the law, at a risk the owners have chosen to accept?",
-  intro: "Domain 1 is where the CISSP stops being a technical exam and becomes a leadership exam. You will meet governance, risk, law, ethics, people and continuity, and you will be asked to rank options rather than recall facts. Your management and audit background is an advantage here. The work is learning ISC2’s vocabulary, which differs in places from ISO and ISACA, so that your instincts land on the answer the exam writers chose.",
+  intro: "Domain 1 is where the CISSP stops being a technical exam and becomes a leadership exam. You will meet governance, risk, law, ethics, people and continuity, and you will be asked to rank options rather than recall facts. A management or audit background is an advantage here. The work is learning ISC2’s vocabulary, which differs in places from ISO and ISACA, so that your instincts land on the answer the exam writers chose.",
   memorise: [
     "ALE = SLE × ARO, and SLE = AV × EF. A safeguard is worth it when (ALE before − ALE after) − annual cost of safeguard > 0.",
     "Risk responses: mitigate, transfer (share), avoid, accept. Ignoring or rejecting risk is never correct.",
@@ -261,7 +261,7 @@ window.DOMAINS.push({
   short: "Architecture & Crypto",
   sybex: "Ch 6 Cryptography & Symmetric Algorithms · Ch 7 PKI & Cryptographic Applications · Ch 8 Security Models, Design & Capabilities · Ch 9 Vulnerabilities, Threats & Countermeasures · Ch 10 Physical Security",
   lede: "The engineer’s domain: secure design principles, the formal models behind them, cryptography from first principles, and the physical building that holds it all.",
-  intro: "This is one of your priority domains, so read it slowly. It has three parts that feel unrelated at first. Secure design principles and security models describe how trustworthy systems are built. Cryptography gives you the tools for confidentiality, integrity and authenticity. Physical security protects the facility. The exam rarely asks you to do maths; it asks you to pick the right mechanism and to know why the others are wrong.",
+  intro: "Many candidates find this the hardest domain, so read it slowly. It has three parts that feel unrelated at first. Secure design principles and security models describe how trustworthy systems are built. Cryptography gives you the tools for confidentiality, integrity and authenticity. Physical security protects the facility. The exam rarely asks you to do maths; it asks you to pick the right mechanism and to know why the others are wrong.",
   memorise: [
     "Bell–LaPadula (confidentiality): no read up, no write down. Biba (integrity): no read down, no write up.",
     "Clark–Wilson enforces integrity through well-formed transactions and separation of duties (the access triple: subject–program–object).",
@@ -435,7 +435,7 @@ window.DOMAINS.push({
   short: "Network Security",
   sybex: "Ch 11 Secure Network Architecture & Components · Ch 12 Secure Communications & Network Attacks",
   lede: "Packets, layers and the paths between them. Learn the stack well enough to draw it from memory, and every network question becomes a question of where a control sits.",
-  intro: "Domain 4 is your weakest area and your first two weeks, so this chapter goes deeper than the rest. The goal is not to become a network engineer. It is to know the layers, the protocols that live at each one, the devices that act on them, and the attacks that abuse them, well enough to place any control at the right layer and to reject options that sit at the wrong one.",
+  intro: "Networking is where many managers feel least at home, so this chapter goes deeper than the rest. The goal is not to become a network engineer. It is to know the layers, the protocols that live at each one, the devices that act on them, and the attacks that abuse them, well enough to place any control at the right layer and to reject options that sit at the wrong one.",
   memorise: [
     "OSI top down: Application, Presentation, Session, Transport, Network, Data Link, Physical. (“All People Seem To Need Data Processing”)",
     "PDUs: data (L5–7), segment/datagram (L4), packet (L3), frame (L2), bits (L1).",
@@ -449,7 +449,8 @@ window.DOMAINS.push({
   ],
   sections: [
     { id: "osi", title: "The OSI and TCP/IP models",
-      body: `<p>The <strong>OSI model</strong> is a teaching tool with seven layers. Each layer serves the one above and uses the one below. When data goes down the stack it is <em>encapsulated</em>: each layer wraps it with its own header.</p>
+      body: `<p><strong>OSI</strong> stands for <strong>Open Systems Interconnection</strong>, a reference model published by the International Organization for Standardization (ISO) in 1984. <strong>TCP/IP</strong> stands for <strong>Transmission Control Protocol / Internet Protocol</strong>, the protocol suite the internet actually runs on. One is a map; the other is the territory.</p>
+      <p>The <strong>OSI model</strong> is a teaching tool with seven layers. Each layer serves the one above and uses the one below. When data goes down the stack it is <em>encapsulated</em>: each layer wraps it with its own header.</p>
       <div class="tbl-wrap"><table><thead><tr><th>#</th><th>Layer</th><th>PDU</th><th>Protocols / examples</th><th>Devices</th></tr></thead><tbody>
       <tr><td>7</td><td>Application</td><td>Data</td><td>HTTP, DNS, SMTP, SNMP, LDAP, SSH</td><td>WAF, proxy, L7 firewall</td></tr>
       <tr><td>6</td><td>Presentation</td><td>Data</td><td>Encoding, compression, encryption formats (ASCII, JPEG, TLS is often placed here)</td><td>—</td></tr>
@@ -459,7 +460,7 @@ window.DOMAINS.push({
       <tr><td>2</td><td>Data link</td><td>Frame</td><td>Ethernet, 802.11, ARP, PPP, VLAN tagging (802.1Q), MAC addresses</td><td>Switch, bridge, WAP</td></tr>
       <tr><td>1</td><td>Physical</td><td>Bits</td><td>Cables, radio, voltages, connectors</td><td>Hub, repeater</td></tr>
       </tbody></table></div>
-      <p>The <strong>TCP/IP model</strong> has four layers: Application (OSI 5–7), Transport (4), Internet (3), and Link / Network Access (1–2).</p>
+      <p>The <strong>TCP/IP model</strong> (also called the Internet model or DoD model) has four layers: Application (OSI 5–7), Transport (4), Internet (3), and Link / Network Access (1–2).</p>
       <div class="note memory"><p>Top down: <strong>All People Seem To Need Data Processing</strong>. Bottom up: <strong>Please Do Not Throw Sausage Pizza Away</strong>. Draw the table above on a blank sheet every few days until it is automatic.</p></div>
       <div class="note exam"><p>ARP sits at layer 2 (it maps IP to MAC). ICMP sits at layer 3. A switch with routing ability is a layer 3 switch. If the question mentions MAC addresses, think layer 2; IP addresses, layer 3; ports, layer 4.</p></div>`,
       exam: "Placing protocols, devices and attacks at the right layer." },

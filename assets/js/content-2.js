@@ -128,7 +128,7 @@ window.DOMAINS.push({
   short: "Assessment & Testing",
   sybex: "Ch 15 Security Assessment & Testing",
   lede: "Trust, but verify. This domain is about producing evidence that controls work, and turning that evidence into decisions.",
-  intro: "Your audit background makes this a natural strength. The exam focuses on choosing the right kind of test for a question, understanding what each technique can and cannot show, the reports that come from third-party audits, and the way results feed back to management. The trap is technical detail on testing tools, so make sure you know the vocabulary of code testing as well as audit.",
+  intro: "People with an audit background often find this domain natural. The exam focuses on choosing the right kind of test for a question, understanding what each technique can and cannot show, the reports that come from third-party audits, and the way results feed back to management. The trap is technical detail on testing tools, so make sure you know the vocabulary of code testing as well as audit.",
   memorise: [
     "Vulnerability scan: automated, finds known weaknesses. Penetration test: exploits them to prove impact, under written authorisation.",
     "Pen test phases: planning (rules of engagement) → discovery → attack → reporting.",
@@ -234,7 +234,7 @@ window.DOMAINS.push({
   short: "Security Operations",
   sybex: "Ch 16 Managing Security Operations · Ch 17 Preventing & Responding to Incidents · Ch 18 Disaster Recovery Planning · Ch 19 Investigations & Ethics",
   lede: "Where policy meets the night shift. Monitoring, incidents, investigations, change, recovery and the people who keep the lights on.",
-  intro: "Your control-room experience maps directly onto this domain. It is broad: foundational operating principles, logging and monitoring, configuration and change, incident response, investigations and evidence, recovery strategies, disaster recovery and personnel safety. Expect process-ordering questions (what comes first) and evidence questions.",
+  intro: "Anyone who has worked in operations, a SOC or a control room will recognise much of this domain. It is broad: foundational operating principles, logging and monitoring, configuration and change, incident response, investigations and evidence, recovery strategies, disaster recovery and personnel safety. Expect process-ordering questions (what comes first) and evidence questions.",
   memorise: [
     "Incident response (Sybex): Detection → Response → Mitigation → Reporting → Recovery → Remediation → Lessons learned.",
     "NIST SP 800-61: Preparation → Detection & Analysis → Containment, Eradication & Recovery → Post-incident activity. (Rev. 3, 2025, maps IR onto CSF 2.0.)",
@@ -362,7 +362,7 @@ window.DOMAINS.push({
   short: "Software Security",
   sybex: "Ch 20 Software Development Security · Ch 21 Malicious Code & Application Attacks",
   lede: "Security that is designed in costs a fraction of security that is bolted on. This domain is about building that into how software is planned, written, bought and run.",
-  intro: "You do not need to write code to pass this domain; you need to understand how software gets built and where security belongs at each stage. Learn the lifecycle and methodologies, the maturity models, the controls in a modern development pipeline, the common vulnerabilities and their fixes, database security concepts, and how to assess software you buy rather than build. Keep it at the concept level, as your plan says.",
+  intro: "You do not need to write code to pass this domain; you need to understand how software gets built and where security belongs at each stage. Learn the lifecycle and methodologies, the maturity models, the controls in a modern development pipeline, the common vulnerabilities and their fixes, database security concepts, and how to assess software you buy rather than build. Keep it at the concept level.",
   memorise: [
     "Security is cheapest when built in early: requirements and design, not testing or production.",
     "SDLC: initiation → requirements → design → development → testing → deployment → operations & maintenance → disposal.",

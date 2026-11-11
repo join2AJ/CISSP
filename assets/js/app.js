@@ -202,6 +202,8 @@
     return { page: a || "home", a: b ? decodeURIComponent(b) : b, b: c ? decodeURIComponent(c) : c };
   }
   App.parse = parse;
+  const sessionGet = (k) => { try { return sessionStorage.getItem(k); } catch (e) { return "x"; } };
+  App.sessionSet = (k, v) => { try { sessionStorage.setItem(k, v); } catch (e) {} };
   const redirect = (h) => { history.replaceState(null, "", h); route(); };
   App.redirect = redirect;
 
@@ -214,10 +216,11 @@
       if (!db.user && !def.public) return redirect("#/login");
       if (db.user && App.profile) {
         if (!App.profile.consent_terms_at && !def.public && r.page !== "consent") return redirect("#/consent");
-        if (App.profile.consent_terms_at && !App.profile.onboarded && !["welcome", "privacy", "consent"].includes(r.page)) return redirect("#/welcome");
+        if (App.profile.consent_terms_at && !App.profile.onboarded && !["welcome", "privacy", "consent", "choose"].includes(r.page) && !(def.admin && App.isAdmin())) return redirect("#/welcome");
         if (["login", "signup"].includes(r.page)) return redirect("#/");
       }
     } else if (App.profile && !App.profile.onboarded && !["welcome", "privacy"].includes(r.page)) return redirect("#/welcome");
+    if (App.profile && App.isAdmin() && r.page === "home" && !sessionGet("cissp.mode")) return redirect("#/choose");
     if (def.admin && !App.isAdmin()) return redirect("#/");
 
     // same chapter: just scroll
@@ -273,7 +276,7 @@
     const all = allProgress();
     const order = App.pathOrder();
     let h = `<div class="mob-nav">
-      ${[["", "Home"], ["read", "Chapters"], ["quiz", "Quiz"], ["flashcards", "Flashcards"], ["mock", "Mock exam"], ["plan", "Plan"], ["insights", "Insights"], ["library", "My library"]].concat(App.isAdmin() ? [["admin", "Admin"]] : []).map(([k, v]) => `<a href="#/${k}">${v}</a>`).join("")}
+      ${[["", "Home"], ["read", "Chapters"], ["quiz", "Quiz"], ["flashcards", "Flashcards"], ["mock", "Mock exam"], ["glossary", "Glossary"], ["plan", "Plan"], ["insights", "Insights"], ["library", "My library"]].concat(App.isAdmin() ? [["admin", "Admin"]] : []).map(([k, v]) => `<a href="#/${k}">${v}</a>`).join("")}
     </div>`;
     h += `<div class="toc-head">Your path · weakest first</div><ol class="toc-list">`;
     order.forEach(d => {
@@ -286,7 +289,7 @@
     });
     const L = (k, ico, t) => `<li><a href="#/${k}" class="${r.page === k ? "active" : ""}"><span class="toc-num">${ico}</span>${t}</a></li>`;
     h += `</ol><div class="toc-head">Practise</div><ol class="toc-list">
-      ${L("quiz", "?", "Quiz by domain or topic")}${L("flashcards", "❐", "Flashcards")}${L("mock", "◷", "Mock exam")}
+      ${L("glossary", "Aa", "Glossary A–Z")}${L("quiz", "?", "Quiz by domain or topic")}${L("flashcards", "❐", "Flashcards")}${L("mock", "◷", "Mock exam")}
     </ol><div class="toc-head">Companion</div><ol class="toc-list">
       ${L("plan", "▤", "My study plan")}${L("insights", "◔", "Insights & time spent")}${L("tracker", "▦", "Scores & error log")}${L("library", "❏", "My library")}
       ${L("tactics", "◎", "Exam tactics")}${L("latest", "✦", "What’s new, 2024–2026")}${L("resources", "§", "Resources")}${L("privacy", "⚿", "Privacy & trust")}
@@ -437,11 +440,12 @@
       </ol></nav>
       <div class="prose" style="margin-top:44px">
         <p class="intro">${esc(d.intro)}</p>
+        ${(window.HISTORY || {})[d.id] ? `<div class="note history"><p>${esc(window.HISTORY[d.id])}</p></div>` : ""}
         ${secs}
       </div>
       <div class="ch-end" id="memorise">
         <div class="memorise"><div class="kicker" style="--kc:var(--dc)">Before you move on</div><h3>Memorise</h3><ul>${d.memorise.map(m => `<li>${esc(m)}</li>`).join("")}</ul></div>
-        <div class="btn-row"><a class="btn" href="#/flashcards/${d.id}">Flashcards for D${d.n}</a><a class="btn" href="#/quiz/run/domain/${d.id}">Full D${d.n} quiz</a></div>
+        <div class="btn-row"><a class="btn" href="#/glossary/${d.id}">D${d.n} glossary</a><a class="btn" href="#/flashcards/${d.id}">Flashcards for D${d.n}</a><a class="btn" href="#/quiz/run/domain/${d.id}">Full D${d.n} quiz</a></div>
         <p class="chapters-src"><b>Read alongside:</b> Sybex Official Study Guide — ${esc(d.sybex)}. Chapter numbers follow the 9th/10th editions; match by title if yours differ.</p>
         <h2 class="h-section" style="margin-top:56px">Check yourself</h2>
         <p class="sub">CISSP-style questions. Answer, then read the reasoning. Misses can go straight into your error log.</p>
@@ -606,6 +610,63 @@
     </div>`;
   }
 
+  /* ---------------- glossary ---------------- */
+  const G = window.GLOSSARY || {};
+  const glossAll = () => Object.entries(G).flatMap(([d, list]) => list.map(e => ({ d, term: e[0], mean: e[1], where: e[2], tools: e[3] })));
+  let gq = "";
+  function viewGlossary(r) {
+    const dom = r.a && byId[r.a] ? r.a : "all";
+    const q = gq.toLowerCase();
+    const rows = glossAll().filter(x => (dom === "all" || x.d === dom) && (!q || [x.term, x.mean, x.where, x.tools].join(" ").toLowerCase().includes(q)))
+      .sort((a, b) => a.term.localeCompare(b.term, "en", { sensitivity: "base", numeric: true }));
+    const letter = t => { const c = t[0].toUpperCase(); return /[A-Z]/.test(c) ? c : "#"; };
+    const letters = [...new Set(rows.map(x => letter(x.term)))];
+    let last = "";
+    const body = rows.map((x, i) => {
+      const L = letter(x.term), head = L !== last ? (last = L, `<tr class="g-letter" id="g-${L}"><td colspan="6">${L}</td></tr>`) : "";
+      const d = byId[x.d];
+      return head + `<tr style="${dc(d)}"><td class="g-n">${i + 1}</td><td class="g-term"><b>${esc(x.term)}</b></td><td>${esc(x.mean)}</td><td>${esc(x.where)}</td><td class="g-tools">${esc(x.tools)}</td><td><a class="chip" style="height:26px;font-size:12px;${dc(d)}" href="#/domain/${d.id}"><i></i>D${d.n}</a></td></tr>`;
+    }).join("");
+    const total = glossAll().length;
+    return `<div class="page">
+      <div class="kicker">Glossary</div>
+      <h1 class="h-display">Words of the <em>trade</em></h1>
+      <p class="lede">${total} terms, A to Z: what each one means, where you’ll meet it, and the tools or examples that bring it to life. Filter by domain or search.</p>
+      <div class="filters">
+        <a class="chip ${dom === "all" ? "on" : ""}" href="#/glossary">All domains</a>
+        ${D.map(d => `<a class="chip ${dom === d.id ? "on" : ""}" href="#/glossary/${d.id}" style="${dc(d)}"><i></i>D${d.n} ${esc(d.short)}</a>`).join("")}
+      </div>
+      <div class="form-row"><label style="flex:1">Search the glossary<input id="gq" value="${esc(gq)}" placeholder="e.g. Kerberos, SIEM, RPO…"></label></div>
+      <div class="g-jump">${letters.map(l => `<a href="#g-${l}" data-jump="${l}">${l}</a>`).join("")}</div>
+      <div class="tbl-wrap"><table class="tbl gloss"><thead><tr><th>S.No</th><th>Term</th><th>Meaning</th><th>Where it’s used</th><th>Tools / examples</th><th>Domain</th></tr></thead>
+        <tbody>${body || `<tr><td colspan="6">No terms match “${esc(gq)}”.</td></tr>`}</tbody></table></div>
+      <p class="sub" style="margin-top:16px">Tool names are examples to help you picture each idea. The exam is vendor-neutral and never asks about products.</p>
+    </div>`;
+  }
+  function bindGlossary() {
+    const i = $("#gq");
+    i.addEventListener("input", () => { gq = i.value; clearTimeout(i._t); i._t = setTimeout(() => { App.rerender(); setTimeout(() => { const n = $("#gq"); if (n) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); } }, 30); }, 250); });
+    $$("[data-jump]").forEach(a => a.addEventListener("click", e => { e.preventDefault(); const el = document.getElementById("g-" + a.dataset.jump); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); }));
+  }
+
+  /* ---------------- admin / study choice ---------------- */
+  function viewChoose() {
+    return `<div class="auth wide"><div class="auth-brand"><span class="brand-mark">C</span><div><b>The CISSP Reader</b><small>Read slowly. Pass once.</small></div></div>
+      <h1 class="h-display" style="font-size:44px">Welcome back, <em>${esc(App.firstName())}</em></h1>
+      <p class="lede">What would you like to do?</p>
+      <div class="grid-2" style="margin-top:26px">
+        <button class="card focus choose" data-mode="study"><span class="kicker">Learner</span><h3>Study CISSP</h3><p>Your plan, chapters, quizzes, flashcards and mock exams.</p></button>
+        <button class="card focus choose" data-mode="admin" style="--dc:var(--d7)"><span class="kicker" style="--kc:var(--d7)">Administrator</span><h3>View admin console</h3><p>Learner analytics, audit trail, privacy requests and accounts.</p></button>
+      </div>
+      <p class="hint" style="text-align:center;margin-top:18px">You can switch any time from the menu under your initial.</p></div>`;
+  }
+  function bindChoose() {
+    $$(".choose").forEach(b => b.addEventListener("click", () => {
+      App.sessionSet("cissp.mode", b.dataset.mode);
+      location.hash = b.dataset.mode === "admin" ? "#/admin" : "#/";
+    }));
+  }
+
   /* ---------------- bindings ---------------- */
   let currentSec = null;
   function markCurrent() { $$(".toc-sub a").forEach(a => a.classList.toggle("current", a.dataset.sec === currentSec)); }
@@ -713,6 +774,8 @@
     $("#restartPlan").addEventListener("click", () => { if (confirm("Redraw the plan starting today? Ticked tasks stay ticked.")) { S.planStart = ymd(today()); save(); App.rerender(); } });
   } });
   App.register("tracker", { render: viewTracker, bind: bindTracker, title: "Tracker", nav: "insights", area: "insights" });
+  App.register("glossary", { render: viewGlossary, bind: bindGlossary, title: "Glossary", nav: "glossary", area: "read" });
+  App.register("choose", { render: viewChoose, bind: bindChoose, title: "Welcome", bare: true });
   App.register("latest", { render: viewLatest, title: "What’s new", nav: "read", area: "read" });
   App.register("tactics", { render: viewTactics, title: "Exam tactics", nav: "plan", area: "plan" });
   App.register("resources", { render: viewResources, bind: bindResources, title: "Resources", nav: "library", area: "library" });
@@ -733,6 +796,7 @@
     d.sections.forEach((s, i) => { const plain = strip(s.body); index.push({ k: `D${d.n}.${i + 1} · ${d.short}`, t: s.title, s: plain, u: `#/domain/${d.id}/${s.id}`, id: d.id, txt: (s.title + " " + plain).toLowerCase() }); });
     d.memorise.forEach(m => index.push({ k: `D${d.n} · Memorise`, t: m.slice(0, 70) + (m.length > 70 ? "…" : ""), s: m, u: `#/domain/${d.id}/memorise`, id: d.id, txt: m.toLowerCase() }));
   });
+  Object.entries(window.GLOSSARY || {}).forEach(([d, list]) => list.forEach(e => index.push({ k: `D${byId[d].n} · Glossary`, t: e[0], s: e[1] + " " + e[2], u: `#/glossary/${d}`, id: d, txt: e.join(" ").toLowerCase() })));
   App.cards.forEach(c => index.push({ k: `D${byId[c.d].n} · Flashcard`, t: c.front, s: c.back, u: `#/flashcards/${c.d}`, id: c.d, txt: (c.front + " " + c.back).toLowerCase() }));
   [["Study plan", "#/plan", "calendar phases checkpoints iteration exam date deadline hours"], ["Quiz", "#/quiz", "questions practice topic domain"], ["Flashcards", "#/flashcards", "cards spaced repetition"], ["Mock exam", "#/mock", "timed test full"], ["Insights", "#/insights", "time spent analytics streak accuracy"], ["Exam tactics", "#/tactics", "method qualifier manager cat adaptive logistics rules"], ["Tracker", "#/tracker", "scores error log mock readiness"], ["What’s new 2024–2026", "#/latest", P.latest.map(x => x.title + " " + x.body).join(" ")], ["Resources", "#/resources", "books sybex boson pdf ultimate guide video nist owasp"], ["My library", "#/library", "upload documents youtube links"], ["Privacy & trust", "#/privacy", "gdpr dpdp iso 27001 31000 delete data export"]]
     .forEach(([t, u, x]) => index.push({ k: "Page", t, s: "", u, id: null, txt: (t + " " + x).toLowerCase() }));
@@ -804,7 +868,7 @@
     const p = App.profile || {};
     m.innerHTML = `<div class="um-head"><b>${esc(p.full_name || p.username || "Learner")}</b><small>${esc(db.mode === "cloud" ? (p.email || "") : "Device-only mode")}</small>${App.isAdmin() ? `<span class="tag plain" style="margin-top:6px">Admin</span>` : ""}</div>
       <a href="#/profile">Profile &amp; exam dates</a><a href="#/insights">Insights</a><a href="#/library">My library</a><a href="#/tracker">Scores &amp; error log</a><a href="#/privacy">Privacy &amp; my data</a>
-      ${App.isAdmin() ? `<a href="#/admin">Admin console</a>` : ""}
+      ${App.isAdmin() ? `<a href="#/admin">Admin console</a><a href="#/choose">Switch: study or admin</a>` : ""}
       ${db.mode === "cloud" ? `<button id="signOut">Sign out</button>` : ""}`;
     const so = $("#signOut"); if (so) so.addEventListener("click", async () => { await flush(); await db.signOut(); location.hash = "#/login"; location.reload(); });
     m.querySelectorAll("a").forEach(a => a.addEventListener("click", closeMenu));

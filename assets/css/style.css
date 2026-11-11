@@ -868,3 +868,29 @@ select.mini { height: 30px; border-radius: 7px; border: 1px solid var(--rule); b
   .user-menu { right: 10px; }
   .run-label { font-size: 15px; }
 }
+
+/* glossary, history, choice */
+.note.history { background: color-mix(in srgb, var(--dc) 6%, var(--card)); border-color: color-mix(in srgb, var(--dc) 25%, var(--rule-2)); font-style: italic; }
+.note.history::before { content: "A little history"; color: var(--dc); font-style: normal; }
+.g-jump { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0 14px; }
+.g-jump a { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 8px; background: var(--card); border: 1px solid var(--rule-2); text-decoration: none; font-family: var(--display); font-size: 15px; }
+.g-jump a:hover { border-color: var(--accent); color: var(--accent); }
+.tbl.gloss td { font-size: 14px; }
+.tbl.gloss .g-n { font-family: var(--mono); font-size: 12px; color: var(--muted); width: 44px; }
+.tbl.gloss .g-term { min-width: 170px; border-left: 3px solid var(--dc); }
+.tbl.gloss .g-term b { font-family: var(--display); font-weight: 500; font-size: 15.5px; }
+.tbl.gloss .g-tools { color: var(--ink-2); font-size: 13px; }
+.tbl.gloss .g-letter td { background: var(--paper-2); font-family: var(--display); font-size: 20px; font-weight: 500; padding: 6px 14px; color: var(--accent); scroll-margin-top: 80px; }
+.choose h3 { font-size: 26px !important; }
+@media (max-width: 760px) {
+  .tbl.gloss thead { display: none; }
+  .tbl.gloss tr { display: grid; grid-template-columns: 1fr auto; padding: 10px 12px; border-bottom: 1px solid var(--rule-2); }
+  .tbl.gloss td { border: 0; padding: 3px 0; }
+  .tbl.gloss .g-n { display: none; }
+  .tbl.gloss .g-term { grid-column: 1; border-left: 0; }
+  .tbl.gloss td:last-child { grid-column: 2; grid-row: 1; }
+  .tbl.gloss td:nth-child(3), .tbl.gloss td:nth-child(4), .tbl.gloss td:nth-child(5) { grid-column: 1 / -1; }
+  .tbl.gloss td:nth-child(4)::before { content: "Where: "; color: var(--muted); font-weight: 600; }
+  .tbl.gloss td:nth-child(5)::before { content: "Tools: "; color: var(--muted); font-weight: 600; }
+  .tbl.gloss .g-letter { display: block; }
+}
