@@ -5,6 +5,13 @@
   # Each deploy stamps script/style links with the commit, so browsers always load fresh files.
   command = "rm -f resources/ISC2\\ CISSP\\ Certified*.pdf && rm -rf supabase && sed -i \"s/?v=dev/?v=${COMMIT_REF:-$(date +%s)}/g\" index.html"
 
+# Forward database calls through this site so they work even where supabase.co is blocked.
+[[redirects]]
+  from = "/sb/*"
+  to = "https://llwvcdcxpiejurqtpgsw.supabase.co/:splat"
+  status = 200
+  force = true
+
 [[headers]]
   for = "/*"
   [headers.values]
