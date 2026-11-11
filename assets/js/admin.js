@@ -1,4 +1,4 @@
-/* StudyCISSP — admin console: analytics, learners, audit trail, privacy requests */
+/* StudyCISSP - admin console: analytics, learners, audit trail, privacy requests */
 (function () {
   "use strict";
   const A = window.App, { D, byId, $, $$, esc, dc, ymd, today, addDays, fmtDur, fmtD, fmtDY, band, db } = A;
@@ -19,7 +19,7 @@
     cache = { t: Date.now(), users, time, attempts, mocks, requests, access, since };
     return cache;
   }
-  const name = (u) => u ? (u.full_name || u.username || u.email) : "—";
+  const name = (u) => u ? (u.full_name || u.username || u.email) : "-";
 
   async function render(r) {
     if (db.mode !== "cloud") return notCloud();
@@ -60,21 +60,21 @@
         <div class="fact"><b>${learnersOnly.length}</b><span>learners · ${unverified} unverified</span></div>
         <div class="fact"><b>${active7}</b><span>active in the last 7 days</span></div>
         <div class="fact"><b>${fmtDur(total)}</b><span>studied in 90 days</span></div>
-        <div class="fact"><b>${acc == null ? "—" : acc + "%"}</b><span>quiz accuracy (90 days)</span></div>
+        <div class="fact"><b>${acc == null ? "-" : acc + "%"}</b><span>quiz accuracy (90 days)</span></div>
       </section>
       ${open ? `<a class="warnbox" href="#/admin/requests" style="display:block;margin-top:18px;text-decoration:none">${open} privacy request${open > 1 ? "s" : ""} waiting. DPDP and GDPR expect a response within 30 days →</a>` : ""}
       <h2 class="h-section">Daily study time, all learners</h2>
       <div class="daychart">${series.map(d => `<div class="dc-col" title="${fmtD(d)}: ${fmtDur(perDay[d] || 0)} · ${(perDayUsers[d] || new Set()).size} learners"><i style="height:${Math.round((perDay[d] || 0) / maxD * 100)}%"></i></div>`).join("")}</div>
       <div class="dc-axis"><span>${fmtD(series[0])}</span><span>today</span></div>
       <div class="grid-2" style="margin-top:36px">
-        <div class="card"><h3>Time and accuracy by domain</h3><div class="bars">${D.map(d => { const s = byDom[d.id] || 0, a = domAcc[d.id] ? Math.round(domAcc[d.id][0] / domAcc[d.id][1] * 100) : null; return `<div class="hbar" style="${dc(d)}"><span>D${d.n}</span><div class="meter"><i style="width:${s / maxDom * 100}%"></i></div><b>${fmtDur(s)}</b><span class="band ${band(a)}">${a == null ? "—" : a + "%"}</span></div>`; }).join("")}</div></div>
+        <div class="card"><h3>Time and accuracy by domain</h3><div class="bars">${D.map(d => { const s = byDom[d.id] || 0, a = domAcc[d.id] ? Math.round(domAcc[d.id][0] / domAcc[d.id][1] * 100) : null; return `<div class="hbar" style="${dc(d)}"><span>D${d.n}</span><div class="meter"><i style="width:${s / maxDom * 100}%"></i></div><b>${fmtDur(s)}</b><span class="band ${band(a)}">${a == null ? "-" : a + "%"}</span></div>`; }).join("")}</div></div>
         <div class="card"><h3>Most time this week</h3>${lb.length ? lb.map((u, i) => `<div class="kv"><a href="#/admin/learners/${u.id}">${i + 1}. ${esc(name(u))}</a><b>${fmtDur(u.seconds_7d)}</b></div>`).join("") : "<p>No learners yet.</p>"}</div>
         <div class="card"><h3>Most-studied topics</h3>${topics.length ? topics.map(([k, v]) => `<div class="kv"><span>${sec(k)}</span><b>${fmtDur(v)}</b></div>`).join("") : "<p>No reading time yet.</p>"}</div>
         <div class="card"><h3>Hardest topics (most misses)</h3>${hard.length ? hard.map(([k, v]) => `<div class="kv"><span>${sec(k)}</span><b>${v} misses</b></div>`).join("") : "<p>No quiz data yet.</p>"}</div>
-        <div class="card"><h3>Where time goes</h3>${Object.entries(byArea).sort((a, b) => b[1] - a[1]).map(([k, v]) => `<div class="kv"><span>${esc(k)}</span><b>${fmtDur(v)}</b></div>`).join("") || "<p>—</p>"}</div>
+        <div class="card"><h3>Where time goes</h3>${Object.entries(byArea).sort((a, b) => b[1] - a[1]).map(([k, v]) => `<div class="kv"><span>${esc(k)}</span><b>${fmtDur(v)}</b></div>`).join("") || "<p>-</p>"}</div>
         <div class="card"><h3>Devices (30 days)</h3>${tally(c.access, x => x.device_type) || "<p>No visits recorded yet.</p>"}</div>
         <div class="card"><h3>Where learners sign in from (30 days)</h3>${tally(c.access, x => [x.city, x.country].filter(Boolean).join(", ")) || "<p>No visits recorded yet.</p>"}</div>
-        <div class="card"><h3>Browsers and systems (30 days)</h3>${tally(c.access, x => [x.os, (x.browser || "").split(" ")[0]].filter(Boolean).join(" · ")) || "<p>—</p>"}</div>
+        <div class="card"><h3>Browsers and systems (30 days)</h3>${tally(c.access, x => [x.os, (x.browser || "").split(" ")[0]].filter(Boolean).join(" · ")) || "<p>-</p>"}</div>
         <div class="card"><h3>Exams in the next 30 days</h3>${upcoming.length ? upcoming.map(u => `<div class="kv"><a href="#/admin/learners/${u.id}">${esc(name(u))}</a><b>${fmtD(u.target_date)}</b></div>`).join("") : "<p>None scheduled.</p>"}</div>
       </div>
       <div class="btn-row"><button class="btn small ghost" id="refresh">Refresh data</button></div>
@@ -98,8 +98,8 @@
       ${rows.map(u => { const a = u.attempts ? Math.round(u.correct / u.attempts * 100) : null; return `<tr class="rowlink" data-href="#/admin/learners/${u.id}">
         <td><b>${esc(name(u))}</b>${u.role === "admin" ? ` <span class="tag plain">admin</span>` : ""}${!u.verified ? ` <span class="tag weak">unverified</span>` : ""}<div style="font-size:12px;color:var(--muted)">${esc(u.username || "")} · ${esc(u.email)}</div></td>
         <td><span class="plan-chip plan-${esc(u.plan || "silver")}">${esc(A.planById(u.plan).name)}</span>${u.plan_expires_at && new Date(u.plan_expires_at) < new Date() ? `<div style="font-size:11px;color:var(--bad)">expired</div>` : ""}</td>
-        <td>${fmtDur(u.seconds_7d)}</td><td>${fmtDur(u.total_seconds)}</td><td>${u.sections_read}/54</td><td><span class="band ${band(a)}">${a == null ? "—" : a + "%"}</span></td>
-        <td>${u.best_mock == null ? "—" : `<span class="band ${band(u.best_mock)}">${u.best_mock}%</span>`}</td><td>${u.target_date ? fmtD(u.target_date) : "—"}</td><td>${u.last_seen_at ? fmtD(u.last_seen_at) : "never"}</td></tr>`; }).join("")}
+        <td>${fmtDur(u.seconds_7d)}</td><td>${fmtDur(u.total_seconds)}</td><td>${u.sections_read}/54</td><td><span class="band ${band(a)}">${a == null ? "-" : a + "%"}</span></td>
+        <td>${u.best_mock == null ? "-" : `<span class="band ${band(u.best_mock)}">${u.best_mock}%</span>`}</td><td>${u.target_date ? fmtD(u.target_date) : "-"}</td><td>${u.last_seen_at ? fmtD(u.last_seen_at) : "never"}</td></tr>`; }).join("")}
       </tbody></table></div></div>`;
   }
 
@@ -128,9 +128,9 @@
       const days = 30, perDay = {}; d.time.forEach(t => { perDay[t.day] = (perDay[t.day] || 0) + t.seconds; });
       const series = Array.from({ length: days }, (_, i) => ymd(addDays(today(), i - days + 1))), maxD = Math.max(60, ...series.map(x => perDay[x] || 0));
       el.innerHTML = `<h2 class="h-section">Last 30 days</h2><div class="daychart">${series.map(x => `<div class="dc-col" title="${fmtD(x)}: ${fmtDur(perDay[x] || 0)}"><i style="height:${Math.round((perDay[x] || 0) / maxD * 100)}%"></i></div>`).join("")}</div>
-        <h2 class="h-section">By domain</h2><div class="bars">${D.map(dm => { const s = byDom[dm.id] || 0, a = acc[dm.id] ? Math.round(acc[dm.id][0] / acc[dm.id][1] * 100) : null; return `<div class="hbar" style="${dc(dm)}"><span>D${dm.n} ${esc(dm.short)}</span><div class="meter"><i style="width:${s / max * 100}%"></i></div><b>${fmtDur(s)}</b><span class="band ${band(a)}">${a == null ? "—" : a + "%"}</span></div>`; }).join("")}</div>
+        <h2 class="h-section">By domain</h2><div class="bars">${D.map(dm => { const s = byDom[dm.id] || 0, a = acc[dm.id] ? Math.round(acc[dm.id][0] / acc[dm.id][1] * 100) : null; return `<div class="hbar" style="${dc(dm)}"><span>D${dm.n} ${esc(dm.short)}</span><div class="meter"><i style="width:${s / max * 100}%"></i></div><b>${fmtDur(s)}</b><span class="band ${band(a)}">${a == null ? "-" : a + "%"}</span></div>`; }).join("")}</div>
         <div class="grid-2" style="margin-top:30px"><div class="card"><h3>Mock exams</h3>${d.mocks.length ? d.mocks.map(m => { const v = Math.round(m.correct / m.total * 100); return `<div class="kv"><span>${fmtD(m.created_at)} · ${m.total} q · ${fmtDur(m.seconds)}</span><span class="band ${band(v)}">${v}%</span></div>`; }).join("") : "<p>None yet.</p>"}</div>
-        <div class="card" style="grid-column:1/-1"><h3>Sign-ins and devices (last 100)</h3>${d.access.length ? `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>When</th><th>Event</th><th>IP</th><th>Location</th><th>Device</th><th>Screen · language · time zone</th></tr></thead><tbody>${d.access.map(x => `<tr><td style="white-space:nowrap">${new Date(x.at).toLocaleString("en-GB", { day: "numeric", month: "short", year: "2-digit", hour: "2-digit", minute: "2-digit" })}</td><td>${esc(x.event)}</td><td style="font-family:var(--mono);font-size:12px">${esc(x.ip || "—")}</td><td>${esc([x.city, x.region, x.country].filter(Boolean).join(", ") || "—")}${x.latitude != null ? ` <a href="https://www.openstreetmap.org/?mlat=${x.latitude}&mlon=${x.longitude}#map=${x.geo_source === "gps" ? 16 : 11}/${x.latitude}/${x.longitude}" target="_blank" rel="noopener">map</a> <small>${x.geo_source === "gps" ? `GPS ±${x.gps_accuracy_m || "?"} m` : "from IP"}</small>` : ""}</td><td>${esc([x.device_model, x.device_type].filter(Boolean).join(" · "))}<div style="font-size:12px;color:var(--muted)">${esc([x.os, x.browser].filter(Boolean).join(" · "))}</div></td><td style="font-size:12.5px">${esc([x.screen, x.language, x.timezone].filter(Boolean).join(" · "))}</td></tr>`).join("")}</tbody></table></div>` : "<p>No sign-ins recorded yet.</p>"}</div>
+        <div class="card" style="grid-column:1/-1"><h3>Sign-ins and devices (last 100)</h3>${d.access.length ? `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>When</th><th>Event</th><th>IP</th><th>Location</th><th>Device</th><th>Screen · language · time zone</th></tr></thead><tbody>${d.access.map(x => `<tr><td style="white-space:nowrap">${new Date(x.at).toLocaleString("en-GB", { day: "numeric", month: "short", year: "2-digit", hour: "2-digit", minute: "2-digit" })}</td><td>${esc(x.event)}</td><td style="font-family:var(--mono);font-size:12px">${esc(x.ip || "-")}</td><td>${esc([x.city, x.region, x.country].filter(Boolean).join(", ") || "-")}${x.latitude != null ? ` <a href="https://www.openstreetmap.org/?mlat=${x.latitude}&mlon=${x.longitude}#map=${x.geo_source === "gps" ? 16 : 11}/${x.latitude}/${x.longitude}" target="_blank" rel="noopener">map</a> <small>${x.geo_source === "gps" ? `GPS ±${x.gps_accuracy_m || "?"} m` : "from IP"}</small>` : ""}</td><td>${esc([x.device_model, x.device_type].filter(Boolean).join(" · "))}<div style="font-size:12px;color:var(--muted)">${esc([x.os, x.browser].filter(Boolean).join(" · "))}</div></td><td style="font-size:12.5px">${esc([x.screen, x.language, x.timezone].filter(Boolean).join(" · "))}</td></tr>`).join("")}</tbody></table></div>` : "<p>No sign-ins recorded yet.</p>"}</div>
         <div class="card"><h3>Library</h3>${d.resources.length ? d.resources.map(r => `<div class="kv"><span>${esc(r.title)}</span><b>${esc(r.kind)}</b></div>`).join("") : "<p>Empty.</p>"}</div></div>`;
     } catch (e) { el.innerHTML = `<div class="warnbox">${esc(A.errMsg(e))}</div>`; }
   }

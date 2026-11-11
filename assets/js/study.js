@@ -1,4 +1,4 @@
-/* StudyCISSP — quiz, flashcards, mock exam, insights, personal library */
+/* StudyCISSP - quiz, flashcards, mock exam, insights, personal library */
 (function () {
   "use strict";
   const A = window.App, { D, byId, $, $$, esc, dc, ymd, today, addDays, fmtDur, fmtD, band, shuffle, pick, db } = A;
@@ -23,7 +23,7 @@
       </div>
       <h2 class="h-section">By domain</h2>
       <div class="dom-grid">${order.map(d => { const a = A.quizAccuracy(d.id), n = A.questions.filter(q => q.d === d.id).length;
-        return `<a class="dom-tile" href="#/quiz/run/domain/${d.id}" style="${dc(d)}"><span class="toc-dot" style="background:var(--${d.id})"></span><b>D${d.n} ${esc(d.short)}</b><small>${n} questions · ${a == null ? "not tried" : a + "%"}</small><span class="band ${band(a)}">${a == null ? "—" : a + "%"}</span></a>`; }).join("")}</div>
+        return `<a class="dom-tile" href="#/quiz/run/domain/${d.id}" style="${dc(d)}"><span class="toc-dot" style="background:var(--${d.id})"></span><b>D${d.n} ${esc(d.short)}</b><small>${n} questions · ${a == null ? "not tried" : a + "%"}</small><span class="band ${band(a)}">${a == null ? "-" : a + "%"}</span></a>`; }).join("")}</div>
       <h2 class="h-section">By topic</h2>
       <p class="sub">Pick a single section to drill. Topics with no questions yet are hidden.</p>
       ${order.map(d => `<details class="topic-group" style="${dc(d)}"><summary><span class="toc-dot" style="background:var(--${d.id})"></span>D${d.n} ${esc(d.title)}</summary>
@@ -79,7 +79,7 @@
         <div class="q-opts">${q.o.map((o, j) => { let c = ""; if (ans != null) { if (j === q.a) c = "correct"; else if (j === ans) c = "wrong"; }
           return `<button class="opt ${c}" data-pick="${j}" ${ans != null ? "disabled" : ""}><span class="l">${L[j]}</span><span>${esc(o)}</span></button>`; }).join("")}</div>
         ${ans != null ? `<div class="why"><b style="color:${ans === q.a ? "var(--good)" : "var(--bad)"}">${ans === q.a ? pick(["Correct.", "Exactly right.", "Yes. Well reasoned."]) : "Not this time. The answer is " + L[q.a] + "."}</b>${esc(q.w)}
-          <div class="actions">${nextButtons()}${ans === q.a ? "" : `<button class="btn small" id="logMiss">+ Error log</button>`}<a class="btn small ghost" href="#/domain/${d.id}${q.t ? "/" + q.t : ""}">Read the section</a></div></div>` : `<p class="hint">Press 1–4 or A–D to answer.</p>`}
+          <div class="actions">${nextButtons()}${ans === q.a ? "" : `<button class="btn small" id="logMiss">+ Error log</button>`}<a class="btn small ghost" href="#/domain/${d.id}${q.t ? "/" + q.t : ""}">Read the section</a></div></div>` : `<p class="hint">Press 1-4 or A-D to answer.</p>`}
       </div>
     </div>`;
   }
@@ -186,7 +186,7 @@
       <div class="grid-3" style="margin-top:28px">
         ${[[25, "Sprint", "30 min"], [50, "Half", "1 hour"], [n, "Full bank", Math.round(n * 72 / 60) + " min"]].map(([k, t, time]) => `<button class="card focus mock-pick" data-n="${k}"><span class="kicker">${t}</span><h3>${k} questions</h3><p>${time}</p></button>`).join("")}
       </div>
-      <p class="sub" style="margin-top:18px">The in-app bank has ${n} questions. For the full 100–150 experience, use outside banks (see <a href="#/resources">Resources</a>) and log the score in the <a href="#/tracker">Tracker</a>.</p>
+      <p class="sub" style="margin-top:18px">The in-app bank has ${n} questions. For the full 100-150 experience, use outside banks (see <a href="#/resources">Resources</a>) and log the score in the <a href="#/tracker">Tracker</a>.</p>
       ${past.length ? `<h2 class="h-section">Recent mocks</h2><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Date</th><th>Questions</th><th>Time</th><th>Score</th></tr></thead><tbody>${past.map(m => { const v = Math.round(m.correct / m.total * 100); return `<tr><td>${fmtD(m.created_at)}</td><td>${m.total}</td><td>${fmtDur(m.seconds)}</td><td><span class="band ${band(v)}">${v}%</span></td></tr>`; }).join("")}</tbody></table></div>` : ""}
     </div>`;
   }
@@ -240,6 +240,7 @@
   const INTERVAL = [0, 1, 3, 7, 16, 35];
   let CS = {}; // card state
   A.loadCards = async () => { try { CS = await db.cards(); } catch (e) { CS = {}; } };
+  A.cardStats = () => ({ total: A.cards.length, due: A.dueCards().length, mastered: A.cards.filter(c => CS[c.id] && CS[c.id].box >= 4).length, reviewed: A.cards.filter(c => CS[c.id]).length });
   A.cardsReviewed = (dom) => A.cards.filter(c => c.d === dom && CS[c.id] && CS[c.id].reviews > 0).length;
   A.dueCards = (dom) => A.cards.filter(c => (!dom || c.d === dom) && (!CS[c.id] || CS[c.id].due <= ymd(today())));
   let F = null, autoDone = null;
@@ -340,13 +341,13 @@
         <div class="fact"><b>${fmtDur(total)}</b><span>studied</span></div>
         <div class="fact"><b>${A.streak()}<small class="unit"> d</small></b><span>current streak</span></div>
         <div class="fact"><b>${att.length}</b><span>questions answered</span></div>
-        <div class="fact"><b>${att.length ? Math.round(att.filter(a => a.correct).length / att.length * 100) + "%" : "—"}</b><span>accuracy</span></div>
+        <div class="fact"><b>${att.length ? Math.round(att.filter(a => a.correct).length / att.length * 100) + "%" : "-"}</b><span>accuracy</span></div>
       </section>
       <h2 class="h-section">Daily study time</h2>
       <div class="daychart">${series.map(([d, s]) => `<div class="dc-col" title="${fmtD(d)}: ${fmtDur(s)}"><i style="height:${Math.round(s / maxDay * 100)}%"></i></div>`).join("")}</div>
       <div class="dc-axis"><span>${fmtD(series[0][0])}</span><span>today</span></div>
       <h2 class="h-section">By domain</h2>
-      <div class="bars">${D.map(d => { const s = byDom[d.id] || 0, a = A.quizAccuracy(d.id); return `<div class="hbar" style="${dc(d)}"><span>D${d.n} ${esc(d.short)}</span><div class="meter"><i style="width:${s / maxDom * 100}%"></i></div><b>${fmtDur(s)}</b><span class="band ${band(a)}">${a == null ? "—" : a + "%"}</span></div>`; }).join("")}</div>
+      <div class="bars">${D.map(d => { const s = byDom[d.id] || 0, a = A.quizAccuracy(d.id); return `<div class="hbar" style="${dc(d)}"><span>D${d.n} ${esc(d.short)}</span><div class="meter"><i style="width:${s / maxDom * 100}%"></i></div><b>${fmtDur(s)}</b><span class="band ${band(a)}">${a == null ? "-" : a + "%"}</span></div>`; }).join("")}</div>
       <p class="legend">Bar = time spent. Badge = quiz accuracy in that domain (all time).</p>
       <div class="grid-2" style="margin-top:40px">
         <div class="card"><h3>By activity</h3>${Object.keys(byArea).length ? Object.entries(byArea).sort((a, b) => b[1] - a[1]).map(([k, v]) => `<div class="kv"><span>${areaName[k] || k}</span><b>${fmtDur(v)}</b></div>`).join("") : `<p>No study time recorded in this range yet.</p>`}</div>

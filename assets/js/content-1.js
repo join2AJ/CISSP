@@ -1,4 +1,4 @@
-/* StudyCISSP — chapter content, Domains 1–4
+/* StudyCISSP - chapter content, Domains 1-4
    Written against the ISC2 CISSP Exam Outline effective 15 April 2024
    (the outline in force until 14 April 2027). */
 window.DOMAINS = window.DOMAINS || [];
@@ -264,9 +264,9 @@ window.DOMAINS.push({
   lede: "The engineer’s domain: secure design principles, the formal models behind them, cryptography from first principles, and the physical building that holds it all.",
   intro: "Many candidates find this the hardest domain, so read it slowly. It has three parts that feel unrelated at first. Secure design principles and security models describe how trustworthy systems are built. Cryptography gives you the tools for confidentiality, integrity and authenticity. Physical security protects the facility. The exam rarely asks you to do maths; it asks you to pick the right mechanism and to know why the others are wrong.",
   memorise: [
-    "Bell–LaPadula (confidentiality): no read up, no write down. Biba (integrity): no read down, no write up.",
-    "Clark–Wilson enforces integrity through well-formed transactions and separation of duties (the access triple: subject–program–object).",
-    "Brewer–Nash (Chinese Wall) prevents conflicts of interest; access depends on what you have already accessed.",
+    "Bell-LaPadula (confidentiality): no read up, no write down. Biba (integrity): no read down, no write up.",
+    "Clark-Wilson enforces integrity through well-formed transactions and separation of duties (the access triple: subject-program-object).",
+    "Brewer-Nash (Chinese Wall) prevents conflicts of interest; access depends on what you have already accessed.",
     "Symmetric keys needed for n people: n(n−1)/2. Asymmetric: 2n (one key pair each).",
     "Sign with your private key; others verify with your public key. Encrypt to someone with their public key; they decrypt with their private key.",
     "AES: 128-bit block, 128/192/256-bit keys. ECB leaks patterns; GCM gives confidentiality and integrity.",
@@ -296,18 +296,18 @@ window.DOMAINS.push({
     { id: "models", title: "Security models",
       body: `<p>Security models are formal descriptions of a security policy. The exam wants you to recognise each model from its rules and its goal.</p>
       <div class="tbl-wrap"><table><thead><tr><th>Model</th><th>Goal</th><th>Key rules</th></tr></thead><tbody>
-      <tr><td>Bell–LaPadula</td><td>Confidentiality (military)</td><td><em>Simple security</em>: no read up. <em>*-property</em>: no write down. <em>Strong star</em>: read and write only at your own level.</td></tr>
+      <tr><td>Bell-LaPadula</td><td>Confidentiality (military)</td><td><em>Simple security</em>: no read up. <em>*-property</em>: no write down. <em>Strong star</em>: read and write only at your own level.</td></tr>
       <tr><td>Biba</td><td>Integrity</td><td><em>Simple integrity</em>: no read down. <em>*-integrity</em>: no write up. <em>Invocation</em>: cannot invoke a subject at higher integrity.</td></tr>
-      <tr><td>Clark–Wilson</td><td>Integrity (commercial)</td><td>Users reach constrained data items (CDIs) only through transformation procedures (TPs); integrity verification procedures (IVPs) check them. Enforces separation of duties.</td></tr>
-      <tr><td>Brewer–Nash</td><td>Conflict of interest</td><td>Access changes dynamically based on prior access (consultant for Bank A cannot then see Bank B).</td></tr>
-      <tr><td>Graham–Denning</td><td>Secure creation/deletion</td><td>Eight protection rights for creating and deleting subjects and objects and granting rights.</td></tr>
-      <tr><td>Harrison–Ruzzo–Ullman</td><td>Rights changes</td><td>Extends Graham–Denning; shows whether rights can leak (safety problem).</td></tr>
-      <tr><td>Take–Grant</td><td>Rights propagation</td><td>Directed graph with take, grant, create, remove.</td></tr>
+      <tr><td>Clark-Wilson</td><td>Integrity (commercial)</td><td>Users reach constrained data items (CDIs) only through transformation procedures (TPs); integrity verification procedures (IVPs) check them. Enforces separation of duties.</td></tr>
+      <tr><td>Brewer-Nash</td><td>Conflict of interest</td><td>Access changes dynamically based on prior access (consultant for Bank A cannot then see Bank B).</td></tr>
+      <tr><td>Graham-Denning</td><td>Secure creation/deletion</td><td>Eight protection rights for creating and deleting subjects and objects and granting rights.</td></tr>
+      <tr><td>Harrison-Ruzzo-Ullman</td><td>Rights changes</td><td>Extends Graham-Denning; shows whether rights can leak (safety problem).</td></tr>
+      <tr><td>Take-Grant</td><td>Rights propagation</td><td>Directed graph with take, grant, create, remove.</td></tr>
       <tr><td>Lattice / state machine / information flow / non-interference</td><td>Foundations</td><td>A secure state machine always moves between secure states; non-interference means high-level actions do not affect what low-level users see.</td></tr>
       </tbody></table></div>
       <div class="anim" data-anim="models"></div>
-      <div class="note memory"><p><strong>Bell–LaPadula keeps secrets: “no read up, no write down”</strong> (you cannot leak secrets downwards). <strong>Biba is the mirror: “no read down, no write up”</strong> (you cannot be contaminated by dirty data, nor contaminate cleaner data). Integrity is <em>“I”</em>nverted.</p></div>`,
-      exam: "Recognising a model from one rule, especially BLP versus Biba and where Clark–Wilson fits." },
+      <div class="note memory"><p><strong>Bell-LaPadula keeps secrets: “no read up, no write down”</strong> (you cannot leak secrets downwards). <strong>Biba is the mirror: “no read down, no write up”</strong> (you cannot be contaminated by dirty data, nor contaminate cleaner data). Integrity is <em>“I”</em>nverted.</p></div>`,
+      exam: "Recognising a model from one rule, especially BLP versus Biba and where Clark-Wilson fits." },
     { id: "evaluation", title: "Trusted computing, evaluation and hardware security",
       body: `<p>The <strong>trusted computing base (TCB)</strong> is every component that enforces security: hardware, firmware and software. The <strong>reference monitor</strong> is the concept that mediates every access of subjects to objects; it must be tamper-proof, always invoked, and small enough to verify. The <strong>security kernel</strong> is its implementation. The <strong>security perimeter</strong> separates the TCB from everything else.</p>
       <p><strong>Common Criteria</strong> (ISO/IEC 15408) evaluates products. A <em>Protection Profile</em> states what a class of product needs; a <em>Security Target</em> states what a specific product claims; the <em>Target of Evaluation</em> is the product. Assurance levels run <strong>EAL1</strong> (functionally tested) to <strong>EAL7</strong> (formally verified design and tested).</p>
@@ -346,9 +346,9 @@ window.DOMAINS.push({
       <tr><td>DES</td><td>64</td><td>56</td><td>Broken; retired</td></tr>
       <tr><td>3DES</td><td>64</td><td>112/168</td><td>Deprecated; NIST disallowed after 2023</td></tr>
       <tr><td>AES (Rijndael)</td><td>128</td><td>128/192/256</td><td>The standard</td></tr>
-      <tr><td>Blowfish / Twofish</td><td>64 / 128</td><td>32–448 / up to 256</td><td>Legacy / AES finalist</td></tr>
+      <tr><td>Blowfish / Twofish</td><td>64 / 128</td><td>32-448 / up to 256</td><td>Legacy / AES finalist</td></tr>
       <tr><td>ChaCha20</td><td>stream</td><td>256</td><td>Modern stream cipher in TLS 1.3</td></tr>
-      <tr><td>RC4</td><td>stream</td><td>40–2048</td><td>Broken (WEP)</td></tr>
+      <tr><td>RC4</td><td>stream</td><td>40-2048</td><td>Broken (WEP)</td></tr>
       </tbody></table></div>
       <h3>Block cipher modes</h3>
       <ul>
@@ -357,13 +357,13 @@ window.DOMAINS.push({
         <li><strong>CTR</strong>: turns a block cipher into a stream; parallelisable.</li>
         <li><strong>GCM</strong>: counter mode with authentication (AEAD). Default in TLS 1.3.</li>
       </ul>
-      <div class="formula">Keys for n users — symmetric: n(n−1)/2 &nbsp;·&nbsp; asymmetric: 2n<br>e.g. 100 users → 4,950 shared keys vs 200 keys</div>`,
+      <div class="formula">Keys for n users - symmetric: n(n−1)/2 &nbsp;·&nbsp; asymmetric: 2n<br>e.g. 100 users → 4,950 shared keys vs 200 keys</div>`,
       exam: "Choosing an algorithm or mode, and the key-count formulas." },
     { id: "crypto-asym", title: "Cryptography II: asymmetric, hashing and signatures",
       body: `<p>Asymmetric cryptography uses a key pair. What one key does, only the other can undo. It solves key distribution and enables digital signatures, but it is slow, so real systems use it to exchange a symmetric session key (<strong>hybrid cryptography</strong>, as in TLS).</p>
       <ul>
         <li><strong>RSA</strong>: security from factoring large numbers. 2048-bit minimum today.</li>
-        <li><strong>Diffie–Hellman</strong>: key agreement over an open channel; no authentication on its own, so vulnerable to man-in-the-middle unless authenticated. Ephemeral DH (DHE/ECDHE) gives <strong>perfect forward secrecy</strong>.</li>
+        <li><strong>Diffie-Hellman</strong>: key agreement over an open channel; no authentication on its own, so vulnerable to man-in-the-middle unless authenticated. Ephemeral DH (DHE/ECDHE) gives <strong>perfect forward secrecy</strong>.</li>
         <li><strong>ECC</strong>: equivalent strength with much smaller keys (256-bit ECC ≈ 3072-bit RSA). Good for mobile and IoT.</li>
         <li><strong>ElGamal, DSA</strong>: discrete-log based encryption and signatures.</li>
       </ul>
@@ -395,12 +395,12 @@ window.DOMAINS.push({
     { id: "physical", title: "Site and facility security",
       body: `<p>Physical security starts with site selection (natural hazards, crime, access to emergency services) and design. <strong>CPTED</strong> (crime prevention through environmental design) uses natural surveillance, natural access control and territorial reinforcement. Layer the controls from perimeter to rack: fencing and lighting, guards and dogs, mantraps (access control vestibules), badge readers and biometrics, locked cages, then cabinet locks.</p>
       <div class="tbl-wrap"><table><thead><tr><th>Fence height</th><th>Effect</th></tr></thead><tbody>
-      <tr><td>3–4 ft (≈1 m)</td><td>Deters casual trespassers</td></tr>
-      <tr><td>6–7 ft (≈2 m)</td><td>Too hard to climb easily</td></tr>
+      <tr><td>3-4 ft (≈1 m)</td><td>Deters casual trespassers</td></tr>
+      <tr><td>6-7 ft (≈2 m)</td><td>Too hard to climb easily</td></tr>
       <tr><td>8 ft (≈2.4 m) + barbed wire</td><td>Deters determined intruders</td></tr>
       </tbody></table></div>
       <h3>Environment and power</h3>
-      <p>Keep data centres at about 18–27 °C and 40–60% relative humidity: too dry builds static, too wet corrodes. Power problems: <em>fault</em> (momentary loss), <em>blackout</em> (prolonged loss), <em>sag</em> (momentary low voltage), <em>brownout</em> (prolonged low), <em>spike</em> (momentary high), <em>surge</em> (prolonged high). UPS covers short gaps; generators cover long ones.</p>
+      <p>Keep data centres at about 18-27 °C and 40-60% relative humidity: too dry builds static, too wet corrodes. Power problems: <em>fault</em> (momentary loss), <em>blackout</em> (prolonged loss), <em>sag</em> (momentary low voltage), <em>brownout</em> (prolonged low), <em>spike</em> (momentary high), <em>surge</em> (prolonged high). UPS covers short gaps; generators cover long ones.</p>
       <h3>Fire</h3>
       <div class="tbl-wrap"><table><thead><tr><th>Class (US)</th><th>Fuel</th><th>Suppressant</th></tr></thead><tbody>
       <tr><td>A</td><td>Ordinary combustibles</td><td>Water, foam</td></tr>
@@ -414,9 +414,9 @@ window.DOMAINS.push({
   ],
   questions: [
     { q: "A system lets a user with Secret clearance write a report into a Top Secret folder but prevents that user from reading Top Secret documents. Which model does this follow?",
-      options: ["Biba", "Bell–LaPadula", "Clark–Wilson", "Brewer–Nash"],
+      options: ["Biba", "Bell-LaPadula", "Clark-Wilson", "Brewer-Nash"],
       answer: 1,
-      why: "No read up and no write down is Bell–LaPadula. Writing up is allowed because it cannot leak secrets to a lower level." },
+      why: "No read up and no write down is Bell-LaPadula. Writing up is allowed because it cannot leak secrets to a lower level." },
     { q: "Alice wants to send Bob a message that only Bob can read and that proves it came from Alice. Which keys are used?",
       options: ["Encrypt with Bob’s public key; sign with Alice’s private key", "Encrypt with Alice’s public key; sign with Bob’s private key", "Encrypt with Bob’s private key; sign with Alice’s public key", "Encrypt and sign with a shared symmetric key"],
       answer: 0,
@@ -441,7 +441,7 @@ window.DOMAINS.push({
   intro: "Networking is where many managers feel least at home, so this chapter goes deeper than the rest. The goal is not to become a network engineer. It is to know the layers, the protocols that live at each one, the devices that act on them, and the attacks that abuse them, well enough to place any control at the right layer and to reject options that sit at the wrong one.",
   memorise: [
     "OSI top down: Application, Presentation, Session, Transport, Network, Data Link, Physical. (“All People Seem To Need Data Processing”)",
-    "PDUs: data (L5–7), segment/datagram (L4), packet (L3), frame (L2), bits (L1).",
+    "PDUs: data (L5-7), segment/datagram (L4), packet (L3), frame (L2), bits (L1).",
     "TCP is connection-oriented (SYN, SYN-ACK, ACK); UDP is connectionless and faster.",
     "IPsec: AH gives integrity and authentication only; ESP adds confidentiality. Transport mode protects payload; tunnel mode protects the whole packet.",
     "Firewall generations: packet filter (L3) → stateful (L4) → application proxy (L7) → NGFW. A WAF protects web apps at L7.",
@@ -457,14 +457,14 @@ window.DOMAINS.push({
       <div class="anim" data-anim="osi"></div>
       <div class="tbl-wrap"><table><thead><tr><th>#</th><th>Layer</th><th>PDU</th><th>Protocols / examples</th><th>Devices</th></tr></thead><tbody>
       <tr><td>7</td><td>Application</td><td>Data</td><td>HTTP, DNS, SMTP, SNMP, LDAP, SSH</td><td>WAF, proxy, L7 firewall</td></tr>
-      <tr><td>6</td><td>Presentation</td><td>Data</td><td>Encoding, compression, encryption formats (ASCII, JPEG, TLS is often placed here)</td><td>—</td></tr>
+      <tr><td>6</td><td>Presentation</td><td>Data</td><td>Encoding, compression, encryption formats (ASCII, JPEG, TLS is often placed here)</td><td>-</td></tr>
       <tr><td>5</td><td>Session</td><td>Data</td><td>NetBIOS, RPC, session setup and teardown</td><td>Circuit-level gateway</td></tr>
       <tr><td>4</td><td>Transport</td><td>Segment / datagram</td><td>TCP, UDP, (TLS runs over TCP)</td><td>Stateful firewall</td></tr>
       <tr><td>3</td><td>Network</td><td>Packet</td><td>IPv4, IPv6, ICMP, IPsec, routing protocols (OSPF, BGP)</td><td>Router, packet filter</td></tr>
       <tr><td>2</td><td>Data link</td><td>Frame</td><td>Ethernet, 802.11, ARP, PPP, VLAN tagging (802.1Q), MAC addresses</td><td>Switch, bridge, WAP</td></tr>
       <tr><td>1</td><td>Physical</td><td>Bits</td><td>Cables, radio, voltages, connectors</td><td>Hub, repeater</td></tr>
       </tbody></table></div>
-      <p>The <strong>TCP/IP model</strong> (also called the Internet model or DoD model) has four layers: Application (OSI 5–7), Transport (4), Internet (3), and Link / Network Access (1–2).</p>
+      <p>The <strong>TCP/IP model</strong> (also called the Internet model or DoD model) has four layers: Application (OSI 5-7), Transport (4), Internet (3), and Link / Network Access (1-2).</p>
       <div class="note memory"><p>Top down: <strong>All People Seem To Need Data Processing</strong>. Bottom up: <strong>Please Do Not Throw Sausage Pizza Away</strong>. Draw the table above on a blank sheet every few days until it is automatic.</p></div>
       <div class="note exam"><p>ARP sits at layer 2 (it maps IP to MAC). ICMP sits at layer 3. A switch with routing ability is a layer 3 switch. If the question mentions MAC addresses, think layer 2; IP addresses, layer 3; ports, layer 4.</p></div>`,
       exam: "Placing protocols, devices and attacks at the right layer." },
@@ -473,11 +473,11 @@ window.DOMAINS.push({
       <p><strong>IPv4</strong> addresses are 32 bits, written as four decimal numbers from 0 to 255 (for example <code>192.168.1.10</code>). Each address has a <strong>network</strong> part and a <strong>host</strong> part; the subnet mask says where one ends and the other begins.</p>
       <p>The original internet split addresses into <strong>classes</strong> by their first number. In 1993 <strong>CIDR</strong> (Classless Inter-Domain Routing) replaced fixed classes with prefixes such as <code>/24</code>, so networks can be any size. You still need the classes: the exam and everyday conversation use them, and the private ranges follow them.</p>
       <div class="tbl-wrap"><table><thead><tr><th>Class</th><th>First octet</th><th>Default mask</th><th>Private range</th><th>Used for</th></tr></thead><tbody>
-      <tr><td>A</td><td>1–126</td><td>255.0.0.0 (/8)</td><td>10.0.0.0 – 10.255.255.255</td><td>Very large networks: about 16.7 million hosts each</td></tr>
-      <tr><td>B</td><td>128–191</td><td>255.255.0.0 (/16)</td><td>172.16.0.0 – 172.31.255.255</td><td>Medium networks: about 65,000 hosts each</td></tr>
-      <tr><td>C</td><td>192–223</td><td>255.255.255.0 (/24)</td><td>192.168.0.0 – 192.168.255.255</td><td>Small networks: 254 hosts each</td></tr>
-      <tr><td>D</td><td>224–239</td><td>—</td><td>—</td><td>Multicast (one sender, many receivers: video streams, routing protocols)</td></tr>
-      <tr><td>E</td><td>240–255</td><td>—</td><td>—</td><td>Reserved / experimental</td></tr>
+      <tr><td>A</td><td>1-126</td><td>255.0.0.0 (/8)</td><td>10.0.0.0 - 10.255.255.255</td><td>Very large networks: about 16.7 million hosts each</td></tr>
+      <tr><td>B</td><td>128-191</td><td>255.255.0.0 (/16)</td><td>172.16.0.0 - 172.31.255.255</td><td>Medium networks: about 65,000 hosts each</td></tr>
+      <tr><td>C</td><td>192-223</td><td>255.255.255.0 (/24)</td><td>192.168.0.0 - 192.168.255.255</td><td>Small networks: 254 hosts each</td></tr>
+      <tr><td>D</td><td>224-239</td><td>-</td><td>-</td><td>Multicast (one sender, many receivers: video streams, routing protocols)</td></tr>
+      <tr><td>E</td><td>240-255</td><td>-</td><td>-</td><td>Reserved / experimental</td></tr>
       </tbody></table></div>
       <p>Special addresses to recognise:</p>
       <ul>
@@ -486,13 +486,13 @@ window.DOMAINS.push({
         <li><strong>0.0.0.0</strong>: “any” or “unknown” address; <strong>255.255.255.255</strong>: broadcast to the local network.</li>
         <li><strong>Private ranges</strong> (RFC 1918, the three in the table) are not routed on the internet; they reach it through <strong>NAT</strong>, which also hides internal addressing.</li>
       </ul>
-      <div class="note memory"><p>First octet: <strong>A</strong> starts with 1–126, <strong>B</strong> 128–191, <strong>C</strong> 192–223. Private: <strong>10</strong>, <strong>172.16–31</strong>, <strong>192.168</strong>. Think “ten, sixteen-to-thirty-one, one-nine-two”.</p></div>
+      <div class="note memory"><p>First octet: <strong>A</strong> starts with 1-126, <strong>B</strong> 128-191, <strong>C</strong> 192-223. Private: <strong>10</strong>, <strong>172.16-31</strong>, <strong>192.168</strong>. Think “ten, sixteen-to-thirty-one, one-nine-two”.</p></div>
       <h3>IPv6</h3>
       <p><strong>IPv6</strong> uses 128-bit addresses written as eight groups of hexadecimal, for example <code>2001:db8:0:0:0:0:0:1</code>, shortened to <code>2001:db8::1</code> (a run of zero groups becomes <code>::</code>, once per address). There are no classes; everything is prefix-based. It removes broadcast in favour of multicast, replaces ARP with the Neighbor Discovery Protocol, and lets hosts configure their own addresses (SLAAC). IPsec support was part of its design.</p>
       <div class="tbl-wrap"><table><thead><tr><th>IPv6 prefix</th><th>Type</th><th>IPv4 equivalent</th></tr></thead><tbody>
       <tr><td>::1</td><td>Loopback</td><td>127.0.0.1</td></tr>
       <tr><td>fe80::/10</td><td>Link-local (same segment only)</td><td>169.254.x.x</td></tr>
-      <tr><td>fc00::/7</td><td>Unique local (private)</td><td>10.x / 172.16–31.x / 192.168.x</td></tr>
+      <tr><td>fc00::/7</td><td>Unique local (private)</td><td>10.x / 172.16-31.x / 192.168.x</td></tr>
       <tr><td>2000::/3</td><td>Global unicast (public internet)</td><td>Public addresses</td></tr>
       <tr><td>ff00::/8</td><td>Multicast</td><td>Class D</td></tr>
       </tbody></table></div>
@@ -505,15 +505,15 @@ window.DOMAINS.push({
       <p><strong>TCP</strong> is connection-oriented and reliable: the three-way handshake (SYN, SYN-ACK, ACK), sequence numbers, acknowledgements and retransmission. <strong>UDP</strong> is connectionless, with no handshake or guarantee, used where speed matters (DNS queries, VoIP, streaming, QUIC).</p>
       <div class="anim" data-anim="handshake"></div>
       <h3>Ports that matter</h3>
-      <p>A port number tells the receiving computer which service should get the traffic. Ports 0–1023 are “well-known” ports for standard services. Know these and their secure replacements:</p>
+      <p>A port number tells the receiving computer which service should get the traffic. Ports 0-1023 are “well-known” ports for standard services. Know these and their secure replacements:</p>
       <div class="tbl-wrap"><table class="ports"><thead><tr><th>Port</th><th>Service</th><th>What it does</th><th>Secure alternative</th></tr></thead><tbody>
       <tr><td>20/21</td><td>FTP</td><td>File Transfer Protocol: moves files between computers. Port 21 carries commands, port 20 the data. Usernames, passwords and files travel in cleartext.</td><td>SFTP (22) or FTPS (990)</td></tr>
-      <tr><td>22</td><td>SSH / SFTP / SCP</td><td>Secure Shell: encrypted remote command line for administering servers; SFTP and SCP copy files over the same encrypted channel.</td><td>— (already secure)</td></tr>
+      <tr><td>22</td><td>SSH / SFTP / SCP</td><td>Secure Shell: encrypted remote command line for administering servers; SFTP and SCP copy files over the same encrypted channel.</td><td>- (already secure)</td></tr>
       <tr><td>23</td><td>Telnet</td><td>Old remote command line. Everything, including passwords, is sent in cleartext and can be sniffed.</td><td>SSH</td></tr>
       <tr><td>25</td><td>SMTP</td><td>Simple Mail Transfer Protocol: servers relay email to each other. Unencrypted by default and abused for spam and spoofing.</td><td>STARTTLS; port 587 with authentication for users sending mail</td></tr>
       <tr><td>53</td><td>DNS</td><td>Domain Name System: turns names like example.com into IP addresses. UDP for normal lookups, TCP for zone transfers and large replies. Target of poisoning and tunnelling.</td><td>DNSSEC (integrity); DNS over HTTPS / TLS (privacy); restrict zone transfers</td></tr>
       <tr><td>80 / 443</td><td>HTTP / HTTPS</td><td>The web. HTTP (80) is cleartext; HTTPS (443) is HTTP inside TLS, encrypting and authenticating the session.</td><td>Use 443 only; redirect 80 and enable HSTS</td></tr>
-      <tr><td>88</td><td>Kerberos</td><td>Ticket-based single sign-on, the default in Active Directory domains.</td><td>— (protect the KDC; keep clocks in sync)</td></tr>
+      <tr><td>88</td><td>Kerberos</td><td>Ticket-based single sign-on, the default in Active Directory domains.</td><td>- (protect the KDC; keep clocks in sync)</td></tr>
       <tr><td>110 / 143</td><td>POP3 / IMAP</td><td>Mail clients fetching email. POP3 downloads and usually deletes from the server; IMAP keeps mail synchronised on the server. Both cleartext.</td><td>POP3S 995 / IMAPS 993</td></tr>
       <tr><td>123</td><td>NTP</td><td>Network Time Protocol: keeps clocks in sync. Accurate time matters for logs, forensics and Kerberos. Can be abused for amplification attacks.</td><td>NTS (Network Time Security); internal trusted time sources</td></tr>
       <tr><td>161 / 162</td><td>SNMP</td><td>Simple Network Management Protocol: monitors and configures network devices (161 queries, 162 traps/alerts). v1/v2c use cleartext “community strings” as passwords.</td><td>SNMPv3 (authentication and encryption)</td></tr>
@@ -543,10 +543,10 @@ window.DOMAINS.push({
       body: `<h3>Firewalls</h3>
       <div class="tbl-wrap"><table><thead><tr><th>Type</th><th>Layer</th><th>Notes</th></tr></thead><tbody>
       <tr><td>Static packet filter</td><td>3</td><td>Rules on IP, port, protocol; fast; no context</td></tr>
-      <tr><td>Stateful inspection</td><td>3–4</td><td>Tracks connection state; return traffic allowed automatically</td></tr>
+      <tr><td>Stateful inspection</td><td>3-4</td><td>Tracks connection state; return traffic allowed automatically</td></tr>
       <tr><td>Circuit-level gateway</td><td>5</td><td>Validates sessions (SOCKS) without inspecting content</td></tr>
       <tr><td>Application proxy</td><td>7</td><td>Breaks the connection and inspects content; slowest, most secure</td></tr>
-      <tr><td>NGFW</td><td>3–7</td><td>Stateful + application awareness + IPS + identity + TLS inspection</td></tr>
+      <tr><td>NGFW</td><td>3-7</td><td>Stateful + application awareness + IPS + identity + TLS inspection</td></tr>
       <tr><td>WAF</td><td>7</td><td>Protects web apps from injection, XSS and similar</td></tr>
       </tbody></table></div>
       <p>Architectures: a <strong>screened subnet</strong> (DMZ) between two firewalls holds public-facing servers; a <strong>bastion host</strong> is hardened because it is exposed. Firewalls should default-deny, with an explicit deny-all at the end of the rule set.</p>

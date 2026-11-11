@@ -24,7 +24,7 @@ create policy plans_admin_update on public.plans for update to authenticated
 insert into public.plans (id, name, tagline, price, currency, free_months, modules, perks, sort) values
  ('silver',  'Silver',  'Read, understand, plan.', 0, 'INR', 12,
   '["chapters","glossary","plan","flashcards"]',
-  '["All eight chapters with animations","A–Z glossary","Personal study plan from your exam date","Chapter questions with explanations","Spaced-repetition flashcards"]', 1),
+  '["All eight chapters with animations","A-Z glossary","Personal study plan from your exam date","Chapter questions with explanations","Spaced-repetition flashcards"]', 1),
  ('gold',    'Gold',    'Practise until it sticks.', 0, 'INR', 12,
   '["chapters","glossary","plan","flashcards","quiz","mock","insights"]',
   '["Everything in Silver","Quizzes by domain, topic and weak area","Timed mock exams","Insights: time spent, streaks, accuracy"]', 2),
@@ -125,10 +125,10 @@ grant execute on function public.admin_users() to authenticated;
 insert into public.private_content (key, body) values ('personal_notes', '{
  "d1": "Risk management is your strength from management and audit work. Spend your time on ISC2’s wording, which differs in places from ISO and ISACA, so your instincts land on the answer the exam writers chose.",
  "d2": "A strength domain for you. Fast pass: confirm owner vs custodian and the sanitisation methods, then move on.",
- "d3": "One of your priority domains (weeks 3–4 of your plan, 26 Nov – 9 Dec). Security models and cryptography are concept-heavy: read slowly and build your one-page cheat sheet as you go.",
- "d4": "Your weakest area and your first two weeks (12–25 Nov). Exit criterion: draw the OSI/TCP-IP stack with protocols, PDUs and devices from memory.",
- "d5": "Medium for you: federation and protocols are where marks are lost. Build the Kerberos / SAML / OAuth / OIDC / RADIUS / TACACS+ comparison table (17–23 Dec).",
+ "d3": "One of your priority domains (weeks 3-4 of your plan, 26 Nov - 9 Dec). Security models and cryptography are concept-heavy: read slowly and build your one-page cheat sheet as you go.",
+ "d4": "Your weakest area and your first two weeks (12-25 Nov). Exit criterion: draw the OSI/TCP-IP stack with protocols, PDUs and devices from memory.",
+ "d5": "Medium for you: federation and protocols are where marks are lost. Build the Kerberos / SAML / OAuth / OIDC / RADIUS / TACACS+ comparison table (17-23 Dec).",
  "d6": "Your audit background makes this a natural strength. Make sure you know the code-testing vocabulary (SAST, DAST, fuzzing) as well as audit.",
  "d7": "Your 24×7 control-room experience maps directly onto this domain. Focus on evidence handling and the exact order of incident-response steps.",
- "d8": "A priority domain, at concept level only, as your plan says (10–16 Dec). Learn the lifecycle, maturity models and the common vulnerabilities with their fixes."
+ "d8": "A priority domain, at concept level only, as your plan says (10-16 Dec). Learn the lifecycle, maturity models and the common vulnerabilities with their fixes."
 }') on conflict (key) do nothing;

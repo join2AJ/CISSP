@@ -1,4 +1,4 @@
-/* StudyCISSP — chapter content, Domains 5–8 */
+/* StudyCISSP - chapter content, Domains 5-8 */
 window.DOMAINS = window.DOMAINS || [];
 
 window.DOMAINS.push({
@@ -22,9 +22,9 @@ window.DOMAINS.push({
     { id: "aaa", title: "Identification, authentication and the factors",
       body: `<p><strong>Identification</strong> is a claim (a username, an email, a badge). <strong>Authentication</strong> proves it. <strong>Authorisation</strong> grants rights. <strong>Accountability</strong> ties actions to the identity through logs, and depends on each identity being unique and not shared.</p>
       <div class="tbl-wrap"><table><thead><tr><th>Factor</th><th>Examples</th><th>Weakness</th></tr></thead><tbody>
-      <tr><td>Type 1 — something you know</td><td>Password, PIN, passphrase, security questions</td><td>Guessing, phishing, reuse</td></tr>
-      <tr><td>Type 2 — something you have</td><td>Smart card, hardware key, authenticator app (TOTP/HOTP), phone</td><td>Loss, theft, SIM swap for SMS</td></tr>
-      <tr><td>Type 3 — something you are</td><td>Fingerprint, face, iris, voice, keystroke dynamics</td><td>Cannot be changed if compromised; privacy</td></tr>
+      <tr><td>Type 1 - something you know</td><td>Password, PIN, passphrase, security questions</td><td>Guessing, phishing, reuse</td></tr>
+      <tr><td>Type 2 - something you have</td><td>Smart card, hardware key, authenticator app (TOTP/HOTP), phone</td><td>Loss, theft, SIM swap for SMS</td></tr>
+      <tr><td>Type 3 - something you are</td><td>Fingerprint, face, iris, voice, keystroke dynamics</td><td>Cannot be changed if compromised; privacy</td></tr>
       <tr><td>Context</td><td>Somewhere you are (location), something you do (behaviour)</td><td>Supporting signals, not primary factors</td></tr>
       </tbody></table></div>
       <h3>Biometrics</h3>
@@ -137,7 +137,7 @@ window.DOMAINS.push({
     "SAST: source code, no execution, early. DAST: running app, black-box. IAST: agent inside running app. SCA: third-party components.",
     "Fuzzing: mutation (alter valid input) or generation (build input from a model of the protocol).",
     "SOC 1: financial reporting controls. SOC 2: Trust Services Criteria (security, availability, processing integrity, confidentiality, privacy). SOC 3: public summary.",
-    "Type I: design at a point in time. Type II: operating effectiveness over a period (usually 6–12 months).",
+    "Type I: design at a point in time. Type II: operating effectiveness over a period (usually 6-12 months).",
     "Synthetic transactions are scripted and proactive; real user monitoring is passive and reactive."
   ],
   sections: [
@@ -348,7 +348,7 @@ window.DOMAINS.push({
       answer: 1,
       why: "Order of volatility: memory is lost when power is removed; disks, remote logs and archives persist longer." },
     { q: "Backups run fully on Sunday and differentially Monday to Saturday. The server fails on Thursday. Which backups are needed for restore?",
-      options: ["Sunday full only", "Sunday full and Wednesday differential", "Sunday full and Monday–Wednesday differentials", "Wednesday differential only"],
+      options: ["Sunday full only", "Sunday full and Wednesday differential", "Sunday full and Monday-Wednesday differentials", "Wednesday differential only"],
       answer: 1,
       why: "Each differential contains all changes since the last full, so you need the full and the most recent differential." },
     { q: "After a disaster, the primary site is repaired. Which systems should move back FIRST?",

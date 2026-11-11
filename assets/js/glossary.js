@@ -1,4 +1,4 @@
-/* StudyCISSP — glossary.
+/* StudyCISSP - glossary.
    Each entry: [term (with full form), meaning, where it is used, tools / examples] */
 window.GLOSSARY = {
   d1: [
@@ -61,15 +61,15 @@ window.GLOSSARY = {
   d3: [
     ["AEAD / GCM (Authenticated Encryption / Galois Counter Mode)", "Encryption that also provides integrity.", "TLS 1.3, modern storage encryption.", "AES-GCM, ChaCha20-Poly1305"],
     ["AES (Advanced Encryption Standard)", "Symmetric block cipher: 128-bit block, 128/192/256-bit keys.", "Bulk encryption everywhere.", "BitLocker, FileVault, TLS, OpenSSL"],
-    ["Bell–LaPadula", "Confidentiality model: no read up, no write down.", "Military / multilevel security.", "SELinux MLS policy"],
+    ["Bell-LaPadula", "Confidentiality model: no read up, no write down.", "Military / multilevel security.", "SELinux MLS policy"],
     ["Biba", "Integrity model: no read down, no write up.", "Integrity-critical systems.", "Windows Mandatory Integrity Control"],
-    ["Brewer–Nash (Chinese Wall)", "Access depends on what you accessed before, to avoid conflicts of interest.", "Consulting, banking, law firms.", "Ethical-wall features in DMS tools"],
+    ["Brewer-Nash (Chinese Wall)", "Access depends on what you accessed before, to avoid conflicts of interest.", "Consulting, banking, law firms.", "Ethical-wall features in DMS tools"],
     ["CA (Certificate Authority)", "Trusted party that signs digital certificates.", "PKI, TLS certificates.", "Let’s Encrypt, DigiCert, AD CS"],
-    ["Clark–Wilson", "Integrity through well-formed transactions and separation of duties.", "Commercial and financial systems.", "Transaction-based applications"],
-    ["Common Criteria (ISO/IEC 15408)", "Product evaluation scheme with EAL1–EAL7 assurance levels.", "Government procurement of security products.", "Protection Profiles, Security Targets"],
+    ["Clark-Wilson", "Integrity through well-formed transactions and separation of duties.", "Commercial and financial systems.", "Transaction-based applications"],
+    ["Common Criteria (ISO/IEC 15408)", "Product evaluation scheme with EAL1-EAL7 assurance levels.", "Government procurement of security products.", "Protection Profiles, Security Targets"],
     ["CPTED (Crime Prevention Through Environmental Design)", "Using layout, lighting and landscaping to deter crime.", "Site and facility design.", "Natural surveillance, access control, territoriality"],
     ["CRL (Certificate Revocation List)", "Signed list of revoked certificates.", "Checking whether a certificate is still valid.", "PKI servers"],
-    ["Diffie–Hellman", "Key agreement over an open channel.", "Establishing session keys (TLS, IPsec, SSH).", "ECDHE in TLS"],
+    ["Diffie-Hellman", "Key agreement over an open channel.", "Establishing session keys (TLS, IPsec, SSH).", "ECDHE in TLS"],
     ["Digital signature", "Hash encrypted with the sender’s private key: integrity, authenticity, non-repudiation.", "Code signing, documents, email.", "GPG, S/MIME, Authenticode"],
     ["ECC (Elliptic Curve Cryptography)", "Public-key crypto with small keys for equivalent strength.", "Mobile, IoT, TLS.", "ECDSA, Curve25519"],
     ["HSM (Hardware Security Module)", "Tamper-resistant device that generates, stores and uses keys.", "CAs, payments, cloud KMS.", "Thales Luna, AWS CloudHSM"],
@@ -146,7 +146,7 @@ window.GLOSSARY = {
   d6: [
     ["BAS (Breach and Attack Simulation)", "Continuously runs attack techniques to test defences.", "Validating detection and controls.", "SafeBreach, AttackIQ, Atomic Red Team"],
     ["CVE (Common Vulnerabilities and Exposures)", "Public identifier for a known vulnerability.", "Tracking and patching.", "NVD, vendor advisories"],
-    ["CVSS (Common Vulnerability Scoring System)", "Standard severity score 0–10; v4.0 is current.", "Prioritising vulnerabilities.", "NVD calculator"],
+    ["CVSS (Common Vulnerability Scoring System)", "Standard severity score 0-10; v4.0 is current.", "Prioritising vulnerabilities.", "NVD calculator"],
     ["DAST (Dynamic Application Security Testing)", "Tests a running application from outside.", "Web and API testing.", "OWASP ZAP, Burp Suite"],
     ["EPSS (Exploit Prediction Scoring System)", "Probability a vulnerability will be exploited soon.", "Risk-based patch prioritisation.", "FIRST EPSS data"],
     ["Fuzzing", "Feeding malformed or random input to find crashes.", "Protocol, parser and API testing.", "AFL++, libFuzzer, Peach"],

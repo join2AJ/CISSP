@@ -1312,3 +1312,90 @@ body.site .toc { display: none; }
 .mv-lv em, .kb-n small, .sg-s small, .mv-t small, .fact .unit, .bk-c span { font-size: 12px; }
 .hs-a span { font-size: 11.5px; }
 @media (max-width: 640px) { .hs-a span { font-size: 11px; } .bk-c span { font-size: 11px; } .sg-s small { font-size: 11.5px; } }
+
+/* ---------- study desk (dashboard) ---------- */
+.dash { padding-top: 28px; }
+.dash-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 18px; flex-wrap: wrap; padding-bottom: 18px; border-bottom: 1px solid var(--rule); }
+.dash-title { font-family: var(--display); font-weight: 400; font-size: clamp(28px, 3.4vw, 40px); letter-spacing: -.02em; margin: 6px 0 0; line-height: 1.1; }
+.dash-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.dash-chips span { padding: 8px 12px; border-radius: 12px; background: var(--card); border: 1px solid var(--rule-2); font-size: 13.5px; color: var(--ink-2); }
+.dash-chips b { font-family: var(--display); font-size: 20px; font-weight: 500; color: var(--ink); margin-right: 3px; }
+.dash-main { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; margin-top: 22px; }
+.dash-continue { text-decoration: none; display: grid; gap: 10px; align-content: start; border-left: 5px solid var(--dc, var(--accent)); }
+.dash-continue h2 { font-family: var(--display); font-weight: 500; font-size: clamp(22px, 2.6vw, 30px); line-height: 1.2; margin: 0; }
+.dash-continue p { margin: 0; color: var(--muted); }
+.dash-continue .meter { height: 6px; }
+.dash-continue .meter i { background: var(--dc, var(--accent)); }
+.dash-continue .btn { justify-self: start; margin-top: 4px; }
+.dash-continue:hover { box-shadow: var(--shadow); }
+.dash-today h3 { margin: 0 0 6px; }
+.today-line { margin: 0 0 10px; font-size: 15px; }
+.today-line a { color: var(--accent); }
+.today-phase { margin: 0 0 4px; font-size: 15px; }
+.tasks.compact label { padding: 4px 2px; font-size: 14px; }
+.dash-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 14px; }
+.tile { display: grid; gap: 4px; padding: 16px 18px; border-radius: 14px; background: var(--card); border: 1px solid var(--rule-2); text-decoration: none; transition: transform .2s var(--ease), box-shadow .2s; }
+.tile:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.tile-k { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; color: var(--dc, var(--accent)); }
+.tile-v { font-family: var(--display); font-size: 30px; font-weight: 500; line-height: 1.1; }
+.tile-v small { font-size: .5em; color: var(--muted); }
+.tile-s { font-size: 13.5px; color: var(--muted); }
+.tile .meter { margin-top: 6px; } .tile .meter i { background: var(--dc, var(--accent)); }
+.tile-go { margin-top: 6px; font-size: 13.5px; font-weight: 600; color: var(--accent); }
+.howto { margin-top: 34px; border: 1px solid var(--rule-2); border-radius: 14px; background: var(--card); padding: 4px 18px; }
+.howto summary { cursor: pointer; padding: 12px 0; font-family: var(--display); font-size: 19px; list-style: none; }
+.howto summary small { font-family: var(--sans); font-size: 13px; color: var(--muted); }
+.howto summary::-webkit-details-marker { display: none; }
+.howto summary::after { content: "+"; float: right; color: var(--accent); font-family: var(--sans); }
+.howto[open] summary::after { content: "-"; }
+.howto-list { margin: 0 0 14px; padding-left: 20px; display: grid; gap: 8px; font-size: 15px; color: var(--ink-2); }
+.howto-list a { text-decoration: none; color: var(--accent); margin-right: 4px; }
+
+/* ---------- "what is this page for?" ---------- */
+.explain { margin: 14px 0 6px; border-radius: 12px; background: color-mix(in srgb, var(--accent) 5%, var(--card)); border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--rule-2)); }
+.explain summary { cursor: pointer; list-style: none; padding: 10px 14px; font-size: 14px; font-weight: 600; color: var(--accent); }
+.explain summary::-webkit-details-marker { display: none; }
+.explain summary::before { content: "ⓘ "; }
+.explain[open] summary { border-bottom: 1px solid var(--rule-2); }
+.ex-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; padding: 12px 14px 14px; }
+.ex-grid b { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.ex-grid p { margin: 4px 0 0; font-size: 14.5px; line-height: 1.5; color: var(--ink-2); }
+
+/* ---------- study times ---------- */
+.sched { margin-top: 18px; }
+.sched h3 { margin: 0 0 4px; }
+.sched-grid { display: grid; gap: 6px; margin: 14px 0 8px; }
+.sched-row { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--rule-2); background: var(--paper); }
+.sched-row.on { border-color: color-mix(in srgb, var(--accent) 40%, var(--rule)); background: color-mix(in srgb, var(--accent) 6%, var(--paper)); }
+.sched-row input[type=time], .sched-row select { height: 38px; border-radius: 8px; border: 1px solid var(--rule); background: var(--card); color: var(--ink); padding: 0 8px; font: 14px var(--sans); }
+.sched-row input:disabled, .sched-row select:disabled { opacity: .45; }
+.sched-total { font-size: 14.5px; color: var(--ink-2); margin: 6px 0 0; }
+
+/* ---------- reading the ISC2 guide in place ---------- */
+.pdf-view { margin-top: 14px; }
+.pdf-view summary { cursor: pointer; font-weight: 600; color: var(--accent); padding: 8px 0; }
+.pdf-view iframe { width: 100%; height: 78vh; border: 1px solid var(--rule); border-radius: 12px; background: #fff; }
+
+/* ---------- wide tables become cards on phones ---------- */
+@media (max-width: 640px) {
+  table.stack thead { display: none; }
+  table.stack, table.stack tbody, table.stack tr, table.stack td { display: block; width: 100%; }
+  table.stack tr { padding: 12px 14px; border-bottom: 1px solid var(--rule-2); }
+  table.stack tr:last-child { border-bottom: 0; }
+  table.stack td { border: 0 !important; padding: 3px 0 !important; display: grid; grid-template-columns: 38% 1fr; gap: 10px; font-size: 14.5px; }
+  table.stack td::before { content: attr(data-label); font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; padding-top: 2px; }
+  table.stack td:first-child { grid-template-columns: 1fr; font-family: var(--display); font-size: 17px; font-weight: 500; padding-bottom: 6px !important; }
+  table.stack td:first-child::before { display: none; }
+  .tbl-wrap:has(table.stack) { overflow: visible; }
+  .dash-main { grid-template-columns: 1fr; }
+  .dash-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .tile { padding: 14px; } .tile-v { font-size: 24px; }
+  .dash-chips span { flex: 1; text-align: center; min-width: 30%; padding: 8px; }
+  .dash-chips b { display: block; }
+  .ex-grid { grid-template-columns: 1fr; gap: 10px; }
+  .sched-row { grid-template-columns: 1fr 1fr; }
+  .sched-row .check { grid-column: 1 / -1; }
+}
+@media (min-width: 641px) and (max-width: 1000px) { .dash-grid { grid-template-columns: repeat(2, 1fr); } }
+
+@media (max-width: 640px) { .dash-chips { width: 100%; } .dash-head > div:first-child { width: 100%; } }

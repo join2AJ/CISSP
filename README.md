@@ -30,7 +30,7 @@ A book-like CISSP study companion for any learner, written against the
 index.html                     page shell
 assets/css/style.css           styles
 assets/js/config.js            Supabase URL + publishable key (public by design)
-assets/js/content-1/2.js       chapter content, Domains 1–8
+assets/js/content-1/2.js       chapter content, Domains 1-8
 assets/js/bank.js              extra questions, flashcards, encouragement
 assets/js/pages.js             tactics, what's new, resources
 assets/js/db.js                data layer (Supabase or device-only)

@@ -1,4 +1,4 @@
-/* StudyCISSP — core: state, router, personalisation, time tracking, reading views */
+/* StudyCISSP - core: state, router, personalisation, time tracking, reading views */
 (function () {
   "use strict";
 
@@ -28,7 +28,7 @@
   const words = d => d.sections.reduce((n, s) => n + strip(s.body).split(" ").length, strip(d.intro).split(" ").length);
   const readMins = d => Math.max(1, Math.round(words(d) / 220));
   const band = v => (v == null || v === "" || isNaN(v)) ? "none" : v >= 85 ? "green" : v >= 65 ? "orange" : "red";
-  const bandLabel = { green: "Green", orange: "Orange", red: "Red", none: "—" };
+  const bandLabel = { green: "Green", orange: "Orange", red: "Red", none: "-" };
   const dc = d => `--dc: var(--${d.id})`;
   const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
   const pick = a => a[Math.floor(Math.random() * a.length)];
@@ -287,7 +287,10 @@
       try { out = await out; } catch (e) { out = `<div class="page-narrow"><h1 class="h-display">Something went wrong</h1><p class="lede">${esc(App.errMsg(e))}</p></div>`; }
       if (my !== token) return;
     }
+    const exKey = r.page === "quiz" && r.a === "run" ? null : r.page === "tracker" ? "tracker" : r.page;
+    if (exKey && !site) out = withExplain(out, exKey);
     view.innerHTML = out + (site ? (App.siteFooter ? App.siteFooter() : "") : def.bare ? "" : footer());
+    App.stackTables(view);
     view.classList.remove("view-enter"); void view.offsetWidth; view.classList.add("view-enter");
     if (!def.bare && !site) renderToc(r);
     paintNav(r, def);
@@ -304,6 +307,47 @@
     onScroll();
   }
   App.route = route;
+
+  /* "What is this page?" panels: short, human, dismissible */
+  const EXPLAIN = {
+    read: ["All eight CISSP domains, written as short pages you can actually finish.", "Questions only stick once the idea makes sense. Reading first saves time later.", "Start with the domains marked Focus. Read one page, tap Got it - next, and keep going."],
+    quiz: ["Short sets of exam-style questions, with the reasoning shown after every answer.", "The CISSP tests judgement. The explanations show you how the examiners think.", "Do a topic quiz right after you read it. Once a week, try My weak areas."],
+    flashcards: ["Quick recall cards for terms, numbers and models.", "Cards you know come back less often; cards you miss come back tomorrow. That's how memory sticks.", "Five minutes a day. Clear the cards due today and stop."],
+    mock: ["A timed exam with no hints until the end.", "It builds stamina and shows how ready you really are.", "Take one once you've read most chapters, then every week or two before the exam."],
+    glossary: ["Every term in one place, A to Z, with where you'll meet it.", "Acronyms trip people up on exam day.", "Search, or filter by your weakest domain and skim the list."],
+    plan: ["Your route from today to exam day, built from your date and your answers.", "A date and a routine do more than motivation ever will.", "Set your study times below, add them to your calendar, and tick tasks as you go. Many tick themselves."],
+    insights: ["Where your study time goes and how you're scoring.", "It shows whether your time is going where the marks are.", "Look once a week. Move time towards the red domains."],
+    tracker: ["Scores from outside practice tests, plus your error log.", "The pattern in your mistakes matters more than any single score.", "After each outside test, enter the score and log every miss with a reason."],
+    library: ["Your own notes, PDFs and videos, kept next to the chapters they belong to.", "Everything you rely on, in one place.", "Add a link or upload a file and tag it with a domain."],
+    resources: ["Official documents and a short list of study material we trust.", "When two sources disagree, the primary source settles it.", "Use these to check a detail. You don't need to read them cover to cover."],
+    tactics: ["How to read and answer CISSP questions.", "Often two answers look right. Method picks the better one.", "Read it once now and again in the week before your exam."],
+    latest: ["What changed in the field between 2024 and 2026.", "Exam questions use today's terms and frameworks.", "Skim it, then follow the links into the chapters."]
+  };
+  App.explainBlock = (key) => {
+    const e = EXPLAIN[key]; if (!e) return "";
+    let closed = false; try { closed = localStorage.getItem("cissp.ex." + key) === "1"; } catch (x) {}
+    return `<details class="explain" data-ex="${key}" ${closed ? "" : "open"}><summary>What is this page for?</summary>
+      <div class="ex-grid"><div><b>What</b><p>${esc(e[0])}</p></div><div><b>Why it helps</b><p>${esc(e[1])}</p></div><div><b>How to use it</b><p>${esc(e[2])}</p></div></div></details>`;
+  };
+  function withExplain(out, key) {
+    const block = App.explainBlock(key); if (!block) return out;
+    const m = out.match(/<p class="lede">[\s\S]*?<\/p>/);
+    if (m) return out.replace(m[0], m[0] + block);
+    return out.replace("</h1>", "</h1>" + block);
+  }
+  document.addEventListener("toggle", (e) => {
+    const d = e.target; if (!d.classList || !d.classList.contains("explain")) return;
+    try { localStorage.setItem("cissp.ex." + d.dataset.ex, d.open ? "0" : "1"); } catch (x) {}
+  }, true);
+
+  /* wide tables become stacked cards on phones */
+  App.stackTables = (root) => {
+    (root || view).querySelectorAll(".prose table, .tbl.stackable").forEach(t => {
+      if (t.dataset.stacked) return; t.dataset.stacked = "1"; t.classList.add("stack");
+      const heads = [...t.querySelectorAll("thead th")].map(th => th.textContent.trim());
+      t.querySelectorAll("tbody tr").forEach(tr => [...tr.children].forEach((td, i) => { if (heads[i]) td.setAttribute("data-label", heads[i]); }));
+    });
+  };
   App.rerender = () => { rendered = null; const y = scrollY; route().then(() => scrollTo(0, y)); };
 
   function paintNav(r, def) {
@@ -342,10 +386,10 @@
     });
     const L = (k, ico, t) => `<li><a href="#/${k}" class="${r.page === k ? "active" : ""}"><span class="toc-num">${ico}</span>${t}</a></li>`;
     h += `</ol><div class="toc-head">Practise</div><ol class="toc-list">
-      ${L("glossary", "Aa", "Glossary A–Z")}${L("quiz", "?", "Quiz by domain or topic")}${L("flashcards", "❐", "Flashcards")}${L("mock", "◷", "Mock exam")}
+      ${L("glossary", "Aa", "Glossary A-Z")}${L("quiz", "?", "Quiz by domain or topic")}${L("flashcards", "❐", "Flashcards")}${L("mock", "◷", "Mock exam")}
     </ol><div class="toc-head">Companion</div><ol class="toc-list">
       ${L("plan", "▤", "My study plan")}${L("insights", "◔", "Insights & time spent")}${L("tracker", "▦", "Scores & error log")}${L("library", "❏", "My library")}
-      ${L("tactics", "◎", "Exam tactics")}${L("latest", "✦", "What’s new, 2024–2026")}${L("resources", "§", "Resources")}${L("privacy", "⚿", "Privacy & trust")}
+      ${L("tactics", "◎", "Exam tactics")}${L("latest", "✦", "What’s new, 2024-2026")}${L("resources", "§", "Resources")}${L("privacy", "⚿", "Privacy & trust")}
     </ol>
     <div class="toc-card"><b>${all.pct}%</b>read · ${all.r} of ${all.t} sections<div class="meter" style="margin-top:10px"><i style="width:${all.pct}%;background:var(--accent)"></i></div></div>`;
     toc.innerHTML = h;
@@ -387,65 +431,103 @@
   }
 
   /* ---------------- reading views ---------------- */
+  const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const schedule = () => (S.schedule && S.schedule.days) || {};
+  const fmtTime = t => { const [h, m] = t.split(":").map(Number); const ap = h >= 12 ? "pm" : "am"; return `${((h + 11) % 12) + 1}${m ? ":" + String(m).padStart(2, "0") : ""}${ap}`; };
+  function nextSession() {
+    const sc = schedule(), now = new Date();
+    for (let k = 0; k < 8; k++) {
+      const d = addDays(today(), k), slot = sc[d.getDay()];
+      if (!slot || !slot.on) continue;
+      const [h, m] = slot.start.split(":").map(Number); const at = new Date(d); at.setHours(h, m, 0, 0);
+      if (k === 0 && at.getTime() + slot.dur * 60000 < now.getTime()) continue;
+      return { k, d, slot, label: k === 0 ? "Today" : k === 1 ? "Tomorrow" : DAYS[d.getDay()] };
+    }
+    return null;
+  }
   async function viewHome() {
     await App.loadTime();
     const all = allProgress(), ph = App.currentPhase(), nx = nextSection();
     const wk = App.secondsSince(ymd(addDays(today(), -6))), streak = App.streak(), acc = App.quizAccuracy();
-    const due = App.dueCards ? App.dueCards().length : 0;
-    const weakest = App.pathOrder()[0];
+    const cs = App.cardStats ? App.cardStats() : { total: App.cards.length, mastered: 0, due: App.cards.length, reviewed: 0 };
     const hr = new Date().getHours();
-    const greet = hr < 5 ? "Burning the midnight oil" : hr < 12 ? "Good morning" : hr < 17 ? "Good afternoon" : "Good evening";
+    const greet = hr < 5 ? "Up late" : hr < 12 ? "Good morning" : hr < 17 ? "Good afternoon" : "Good evening";
+    const daysLeft = daysTo(App.examTarget());
+    // where you are
     const last = S.last && byId[S.last.d] ? byId[S.last.d] : null;
-    const cont = last ? `<a class="btn primary" href="#/domain/${last.id}${S.last.s ? "/" + S.last.s : ""}">Continue · D${last.n} ${esc(last.short)} →</a>`
-      : nx ? `<a class="btn primary" href="#/domain/${nx.d.id}/${nx.s.id}">Start with D${nx.d.n} ${esc(nx.d.short)} →</a>` : `<a class="btn primary" href="#/mock">Take a mock exam →</a>`;
-    return `<div class="page">
-      <section class="hero">
-        <div>
-          <div class="kicker">${greet}, ${esc(App.firstName())}</div>
-          <h1 class="h-display">Read slowly.<br><em>Pass once.</em></h1>
-          <p class="lede">${esc(pick(B.encouragement))}</p>
-          <div class="btn-row">${cont}<a class="btn" href="#/quiz">Quick quiz</a></div>
+    let cont = null;
+    if (last) { const sec = S.last.s && last.sections.find(x => x.id === S.last.s); const si = sec ? last.sections.indexOf(sec) : -1;
+      cont = { d: last, href: `#/domain/${last.id}${S.last.s ? "/" + S.last.s : ""}`, title: sec ? `${last.n}.${si + 1} ${sec.title}` : last.title, kicker: "Pick up where you left off" }; }
+    else if (nx) cont = { d: nx.d, href: `#/domain/${nx.d.id}/${nx.s.id}`, title: `${nx.d.n}.${nx.d.sections.indexOf(nx.s) + 1} ${nx.s.title}`, kicker: "Start here" };
+    const cp = cont ? domProgress(cont.d) : null;
+    // quiz picture
+    const quizRows = App.attempts.filter(a => a.mode !== "chapter");
+    const perDom = D.map(d => { const r = App.attempts.filter(a => a.domain === d.id); return { d, n: r.length, v: r.length ? Math.round(r.filter(a => a.correct).length / r.length * 100) : null }; });
+    const weakQ = perDom.filter(x => x.n >= 3).sort((a, b) => a.v - b.v)[0] || { d: App.pathOrder()[0], v: null };
+    const mocks = App.mocks.slice(-1)[0], bestMock = App.mocks.length ? Math.max(...App.mocks.map(m => Math.round(m.correct / m.total * 100))) : null;
+    const weekTarget = ((App.profile && App.profile.weekly_hours) || 10) * 3600;
+    const ns = nextSession();
+    const tasks = ph ? ph.tasks.map((t, i) => ({ t, k: ph.id + ":" + i, done: !!S.tasks[ph.id + ":" + i] || autoDone(t) })) : [];
+    const open = tasks.filter(x => !x.done).slice(0, 3);
+    const tile = (o) => `<a class="tile" href="${o.href}" style="${o.dc || ""}">
+        <span class="tile-k">${o.k}</span><b class="tile-v">${o.v}</b><span class="tile-s">${o.s}</span>
+        ${o.pct != null ? `<span class="meter"><i style="width:${Math.max(0, Math.min(100, o.pct))}%"></i></span>` : ""}
+        <span class="tile-go">${o.go} →</span></a>`;
+    const firstTime = !all.r && !App.attempts.length;
+    return `<div class="page dash">
+      <header class="dash-head">
+        <div><div class="kicker">${greet}, ${esc(App.firstName())}</div><h1 class="dash-title">Your study desk</h1>
+          <p class="sub" style="margin:4px 0 0">${esc(pick(B.encouragement))}</p></div>
+        <div class="dash-chips">
+          <span><b>${Math.max(daysLeft, 0)}</b> days to your exam</span>
+          <span><b>${streak}</b> day streak</span>
+          <span><b>${fmtDur(wk)}</b> this week</span>
         </div>
-        <div class="hero-aside">
-          ${countdown()}
-          ${ph ? `<a class="count" href="#/plan" style="text-decoration:none"><div class="count-lbl" style="flex:1"><span class="kicker" style="--kc:var(--${ph.domain})">Now · ${esc(ph.iter)}</span><div style="font-family:var(--display);font-size:20px;margin-top:4px">${esc(ph.title)}</div><small>${fmtD(ph.start)} – ${fmtD(ph.end)} · exit: ${esc(ph.exit)}</small></div></a>` : ""}
-        </div>
-      </section>
-
+      </header>
       ${planBanner()}
-      <section class="facts">
-        <div class="fact"><b>${streak}<small class="unit"> day${streak === 1 ? "" : "s"}</small></b><span>study streak (5+ min a day)</span></div>
-        <div class="fact"><b>${fmtDur(wk)}</b><span>studied in the last 7 days</span></div>
-        <div class="fact"><b>${all.r}<small class="unit">/${all.t}</small></b><span>sections understood</span></div>
-        <div class="fact"><b>${acc == null ? "—" : acc + "%"}</b><span>quiz accuracy so far</span></div>
+      <section class="dash-main">
+        ${cont ? `<a class="card dash-continue" href="${cont.href}" style="${dc(cont.d)}">
+          <span class="kicker" style="--kc:var(--dc)">${cont.kicker}</span>
+          <h2>${esc(cont.title)}</h2>
+          <p>D${cont.d.n} ${esc(cont.d.title)} · ${cp.r} of ${cp.t} sections read</p>
+          <span class="meter"><i style="width:${cp.pct}%"></i></span>
+          <span class="btn primary">${last ? "Continue reading" : "Start reading"} →</span></a>`
+          : `<a class="card dash-continue" href="#/mock"><span class="kicker">Every chapter read</span><h2>Time to test yourself</h2><p>Take a timed mock and see where you stand.</p><span class="btn primary">Start a mock →</span></a>`}
+        <div class="card dash-today">
+          <h3>Today</h3>
+          <p class="today-line">${ns ? `<b>${ns.label}</b> ${fmtTime(ns.slot.start)} for ${ns.slot.dur} min` : `No study times set yet. <a href="#/plan/schedule">Choose your study times</a>`}</p>
+          ${ph ? `<p class="today-phase"><span class="kicker" style="--kc:var(--${ph.domain})">${esc(ph.iter)}</span><br>${esc(ph.title)} <small>· until ${fmtD(ph.end)}</small></p>
+            ${open.length ? `<ul class="tasks compact">${open.map(x => `<li><label><input type="checkbox" data-task="${x.k}"><span>${esc(x.t)}</span></label></li>`).join("")}</ul>` : `<p class="hint">All tasks in this stage are done. Nice work.</p>`}` : ""}
+          <a class="btn small ghost" href="#/plan">Open my plan →</a>
+        </div>
       </section>
 
-      <h2 class="h-section">Today’s focus</h2>
-      <p class="sub">Three small things. Do one and today counts.</p>
-      <div class="grid-3">
-        <a class="card focus" href="${nx ? `#/domain/${nx.d.id}/${nx.s.id}` : "#/read"}" style="${nx ? dc(nx.d) : ""}"><span class="kicker" style="--kc:var(--dc,var(--accent))">Read · ~6 min</span><h3>${nx ? esc(nx.s.title) : "All sections read"}</h3><p>${nx ? `D${nx.d.n} ${esc(nx.d.short)} · your ${prioLabel[prio(nx.d)].toLowerCase()} domain` : "Revisit Memorise cards before the exam."}</p></a>
-        <a class="card focus" href="#/flashcards"><span class="kicker">Flashcards · ~5 min</span><h3>${due} card${due === 1 ? "" : "s"} due</h3><p>Spaced repetition keeps the facts you’ve learned from fading.</p></a>
-        <a class="card focus" href="#/quiz/run/domain/${weakest.id}" style="${dc(weakest)}"><span class="kicker" style="--kc:var(--dc)">Quiz · ~8 min</span><h3>10 questions on D${weakest.n}</h3><p>${esc(weakest.title)}: where the most marks are waiting.</p></a>
+      <h2 class="h-section">Where you are</h2>
+      <div class="dash-grid">
+        ${tile({ k: "Reading", v: `${all.r}<small>/${all.t}</small>`, s: "sections understood", pct: all.pct, go: cont ? "Continue" : "Chapters", href: cont ? cont.href : "#/read" })}
+        ${tile({ k: "Quizzes", v: quizRows.length ? `${acc}%` : "-", s: quizRows.length ? `${quizRows.length} answered · weakest D${weakQ.d.n}${weakQ.v != null ? " (" + weakQ.v + "%)" : ""}` : "not started", pct: acc, go: `Quiz D${weakQ.d.n}`, href: `#/quiz/run/domain/${weakQ.d.id}`, dc: dc(weakQ.d) })}
+        ${tile({ k: "Flashcards", v: `${cs.due}`, s: `due today · ${cs.mastered}/${cs.total} mastered`, pct: cs.total ? cs.mastered / cs.total * 100 : 0, go: cs.due ? "Review now" : "Browse decks", href: "#/flashcards" })}
+        ${tile({ k: "Mock exams", v: mocks ? Math.round(mocks.correct / mocks.total * 100) + "%" : "-", s: mocks ? `last of ${App.mocks.length} · best ${bestMock}%` : "not taken yet", pct: mocks ? Math.round(mocks.correct / mocks.total * 100) : null, go: "Start a mock", href: "#/mock" })}
+        ${tile({ k: "Study time", v: fmtDur(wk), s: `this week · target ${Math.round(weekTarget / 3600)}h`, pct: wk / weekTarget * 100, go: "Insights", href: "#/insights" })}
+        ${tile({ k: "Plan", v: ph ? `${tasks.filter(x => x.done).length}/${tasks.length}` : "-", s: ph ? "tasks done in this stage" : "set your exam date", pct: ph && tasks.length ? tasks.filter(x => x.done).length / tasks.length * 100 : null, go: "Open plan", href: "#/plan" })}
       </div>
 
-      <h2 class="h-section">Your path</h2>
-      <p class="sub">Ordered from your self-assessment: focus domains first, strengths last. Change it any time in <a href="#/profile">your profile</a>.</p>
+      <details class="howto" ${firstTime ? "open" : ""}>
+        <summary>How StudyCISSP works <small>(what each part is for)</small></summary>
+        <ol class="howto-list">
+          <li><a href="#/read"><b>Chapters</b></a> Read the eight domains one short page at a time. Tap <em>Got it - next</em> when a page makes sense.</li>
+          <li><a href="#/quiz"><b>Quiz</b></a> Check yourself after each topic. Every answer explains why.</li>
+          <li><a href="#/flashcards"><b>Flashcards</b></a> Five minutes a day keeps terms and numbers fresh.</li>
+          <li><a href="#/plan"><b>Plan</b></a> Your route to exam day. Set your study times and add them to your calendar.</li>
+          <li><a href="#/mock"><b>Mock exam</b></a> A timed run with no hints, once most chapters are done.</li>
+          <li><a href="#/insights"><b>Insights</b></a> Where your time goes and which domains need more of it.</li>
+          <li><a href="#/glossary"><b>Glossary</b></a> and <a href="#/resources"><b>Resources</b></a> for quick look-ups and official documents.</li>
+        </ol>
+      </details>
+
+      <h2 class="h-section">Your chapters</h2>
+      <p class="sub">In your order: focus domains first, strengths last. Change this in <a href="#/profile">your profile</a>.</p>
       <div class="shelf">${App.pathOrder().map(bookCard).join("")}</div>
-
-      <h2 class="h-section">The exam, to scale</h2>
-      <p class="sub">Width is each domain’s exam weight. The shaded height is your current score (Tracker or quiz accuracy).</p>
-      <div class="wmap">${D.map(d => {
-        const sc = App.domainScore(d.id).v || 0;
-        return `<a href="#/domain/${d.id}" style="flex:${d.weight};${dc(d)}" title="D${d.n} ${esc(d.title)}: ${d.weight}%"><div class="fill" style="height:${sc}%"></div><b>${d.weight}%</b><span>D${d.n} ${esc(d.short)}</span></a>`;
-      }).join("")}</div>
-      <p class="legend">Bands used throughout: <span class="band green">85%+</span> <span class="band orange">65–84%</span> <span class="band red">&lt;65%</span></p>
-
-      <h2 class="h-section">The pathway</h2>
-      <p class="sub">From ISC2’s <a href="#/resources">Ultimate Guide to the CISSP</a>: six steps from candidate to certified member.</p>
-      <div class="path">${P.pathway.map((s, i) => `<div class="step"><b>${i + 1}</b><h4>${esc(s.t)}</h4><p>${esc(s.d)}</p></div>`).join("")}</div>
-
-      <p class="quote">“Think like a manager, act like an adviser, and never forget that people come first.”</p>
-      <p class="quote-by">The one sentence that answers more CISSP questions than any fact.</p>
     </div>`;
   }
 
@@ -525,9 +607,9 @@
         </section>
       </div>
       <div class="sec-finish">
-        <a class="btn primary big-next" id="readNext" href="${nextHref}" data-read-key="${k}">${on ? "Next" : "Got it — next"}: ${esc(nextName)} →</a>
+        <a class="btn primary big-next" id="readNext" href="${nextHref}" data-read-key="${k}">${on ? "Next" : "Got it - next"}: ${esc(nextName)} →</a>
         <div class="sec-finish-row">
-          <a class="btn small" href="#/quiz/run/topic/${d.id}.${s.id}">Quiz this topic (${qCount(d, s)})</a>
+          <a class="btn small ghost" href="#/quiz/run/topic/${d.id}.${s.id}">Practise this topic</a>
           <button class="understood small ${on ? "on" : ""}" data-read="${k}" aria-pressed="${on}"><span class="box"></span><span>${on ? "Understood" : "Mark as understood"}</span></button>
         </div>
         <div class="sec-pager"><a href="${prevHref}">← ${esc(prevName)}</a><a href="${nextHref}" class="skip">Skip to ${esc(nextName)} →</a></div>
@@ -543,7 +625,7 @@
       <div class="ch-end" style="margin-top:28px">
         <div class="memorise"><div class="kicker" style="--kc:var(--dc)">Before you move on</div><h3>Memorise</h3><ul>${d.memorise.map(m => `<li>${esc(m)}</li>`).join("")}</ul></div>
         <div class="btn-row"><a class="btn" href="#/flashcards/${d.id}">Flashcards for D${d.n}</a><a class="btn" href="#/quiz/run/domain/${d.id}">Full D${d.n} quiz</a><a class="btn" href="#/glossary/${d.id}">D${d.n} glossary</a></div>
-        <p class="chapters-src"><b>Read alongside:</b> Sybex Official Study Guide — ${esc(d.sybex)}. Chapter numbers follow the 9th/10th editions; match by title if yours differ.</p>
+        <p class="chapters-src"><b>Read alongside:</b> Sybex Official Study Guide - ${esc(d.sybex)}. Chapter numbers follow the 9th/10th editions; match by title if yours differ.</p>
         <h2 class="h-section" style="margin-top:44px">Check yourself</h2>
         <p class="sub">CISSP-style questions. Answer, then read the reasoning. Misses can go straight into your error log.</p>
         <div class="quiz">${qs}</div>
@@ -590,6 +672,66 @@
     if (/^Clear all due flashcards/.test(t)) return !!App.dueCards && App.dueCards().length === 0 && App.cards.length > 0;
     return false;
   }
+  function scheduleCard() {
+    const sc = schedule(), weekly = (App.profile && App.profile.weekly_hours) || 10;
+    const row = (d) => { const sl = sc[d] || { on: false, start: d === 0 || d === 6 ? "09:00" : "19:00", dur: d === 0 || d === 6 ? 120 : 60 };
+      return `<div class="sched-row ${sl.on ? "on" : ""}" data-day="${d}">
+        <label class="check"><input type="checkbox" data-s-on ${sl.on ? "checked" : ""}><span>${DAYS[d]}</span></label>
+        <input type="time" data-s-start value="${esc(sl.start)}" ${sl.on ? "" : "disabled"} aria-label="${DAYS[d]} start time">
+        <select data-s-dur ${sl.on ? "" : "disabled"} aria-label="${DAYS[d]} length">${[30, 45, 60, 90, 120, 180].map(m => `<option value="${m}" ${m === +sl.dur ? "selected" : ""}>${m < 60 ? m + " min" : (m / 60) + " h"}</option>`).join("")}</select>
+      </div>`; };
+    return `<section class="card sched" id="schedule">
+      <h3>My study times</h3>
+      <p>Pick the days and times that fit around your work and family. Your dashboard shows the next session, and you can put them all in your phone or Google calendar with a reminder.</p>
+      <div class="sched-grid">${[1, 2, 3, 4, 5, 6, 0].map(row).join("")}</div>
+      <p class="sched-total">That’s <b id="schedTotal">0 h</b> a week. Your plan currently assumes <b>${weekly} h</b>.</p>
+      <div class="btn-row"><button class="btn small primary" id="schedSave">Save my study times</button><button class="btn small" id="schedIcs">Add to my calendar</button></div>
+      <p class="hint">The calendar file works with Google Calendar, Apple Calendar and Outlook. Each session repeats every week until your exam date.</p>
+    </section>`;
+  }
+  function readSchedule() {
+    const days = {};
+    $$(".sched-row").forEach(r => { days[r.dataset.day] = { on: r.querySelector("[data-s-on]").checked, start: r.querySelector("[data-s-start]").value || "19:00", dur: +r.querySelector("[data-s-dur]").value }; });
+    return days;
+  }
+  function bindSchedule() {
+    if (!$("#schedule")) return;
+    const total = () => { const d = readSchedule(); const m = Object.values(d).filter(x => x.on).reduce((n, x) => n + x.dur, 0); $("#schedTotal").textContent = fmtDur(m * 60); return m / 60; };
+    $$(".sched-row").forEach(r => r.addEventListener("change", () => {
+      const on = r.querySelector("[data-s-on]").checked; r.classList.toggle("on", on);
+      r.querySelectorAll("[data-s-start],[data-s-dur]").forEach(x => { x.disabled = !on; }); total();
+    }));
+    total();
+    $("#schedSave").addEventListener("click", async () => {
+      S.schedule = { days: readSchedule(), updated: ymd(today()) }; save();
+      const h = Math.max(1, Math.round(total()));
+      if (App.profile && h !== App.profile.weekly_hours && Object.values(S.schedule.days).some(x => x.on)) {
+        try { App.profile = await db.updateProfile({ weekly_hours: h }); } catch (e) {}
+      }
+      toast("Study times saved. Your plan now assumes " + h + " h a week."); App.rerender();
+    });
+    $("#schedIcs").addEventListener("click", () => {
+      const days = readSchedule(), on = Object.entries(days).filter(([, x]) => x.on);
+      if (!on.length) return toast("Tick at least one day first.");
+      const BY = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"], p2 = n => String(n).padStart(2, "0");
+      const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+Z$/, "Z");
+      const until = App.examTarget().replace(/-/g, "") + "T235959";
+      const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//StudyCISSP//Study times//EN", "CALSCALE:GREGORIAN", "METHOD:PUBLISH"];
+      on.forEach(([d, x]) => {
+        let first = today(); while (first.getDay() !== +d) first = addDays(first, 1);
+        const [h, m] = x.start.split(":").map(Number);
+        lines.push("BEGIN:VEVENT", `UID:study-${d}-${Date.now()}@studycissp`, `DTSTAMP:${stamp}`,
+          `DTSTART:${first.getFullYear()}${p2(first.getMonth() + 1)}${p2(first.getDate())}T${p2(h)}${p2(m)}00`, `DURATION:PT${x.dur}M`,
+          `RRULE:FREQ=WEEKLY;BYDAY=${BY[+d]};UNTIL=${until}`, "SUMMARY:CISSP study session",
+          "DESCRIPTION:Open https://studycissp.netlify.app and pick up where you left off.",
+          "BEGIN:VALARM", "TRIGGER:-PT10M", "ACTION:DISPLAY", "DESCRIPTION:CISSP study session in 10 minutes", "END:VALARM", "END:VEVENT");
+      });
+      lines.push("END:VCALENDAR");
+      const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([lines.join("\r\n")], { type: "text/calendar" })); a.download = "cissp-study-times.ics"; a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1500);
+      db.logEvent("user.calendar_export", {}); toast("Calendar file downloaded. Open it to add your sessions.");
+    });
+  }
   function viewPlan() {
     const now = today(), pl = App.plan(), ph = App.currentPhase();
     const phases = pl.phases.map(p => {
@@ -597,7 +739,7 @@
       const state = now > en ? "done" : (now >= st && now <= en) || p === ph ? "now" : "";
       const done = p.tasks.filter((t, i) => S.tasks[p.id + ":" + i] || autoDone(t)).length;
       return `<div class="phase ${state}" style="--pc:var(--${p.domain})"><div class="phase-card">
-        <div class="phase-top"><span class="phase-date">${fmtD(p.start)} – ${fmtDY(p.end)}</span><span class="kicker" style="--kc:var(--${p.domain})">${esc(p.iter)}</span>${state === "now" ? `<span class="now-pill">You are here</span>` : ""}<span class="phase-date" style="margin-left:auto">${done}/${p.tasks.length}</span>
+        <div class="phase-top"><span class="phase-date">${fmtD(p.start)} - ${fmtDY(p.end)}</span><span class="kicker" style="--kc:var(--${p.domain})">${esc(p.iter)}</span>${state === "now" ? `<span class="now-pill">You are here</span>` : ""}<span class="phase-date" style="margin-left:auto">${done}/${p.tasks.length}</span>
         <h3>${esc(p.title)}</h3></div>
         <p>${esc(p.text)}</p><p class="exit"><b>Exit criterion:</b> ${esc(p.exit)}</p>
         <ul class="tasks">${p.tasks.map((t, i) => { const k = p.id + ":" + i, auto = autoDone(t);
@@ -618,6 +760,7 @@
       <p class="lede">Built from your target date and self-assessment. Focus domains get the most days; strengths share a fast pass. Change your dates or ratings in <a href="#/profile">your profile</a> and the plan redraws itself.</p>
       <div class="grid-2" style="margin-top:28px">${countdown()}</div>
       <div class="btn-row"><button class="btn small ghost" id="restartPlan">Restart the plan from today</button></div>
+      ${scheduleCard()}
       <h2 class="h-section">Checkpoints</h2>
       <p class="sub">Checked automatically from your quiz accuracy, Tracker scores and mock exams.</p>
       <div class="grid-3">${cps}</div>
@@ -631,7 +774,7 @@
   function viewTracker() {
     const rows = D.map(d => {
       const s = S.scores[d.id] || {}, b = band(s.latest === "" ? null : s.latest), qa = App.quizAccuracy(d.id);
-      return `<tr style="${dc(d)}"><td><span class="toc-dot" style="display:inline-block;background:var(--${d.id});margin-right:8px"></span><b>D${d.n}</b> ${esc(d.short)}<div style="font-size:12px;color:var(--muted)">${d.weight}% weight · in-app quizzes ${qa == null ? "—" : qa + "%"}</div></td>
+      return `<tr style="${dc(d)}"><td><span class="toc-dot" style="display:inline-block;background:var(--${d.id});margin-right:8px"></span><b>D${d.n}</b> ${esc(d.short)}<div style="font-size:12px;color:var(--muted)">${d.weight}% weight · in-app quizzes ${qa == null ? "-" : qa + "%"}</div></td>
         <td><input type="number" min="0" max="100" data-score="${d.id}:base" value="${s.base ?? ""}" aria-label="Baseline D${d.n}"></td>
         <td><input type="number" min="0" max="100" data-score="${d.id}:latest" value="${s.latest ?? ""}" aria-label="Latest D${d.n}"></td>
         <td><span class="band ${b}" data-band="${d.id}">${bandLabel[b]}</span></td></tr>`;
@@ -643,7 +786,7 @@
       <h1 class="h-display">Scores, mocks <em>&amp; mistakes</em></h1>
       <p class="lede">Record scores from outside practice sets (Sybex, Boson). In-app quiz results are tracked automatically in <a href="#/insights">Insights</a>.</p>
       <div class="card" style="margin-top:26px;display:flex;gap:26px;align-items:center;flex-wrap:wrap">
-        <div><div class="kicker">Weighted readiness</div><div id="ready" style="font-family:var(--display);font-size:54px;line-height:1">—</div></div>
+        <div><div class="kicker">Weighted readiness</div><div id="ready" style="font-family:var(--display);font-size:54px;line-height:1">-</div></div>
         <p style="flex:1;min-width:220px;margin:0">Scores weighted by each domain’s share of the exam (Tracker score, or quiz accuracy when you haven’t entered one). Aim for 75%+ before your first mock.</p>
       </div>
       <h2 class="h-section">Domain scores</h2>
@@ -677,7 +820,7 @@
   function viewLatest() {
     return `<div class="page-narrow">
       <div class="kicker" style="--kc:var(--d3)">What’s new</div>
-      <h1 class="h-display">The field, <em>2024–2026</em></h1>
+      <h1 class="h-display">The field, <em>2024-2026</em></h1>
       <p class="lede">The exam is written to the 2024 outline, but questions are framed in today’s practice. These are the developments worth recognising by name.</p>
       <div style="margin-top:34px;display:grid;gap:16px">
         ${P.latest.map(x => `<div class="card"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="tag plain">${esc(x.tag)}</span><span class="phase-date">${esc(x.date)}</span>
@@ -709,16 +852,17 @@
     return `<div class="page-narrow">
       <div class="kicker">Resources</div>
       <h1 class="h-display">The <em>library</em></h1>
-      <p class="lede">A short list on purpose. One core book, one practice bank, one mobile app, free video for review, and the primary sources. Add your own in <a href="#/library">My library</a>.</p>
+      <p class="lede">A short list, on purpose. Free official documents first, then the books and practice banks most people pass with. Add your own in <a href="#/library">My library</a>.</p>
       <div class="featured">
         <div class="pdf-cover"><small>ISC2 · PDF · 15 pages</small><b>The Ultimate Guide to the CISSP</b></div>
         <div>
           <div class="kicker">Official overview from ISC2</div>
           <h3 style="font-family:var(--display);font-weight:500;font-size:26px;margin:6px 0 8px">The Ultimate Guide to the CISSP</h3>
-          <p style="color:var(--ink-2);margin:0 0 6px">Who the CISSP is for, the experience requirement, domain weights, exam format (100–150 CAT items, 3 hours, 700/1000), the six-step pathway, endorsement within nine months, and CPE rules (120 over three years, US$135 AMF). It also notes the new exam outline from 15 April 2027.</p>
+          <p style="color:var(--ink-2);margin:0 0 6px">Who the CISSP is for, the experience requirement, domain weights, exam format (100-150 CAT items, 3 hours, 700/1000), the six-step pathway, endorsement within nine months, and CPE rules (120 over three years, US$135 AMF). It also notes the new exam outline from 15 April 2027.</p>
           <div class="btn-row" style="margin-top:14px"><a class="btn primary small" href="resources/ISC2-Ultimate-Guide-to-the-CISSP.pdf" target="_blank" rel="noopener">Open the PDF</a><a class="btn small" href="resources/ISC2-Ultimate-Guide-to-the-CISSP.pdf" download>Download</a></div>
         </div>
       </div>
+      <details class="pdf-view"><summary>Read the ISC2 guide here</summary><iframe src="resources/ISC2-Ultimate-Guide-to-the-CISSP.pdf#view=FitH" title="The Ultimate Guide to the CISSP (ISC2)" loading="lazy"></iframe><p class="hint">If it doesn’t show on your phone, use Open the PDF above.</p></details>
       ${P.resources.map(g => `<h2 class="h-section">${esc(g.group)}</h2>${g.items.map(r => `<div class="res"><div class="res-ico">${r.ico}</div><div><h4><a href="${esc(r.u)}" target="_blank" rel="noopener">${esc(r.t)} ↗</a></h4><p>${esc(r.d)}</p><div class="tags">${r.tags.map(t => `<span class="tag plain">${esc(t)}</span>`).join("")}</div></div></div>`).join("")}`).join("")}
       <div id="privateBlock"></div>
     </div>`;
@@ -766,7 +910,7 @@
         <div>
           <div class="kicker">A CISSP study companion</div>
           <h1 class="h-display">Read slowly.<br><em>Pass once.</em></h1>
-          <p class="lede">Eight beautifully written chapters, small animations for the tricky ideas, a plan built around your exam date, and quizzes, flashcards and mock exams that show exactly where you stand. Whatever your background, you can do this.</p>
+          <p class="lede">Study the CISSP one short page at a time. Each chapter is broken into small sections, the tricky ideas have little animations, and a quick quiz after each topic tells you if it has sunk in. Your plan works back from your exam date, so you always know what to do next.</p>
           <div class="btn-row">${db.mode === "cloud" ? `<a class="btn primary" href="#/signup/gold">Create a free account</a><a class="btn" href="#/login">Sign in</a>` : `<a class="btn primary" href="#/welcome">Start studying on this device</a>`}</div>
           ${db.mode === "cloud" ? `<ol class="land-steps"><li><b>1</b>Create your free account</li><li><b>2</b>Verify your email</li><li><b>3</b>Tell us your exam date and what you know</li><li><b>4</b>Get your personal plan</li></ol>` : `<ol class="land-steps"><li><b>1</b>Tell us your exam date and what you know</li><li><b>2</b>Get your personal plan</li></ol>`}
         </div>
@@ -877,7 +1021,7 @@
     const at = Math.max(0, ids.indexOf(r.b || null));
     const href = (id) => id ? `#/domain/${d.id}/${id}` : `#/domain/${d.id}`;
     pageKeys = { prev: at > 0 ? href(ids[at - 1]) : null, next: at < ids.length - 1 ? href(ids[at + 1]) : null };
-    // "Got it — next": mark as understood and turn the page
+    // "Got it - next": mark as understood and turn the page
     const rn = $("#readNext"); if (rn) rn.addEventListener("click", () => { if (!S.read[rn.dataset.readKey]) markRead(rn.dataset.readKey, true); });
     $$("[data-read]").forEach(b => b.addEventListener("click", () => {
       const k = b.dataset.read, on = !S.read[k];
@@ -924,7 +1068,7 @@
       const el = $("#ready"); if (!el) return;
       let w = 0, s = 0;
       D.forEach(d => { const v = App.domainScore(d.id).v; if (v != null) { w += d.weight; s += d.weight * v; } });
-      if (!w) { el.textContent = "—"; el.style.color = ""; return; }
+      if (!w) { el.textContent = "-"; el.style.color = ""; return; }
       const v = Math.round(s / w); el.textContent = v + "%"; el.style.color = `var(--${{ green: "good", orange: "warn", red: "bad" }[band(v)]})`;
     };
     $$("[data-score]").forEach(inp => inp.addEventListener("input", () => {
@@ -966,8 +1110,10 @@
   App.register("home", { render: viewHome, area: "other", nav: "home" });
   App.register("read", { render: viewChapters, title: "Chapters", nav: "read", area: "read" });
   App.register("domain", { render: viewDomain, bind: bindDomain, nav: "read", area: "read", title: r => byId[r.a] ? `D${byId[r.a].n} ${byId[r.a].title}` : "Chapter" });
-  App.register("plan", { render: viewPlan, title: "Study plan", nav: "plan", area: "plan", bind: () => {
+  App.register("plan", { render: viewPlan, title: "Study plan", nav: "plan", area: "plan", bind: (r) => {
     $("#restartPlan").addEventListener("click", () => { if (confirm("Redraw the plan starting today? Ticked tasks stay ticked.")) { S.planStart = ymd(today()); save(); App.rerender(); } });
+    bindSchedule();
+    if (r.a === "schedule") { const el = $("#schedule"); if (el) requestAnimationFrame(() => el.scrollIntoView({ block: "start" })); }
   } });
   App.register("tracker", { render: viewTracker, bind: bindTracker, title: "Tracker", nav: "insights", area: "insights" });
   App.register("landing", { render: viewLanding, bind: () => { if (window.Anim) window.Anim.mountAll(view); }, title: "CISSP study, made calm", public: true, site: true, nav: "landing" });
@@ -996,7 +1142,7 @@
   });
   Object.entries(window.GLOSSARY || {}).forEach(([d, list]) => list.forEach(e => index.push({ k: `D${byId[d].n} · Glossary`, t: e[0], s: e[1] + " " + e[2], u: `#/glossary/${d}`, id: d, txt: e.join(" ").toLowerCase() })));
   App.cards.forEach(c => index.push({ k: `D${byId[c.d].n} · Flashcard`, t: c.front, s: c.back, u: `#/flashcards/${c.d}`, id: c.d, txt: (c.front + " " + c.back).toLowerCase() }));
-  [["Study plan", "#/plan", "calendar phases checkpoints iteration exam date deadline hours"], ["Quiz", "#/quiz", "questions practice topic domain"], ["Flashcards", "#/flashcards", "cards spaced repetition"], ["Mock exam", "#/mock", "timed test full"], ["Insights", "#/insights", "time spent analytics streak accuracy"], ["Exam tactics", "#/tactics", "method qualifier manager cat adaptive logistics rules"], ["Tracker", "#/tracker", "scores error log mock readiness"], ["What’s new 2024–2026", "#/latest", P.latest.map(x => x.title + " " + x.body).join(" ")], ["Resources", "#/resources", "books sybex boson pdf ultimate guide video nist owasp"], ["My library", "#/library", "upload documents youtube links"], ["Privacy & trust", "#/privacy", "gdpr dpdp iso 27001 31000 delete data export"]]
+  [["Study plan", "#/plan", "calendar phases checkpoints iteration exam date deadline hours"], ["Quiz", "#/quiz", "questions practice topic domain"], ["Flashcards", "#/flashcards", "cards spaced repetition"], ["Mock exam", "#/mock", "timed test full"], ["Insights", "#/insights", "time spent analytics streak accuracy"], ["Exam tactics", "#/tactics", "method qualifier manager cat adaptive logistics rules"], ["Tracker", "#/tracker", "scores error log mock readiness"], ["What’s new 2024-2026", "#/latest", P.latest.map(x => x.title + " " + x.body).join(" ")], ["Resources", "#/resources", "books sybex boson pdf ultimate guide video nist owasp"], ["My library", "#/library", "upload documents youtube links"], ["Privacy & trust", "#/privacy", "gdpr dpdp iso 27001 31000 delete data export"]]
     .forEach(([t, u, x]) => index.push({ k: "Page", t, s: "", u, id: null, txt: (t + " " + x).toLowerCase() }));
 
   const modal = $("#searchModal"), sIn = $("#searchInput"), sRes = $("#searchResults");

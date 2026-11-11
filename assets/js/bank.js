@@ -1,4 +1,4 @@
-/* StudyCISSP — extra question bank and flashcards.
+/* StudyCISSP - extra question bank and flashcards.
    Every question carries a domain (d) and topic (t = section id). */
 window.BANK = {
   // topics of the end-of-chapter questions, in order
@@ -62,7 +62,7 @@ window.BANK = {
 
     // ---------- D3 ----------
     { d: "d3", t: "models", q: "Which model prevents a high-integrity process from reading low-integrity data?",
-      o: ["Bell–LaPadula", "Biba", "Brewer–Nash", "Take–Grant"], a: 1,
+      o: ["Bell-LaPadula", "Biba", "Brewer-Nash", "Take-Grant"], a: 1,
       w: "Biba’s simple integrity rule: no read down." },
     { d: "d3", t: "crypto-basics", q: "A company with 50 employees wants every pair to communicate privately with symmetric keys. How many keys are needed?",
       o: ["50", "100", "1,225", "2,500"], a: 2,
@@ -70,7 +70,7 @@ window.BANK = {
     { d: "d3", t: "crypto-basics", q: "Which block cipher mode should NOT be used because identical plaintext blocks produce identical ciphertext?",
       o: ["CBC", "GCM", "ECB", "CTR"], a: 2,
       w: "ECB encrypts each block independently and leaks patterns." },
-    { d: "d3", t: "crypto-asym", q: "What property does ephemeral Diffie–Hellman (DHE/ECDHE) add to TLS?",
+    { d: "d3", t: "crypto-asym", q: "What property does ephemeral Diffie-Hellman (DHE/ECDHE) add to TLS?",
       o: ["Non-repudiation", "Perfect forward secrecy", "Smaller certificates", "Hashing"], a: 1,
       w: "New key pairs per session mean a stolen long-term key cannot decrypt past sessions." },
     { d: "d3", t: "pki", q: "A browser needs the current revocation status of a single certificate without downloading a large list. Which mechanism fits?",
@@ -115,8 +115,8 @@ window.BANK = {
       o: ["It is on a class B private network", "It could not reach a DHCP server and assigned itself an APIPA address", "It is using IPv6", "Its DNS server is down"], a: 1,
       w: "169.254.0.0/16 is APIPA (link-local). Windows assigns it when no DHCP server answers, so the host has no usable network configuration." },
     { d: "d4", t: "tcpip", q: "Which address range is reserved for private use and NOT routed on the public internet?",
-      o: ["172.32.0.0 – 172.40.255.255", "192.169.0.0 – 192.169.255.255", "172.16.0.0 – 172.31.255.255", "11.0.0.0 – 11.255.255.255"], a: 2,
-      w: "RFC 1918 private ranges are 10.0.0.0/8, 172.16.0.0–172.31.255.255 and 192.168.0.0/16. The others are public look-alikes." },
+      o: ["172.32.0.0 - 172.40.255.255", "192.169.0.0 - 192.169.255.255", "172.16.0.0 - 172.31.255.255", "11.0.0.0 - 11.255.255.255"], a: 2,
+      w: "RFC 1918 private ranges are 10.0.0.0/8, 172.16.0.0-172.31.255.255 and 192.168.0.0/16. The others are public look-alikes." },
 
     // ---------- D5 ----------
     { d: "d5", t: "aaa", q: "Which combination is true multi-factor authentication?",
@@ -243,10 +243,10 @@ window.BANK = {
       ["Data remanence", "Residual data left on media after deletion."]
     ],
     d3: [
-      ["Bell–LaPadula", "Confidentiality: no read up, no write down."],
+      ["Bell-LaPadula", "Confidentiality: no read up, no write down."],
       ["Biba", "Integrity: no read down, no write up."],
-      ["Clark–Wilson", "Integrity via well-formed transactions, access triple, separation of duties."],
-      ["Brewer–Nash", "Chinese Wall: prevents conflicts of interest based on prior access."],
+      ["Clark-Wilson", "Integrity via well-formed transactions, access triple, separation of duties."],
+      ["Brewer-Nash", "Chinese Wall: prevents conflicts of interest based on prior access."],
       ["Reference monitor", "Mediates all access; tamper-proof, always invoked, verifiable."],
       ["Symmetric key count", "n(n−1)/2"],
       ["Asymmetric key count", "2n (one pair each)"],
@@ -275,8 +275,8 @@ window.BANK = {
       ["SPF / DKIM / DMARC", "Allowed senders / message signature / policy and reporting."],
       ["SDN", "Separates control plane from data plane."],
       ["SYN flood defence", "SYN cookies, rate limiting, DDoS scrubbing."],
-      ["IPv4 classes A / B / C (first octet)", "A 1–126 (/8), B 128–191 (/16), C 192–223 (/24). D 224–239 is multicast; E 240–255 reserved."],
-      ["RFC 1918 private ranges", "10.0.0.0/8, 172.16.0.0/12 (172.16–172.31), 192.168.0.0/16."],
+      ["IPv4 classes A / B / C (first octet)", "A 1-126 (/8), B 128-191 (/16), C 192-223 (/24). D 224-239 is multicast; E 240-255 reserved."],
+      ["RFC 1918 private ranges", "10.0.0.0/8, 172.16.0.0/12 (172.16-172.31), 192.168.0.0/16."],
       ["127.0.0.1 and 169.254.x.x", "Loopback (this computer) and APIPA (self-assigned when DHCP fails)."],
       ["IPv6 ::1 / fe80::/10 / fc00::/7", "Loopback / link-local / unique local (private)."]
     ],

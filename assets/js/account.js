@@ -1,4 +1,4 @@
-/* StudyCISSP — sign-in, onboarding, profile, privacy & trust centre */
+/* StudyCISSP - sign-in, onboarding, profile, privacy & trust centre */
 (function () {
   "use strict";
   const A = window.App, { D, byId, $, $$, esc, dc, ymd, today, addDays, fmtDY, db } = A;
@@ -308,12 +308,12 @@
         <div class="card danger"><h3>Delete my account</h3><p>Erases your account, plan, progress and files now. This can’t be undone.</p><button class="btn small" id="pvDelete">Delete everything</button></div>
       </div>
       ${cloud ? `<div class="card" style="margin-top:16px"><h3>Your recent sign-ins and devices</h3><p>We keep these for 180 days to protect your account. Don’t recognise one? Change your password and raise a request below.</p>
-        ${access.length ? `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>When</th><th>Where (approx.)</th><th>Device</th><th>IP</th></tr></thead><tbody>${access.map(x => `<tr><td style="white-space:nowrap">${new Date(x.at).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}${x.event === "sign_in" ? ` <span class="tag plain">sign-in</span>` : ""}</td><td>${esc([x.city, x.region, x.country].filter(Boolean).join(", ") || "—")}${x.geo_source === "gps" ? " · GPS" : ""}</td><td>${esc([x.device_model, x.device_type, x.os, x.browser].filter(Boolean).join(" · "))}</td><td style="font-family:var(--mono);font-size:12px">${esc(x.ip || "—")}</td></tr>`).join("")}</tbody></table></div>` : `<p class="hint">No records yet.</p>`}</div>
+        ${access.length ? `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>When</th><th>Where (approx.)</th><th>Device</th><th>IP</th></tr></thead><tbody>${access.map(x => `<tr><td style="white-space:nowrap">${new Date(x.at).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}${x.event === "sign_in" ? ` <span class="tag plain">sign-in</span>` : ""}</td><td>${esc([x.city, x.region, x.country].filter(Boolean).join(", ") || "-")}${x.geo_source === "gps" ? " · GPS" : ""}</td><td>${esc([x.device_model, x.device_type, x.os, x.browser].filter(Boolean).join(" · "))}</td><td style="font-family:var(--mono);font-size:12px">${esc(x.ip || "-")}</td></tr>`).join("")}</tbody></table></div>` : `<p class="hint">No records yet.</p>`}</div>
       <div class="card" style="margin-top:16px"><h3>Raise a request</h3><p>For corrections you can’t make yourself, restriction, nomination, a grievance or any question about your data.</p>
         <div class="form-row"><label>Type<select id="rqKind"><option value="rectify">Correction</option><option value="access">Access / copy</option><option value="restrict">Restrict processing</option><option value="erase">Erasure</option><option value="withdraw_consent">Withdraw consent</option><option value="grievance">Grievance</option><option value="other">Other / nomination</option></select></label>
         <label style="flex:1">Details<textarea id="rqText" maxlength="2000" placeholder="Tell us what you need"></textarea></label><button class="btn small primary" id="rqGo">Send</button></div>
         ${reqs.length ? `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Sent</th><th>Type</th><th>Status</th><th>Response</th></tr></thead><tbody>${reqs.map(r => `<tr><td>${fmtDY(r.created_at)}</td><td>${esc(r.kind)}</td><td><span class="tag plain">${esc(r.status)}</span></td><td>${esc(r.resolution || "")}</td></tr>`).join("")}</tbody></table></div>` : ""}</div>
-        <p class="hint">Consent recorded ${p.consent_terms_at ? "on " + fmtDY(p.consent_terms_at) : ""} for notice version ${esc(p.consent_version || "—")}.</p>` : `<p class="hint">Device-only mode: all data lives in this browser and never leaves it.</p>`}` : "";
+        <p class="hint">Consent recorded ${p.consent_terms_at ? "on " + fmtDY(p.consent_terms_at) : ""} for notice version ${esc(p.consent_version || "-")}.</p>` : `<p class="hint">Device-only mode: all data lives in this browser and never leaves it.</p>`}` : "";
     return `<div class="page-narrow">
       <div class="kicker">Privacy &amp; trust</div>
       <h1 class="h-display">Your data, <em>handled well</em></h1>

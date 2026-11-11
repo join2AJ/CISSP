@@ -1,4 +1,4 @@
-/* StudyCISSP — public website pages: features, pricing, about, FAQ, contact, terms, footer */
+/* StudyCISSP - public website pages: features, pricing, about, FAQ, contact, terms, footer */
 (function () {
   "use strict";
   const A = window.App, { D, P, $, $$, esc, dc, db } = A;
@@ -29,7 +29,7 @@
     ["🃏", "Flashcards that space themselves", "Cards you know come back later; cards you miss come back tomorrow. Memory that lasts to exam day."],
     ["⏱", "Timed mock exams", "No feedback until the end and no going back, weighted like the real exam."],
     ["📈", "Insights on your time", "See active study time per day, domain and topic, plus streaks and accuracy."],
-    ["🔤", "A–Z glossary", "Nearly 200 terms with what they mean, where you’ll meet them and real tools that use them."],
+    ["🔤", "A-Z glossary", "Nearly 200 terms with what they mean, where you’ll meet them and real tools that use them."],
     ["📚", "Your own library", "Keep your notes, PDFs and favourite videos next to the chapters they belong to."]
   ];
   function viewFeatures() {
@@ -55,7 +55,7 @@
       ${A.planCards({ signup: !(db.mode === "cloud" && db.user) })}
       <h2 class="h-section">Compare plans</h2>
       <div class="tbl-wrap"><table class="tbl compare"><thead><tr><th>What’s included</th>${plans.map(p => `<th class="plan-${p.id}"><span class="plan-chip plan-${p.id}">${esc(p.name)}</span></th>`).join("")}</tr></thead><tbody>
-        ${Object.entries(M).map(([k, l]) => `<tr><td>${esc(l)}</td>${plans.map(p => `<td class="cmp">${(p.modules || []).includes(k) ? `<span class="yes">✓</span>` : `<span class="no">—</span>`}</td>`).join("")}</tr>`).join("")}
+        ${Object.entries(M).map(([k, l]) => `<tr><td>${esc(l)}</td>${plans.map(p => `<td class="cmp">${(p.modules || []).includes(k) ? `<span class="yes">✓</span>` : `<span class="no">-</span>`}</td>`).join("")}</tr>`).join("")}
         <tr><td>Free period</td>${plans.map(p => `<td class="cmp">${p.free_months} months</td>`).join("")}</tr>
         <tr><td>After the free period</td>${plans.map(p => `<td class="cmp">${+p.price > 0 ? A.money(+p.price, p.currency) + " / year" : "To be announced"}</td>`).join("")}</tr>
       </tbody></table></div>
@@ -72,7 +72,7 @@
       <div class="grid-2" style="margin-top:34px">
         <div class="card"><h3>Who it’s for</h3><p>Security managers, architects, analysts, auditors, consultants and IT leaders. Typical roles include CISO, security architect, security manager and security consultant.</p></div>
         <div class="card"><h3>The experience requirement</h3><p>Five years of paid work in two or more of the eight domains. A relevant degree or approved credential can count for one year. Pass without it and you become an Associate of ISC2, with six years to gain the experience.</p></div>
-        <div class="card"><h3>The exam</h3><p>A computer-adaptive test of 100–150 questions in up to three hours at a Pearson VUE centre. You need 700 out of 1,000. Questions test judgement, not just recall.</p></div>
+        <div class="card"><h3>The exam</h3><p>A computer-adaptive test of 100-150 questions in up to three hours at a Pearson VUE centre. You need 700 out of 1,000. Questions test judgement, not just recall.</p></div>
         <div class="card"><h3>After you pass</h3><p>Get endorsed by an ISC2-certified member within nine months, then keep your certification with 120 CPE credits every three years and an annual maintenance fee.</p></div>
       </div>
       <h2 class="h-section" id="domains">The eight domains</h2>

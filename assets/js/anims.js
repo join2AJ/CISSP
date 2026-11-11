@@ -1,4 +1,4 @@
-/* StudyCISSP — small step-by-step animations for hard topics.
+/* StudyCISSP - small step-by-step animations for hard topics.
    Place <div class="anim" data-anim="osi"></div> in content; Anim.mountAll(root) brings it to life.
    Each animation is a list of states; CSS transitions do the moving. */
 (function () {
@@ -58,8 +58,8 @@
       show(st, i) { st.querySelectorAll("[data-k]").forEach(e => e.classList.toggle("on", +e.dataset.k <= i)); return this.caps[i]; }
     },
     models: {
-      title: "Bell–LaPadula vs Biba: who can read and write where",
-      html: `<div class="mv">${[["blp", "Bell–LaPadula", "Confidentiality", ["Top Secret", "Secret", "Unclassified"]], ["biba", "Biba", "Integrity", ["High integrity", "Medium", "Low integrity"]]].map(([k, n, g, lv]) => `
+      title: "Bell-LaPadula vs Biba: who can read and write where",
+      html: `<div class="mv">${[["blp", "Bell-LaPadula", "Confidentiality", ["Top Secret", "Secret", "Unclassified"]], ["biba", "Biba", "Integrity", ["High integrity", "Medium", "Low integrity"]]].map(([k, n, g, lv]) => `
         <div class="mv-p" data-m="${k}"><div class="mv-t"><b>${n}</b><small>${g}</small></div>
           ${lv.map((x, j) => `<div class="mv-lv ${j === 1 ? "me" : ""}">${x}${j === 1 ? " <em>you are here</em>" : ""}</div>`).join("")}
           <div class="mv-ar"><span class="lbl"></span></div><div class="mv-v"></div></div>`).join("")}</div>`,
@@ -67,10 +67,10 @@
       ops: [null, ["up", "Read up"], ["down", "Read down"], ["up", "Write up"], ["down", "Write down"]],
       verdict: { blp: [null, 0, 1, 1, 0], biba: [null, 1, 0, 0, 1] },
       caps: ["A subject cleared at the middle level tries four operations under each model.",
-        "Read up: Bell–LaPadula says no (you can’t read secrets above you). Biba says yes (reading cleaner data is safe).",
-        "Read down: Bell–LaPadula allows it. Biba blocks it, because low-integrity data could contaminate you.",
-        "Write up: Bell–LaPadula allows it (it can’t leak secrets). Biba blocks it (you’d contaminate cleaner data).",
-        "Write down: Bell–LaPadula blocks it (that would leak secrets). Biba allows it. The two models are mirror images."],
+        "Read up: Bell-LaPadula says no (you can’t read secrets above you). Biba says yes (reading cleaner data is safe).",
+        "Read down: Bell-LaPadula allows it. Biba blocks it, because low-integrity data could contaminate you.",
+        "Write up: Bell-LaPadula allows it (it can’t leak secrets). Biba blocks it (you’d contaminate cleaner data).",
+        "Write down: Bell-LaPadula blocks it (that would leak secrets). Biba allows it. The two models are mirror images."],
       show(st, i) {
         const op = this.ops[i];
         st.querySelectorAll(".mv-p").forEach(p => {
@@ -118,7 +118,7 @@
     backup: {
       title: "Incremental vs differential backups",
       html: `<div class="bk"><div></div>${["Sun", "Mon", "Tue", "Wed", "Thu"].map(d => `<div class="bk-d">${d}</div>`).join("")}
-        ${[["inc", "Incremental", ["Full", "Mon", "Tue", "Wed", "Thu"]], ["dif", "Differential", ["Full", "Mon", "Mon–Tue", "Mon–Wed", "Mon–Thu"]]].map(([k, n, cells]) => `<div class="bk-n">${n}</div>${cells.map((c, j) => `<div class="bk-c ${j === 0 ? "full" : ""}" data-r="${k}" data-j="${j}" style="--w:${j === 0 ? 100 : k === "inc" ? 22 : 18 + j * 18}%"><i></i><span>${c}</span></div>`).join("")}`).join("")}</div>`,
+        ${[["inc", "Incremental", ["Full", "Mon", "Tue", "Wed", "Thu"]], ["dif", "Differential", ["Full", "Mon", "Mon-Tue", "Mon-Wed", "Mon-Thu"]]].map(([k, n, cells]) => `<div class="bk-n">${n}</div>${cells.map((c, j) => `<div class="bk-c ${j === 0 ? "full" : ""}" data-r="${k}" data-j="${j}" style="--w:${j === 0 ? 100 : k === "inc" ? 22 : 18 + j * 18}%"><i></i><span>${c}</span></div>`).join("")}`).join("")}</div>`,
       steps: 7,
       caps: ["Two strategies, both starting with a full backup on Sunday.",
         "Sunday: a full backup copies everything (and clears the archive bit).",

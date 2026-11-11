@@ -1,4 +1,4 @@
-/* StudyCISSP — additional questions so every section has at least three for topic quizzes. */
+/* StudyCISSP - additional questions so every section has at least three for topic quizzes. */
 (window.BANK.questions = window.BANK.questions || []).push(
   // ---------- D1 ----------
   { d: "d1", t: "cia", q: "An attacker changes the amount on an invoice in transit without being detected. Which security property was violated?",
@@ -75,8 +75,8 @@
     o: ["Defence in depth", "Zero trust", "Security through obscurity", "Least privilege only"], a: 1,
     w: "Zero trust (NIST SP 800-207) removes implicit trust based on network location." },
   { d: "d3", t: "models", q: "Users can only change account balances through approved programs that enforce business rules, and an audit routine checks the data. Which model is this?",
-    o: ["Bell–LaPadula", "Biba", "Clark–Wilson", "Graham–Denning"], a: 2,
-    w: "Clark–Wilson uses well-formed transactions (TPs) on constrained data (CDIs) checked by IVPs." },
+    o: ["Bell-LaPadula", "Biba", "Clark-Wilson", "Graham-Denning"], a: 2,
+    w: "Clark-Wilson uses well-formed transactions (TPs) on constrained data (CDIs) checked by IVPs." },
   { d: "d3", t: "evaluation", q: "Which Common Criteria document describes the security claims for one specific product?",
     o: ["Protection Profile", "Security Target", "Target of Evaluation", "Evaluation Assurance Level"], a: 1,
     w: "A Protection Profile states needs for a class of products; the Security Target states what a specific product claims." },
@@ -155,7 +155,7 @@
     w: "PAM vaults, time-limits and records privileged access." },
   { d: "d5", t: "attacks", q: "An attacker tries one common password against thousands of accounts to avoid lockouts. This is:",
     o: ["Brute force", "Password spraying", "Credential stuffing", "Rainbow table attack"], a: 1,
-    w: "Spraying uses few passwords across many accounts; stuffing reuses leaked username–password pairs." },
+    w: "Spraying uses few passwords across many accounts; stuffing reuses leaked username-password pairs." },
   { d: "d5", t: "attacks", q: "An attacker steals a password hash from memory and uses it to authenticate without cracking it. This is:",
     o: ["Pass-the-hash", "Kerberoasting", "Phishing", "Session fixation"], a: 0,
     w: "Pass-the-hash replays the hash itself against systems that accept it (e.g. NTLM)." },
