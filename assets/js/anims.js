@@ -1,4 +1,4 @@
-/* The CISSP Reader — small step-by-step animations for hard topics.
+/* StudyCISSP — small step-by-step animations for hard topics.
    Place <div class="anim" data-anim="osi"></div> in content; Anim.mountAll(root) brings it to life.
    Each animation is a list of states; CSS transitions do the moving. */
 (function () {

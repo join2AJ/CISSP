@@ -1,4 +1,4 @@
-/* The CISSP Reader — sign-in, onboarding, profile, privacy & trust centre */
+/* StudyCISSP — sign-in, onboarding, profile, privacy & trust centre */
 (function () {
   "use strict";
   const A = window.App, { D, byId, $, $$, esc, dc, ymd, today, addDays, fmtDY, db } = A;
@@ -6,22 +6,22 @@
   const VERSION = C.privacyVersion || "2026-11-v1";
   const cloud = db.mode === "cloud";
 
-  const shell = (inner, wide) => `<div class="auth ${wide ? "wide" : ""}"><div class="auth-brand"><span class="brand-mark">C</span><div><b>The CISSP Reader</b><small>Read slowly. Pass once.</small></div></div>${inner}</div>`;
+  const shell = (inner, wide) => `<div class="auth ${wide ? "wide" : ""}">${inner}</div>`;
+  const offline = () => cloud ? "" : `<div class="okbox">Online accounts are opening soon. Until then you can <a href="#/welcome">study on this device</a>; your progress stays in this browser.</div>`;
   const busy = (btn, on, label) => { btn.disabled = on; if (label) btn.textContent = label; };
 
   /* ---------------- login ---------------- */
   function viewLogin() {
-    if (!cloud) return shell(`<div class="auth-card"><h1>Accounts are coming soon</h1><p class="auth-sub">Online accounts aren’t switched on yet. You can still study now: your plan and progress are saved privately in this browser.</p><div class="btn-row"><a class="btn primary" href="#/welcome">Set up my plan on this device</a><a class="btn ghost" href="#/landing">Back</a></div></div>`);
     return shell(`<div class="auth-card">
       <h1>Welcome back</h1><p class="auth-sub">Every session moves you closer. Sign in to pick up where you left off.</p>
       <form id="loginForm" class="stack">
         <label>Email or username<input id="lId" autocomplete="username" required></label>
         <label>Password<input id="lPw" type="password" autocomplete="current-password" required></label>
-        <button class="btn primary" id="lGo">Sign in</button>
-      </form>
+        <button class="btn primary" id="lGo" ${cloud ? "" : "disabled"}>Sign in</button>
+      </form>${offline()}
       <div id="lMsg"></div>
       <div class="auth-links"><a href="#/forgot">Forgot password?</a><a href="#/signup">Create an account</a></div>
-    </div><p class="auth-foot"><a href="#/privacy">Privacy &amp; trust</a></p>`);
+    </div><div class="auth-side"><b>New here?</b> Every plan is free for its first year. <a href="#/pricing">Compare plans</a></div>`);
   }
   function bindLogin() {
     const f = $("#loginForm"); if (!f) return;
@@ -46,7 +46,6 @@
 
   /* ---------------- signup ---------------- */
   function viewSignup(r) {
-    if (!cloud) return viewLogin();
     const pre = (r && r.a) || "gold";
     return shell(`<div class="auth-card">
       <h1>Start your CISSP journey</h1><p class="auth-sub">Free. A personal plan, quizzes, flashcards and mock exams, built around your exam date.</p>
@@ -60,8 +59,8 @@
         </fieldset>
         <label class="check"><input type="checkbox" id="sAge" required><span>I am 18 or older.</span></label>
         <label class="check"><input type="checkbox" id="sConsent" required><span>I have read the <a href="#/privacy" target="_blank">privacy notice</a> and consent to my account, study plan and study activity being processed to run this service. I can withdraw consent or delete my account at any time.</span></label>
-        <button class="btn primary" id="sGo">Create account</button>
-      </form>
+        <button class="btn primary" id="sGo" ${cloud ? "" : "disabled"}>Create account</button>
+      </form>${offline()}
       <div id="sMsg"></div>
       <div class="auth-links"><a href="#/login">I already have an account</a></div>
     </div>`);
@@ -229,7 +228,7 @@
   const controller = C.contactEmail ? `<a href="mailto:${esc(C.contactEmail)}">${esc(C.contactEmail)}</a>` : "the site administrator (use “Raise a request” below)";
   function notice() {
     return `<div class="prose" style="max-width:none">
-      <p class="intro">This notice explains what The CISSP Reader collects, why, and the control you have over it. It is written to meet the EU General Data Protection Regulation (GDPR) and India’s Digital Personal Data Protection Act 2023 (DPDP) with the DPDP Rules 2025. Version ${esc(VERSION)}.</p>
+      <p class="intro">This notice explains what StudyCISSP collects, why, and the control you have over it. It is written to meet the EU General Data Protection Regulation (GDPR) and India’s Digital Personal Data Protection Act 2023 (DPDP) with the DPDP Rules 2025. Version ${esc(VERSION)}.</p>
       <h3>Who is responsible</h3><p>The operator of this site is the data controller (a “Data Fiduciary” under DPDP). Contact and grievance officer: ${controller}. We aim to acknowledge requests within 7 days and resolve them within 30 days.</p>
       <h3>What we collect</h3><ul>
         <li><strong>Account</strong>: email, username, name, and a password hash managed by our authentication provider. We never see your password.</li>
@@ -343,10 +342,10 @@
     });
   }
 
-  A.register("login", { render: viewLogin, bind: bindLogin, title: "Sign in", bare: true, public: true });
-  A.register("signup", { render: viewSignup, bind: bindSignup, title: "Create account", bare: true, public: true });
-  A.register("forgot", { render: viewForgot, bind: bindForgot, title: "Reset password", bare: true, public: true });
-  A.register("reset", { render: viewReset, bind: bindReset, title: "New password", bare: true, public: true });
+  A.register("login", { render: viewLogin, bind: bindLogin, title: "Sign in", bare: true, public: true, site: true, nav: "login" });
+  A.register("signup", { render: viewSignup, bind: bindSignup, title: "Create account", bare: true, public: true, site: true, nav: "signup" });
+  A.register("forgot", { render: viewForgot, bind: bindForgot, title: "Reset password", bare: true, public: true, site: true });
+  A.register("reset", { render: viewReset, bind: bindReset, title: "New password", bare: true, public: true, site: true });
   A.register("consent", { render: viewConsent, bind: bindConsent, title: "Consent", bare: true });
   A.register("welcome", { render: viewWelcome, bind: bindWelcome, title: "Welcome", bare: true });
   A.register("profile", { render: viewProfile, bind: bindProfile, title: "Profile", nav: "plan", area: "other" });

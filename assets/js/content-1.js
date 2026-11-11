@@ -1,4 +1,4 @@
-/* The CISSP Reader — chapter content, Domains 1–4
+/* StudyCISSP — chapter content, Domains 1–4
    Written against the ISC2 CISSP Exam Outline effective 15 April 2024
    (the outline in force until 14 April 2027). */
 window.DOMAINS = window.DOMAINS || [];

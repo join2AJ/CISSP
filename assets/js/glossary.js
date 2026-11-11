@@ -1,4 +1,4 @@
-/* The CISSP Reader — glossary.
+/* StudyCISSP — glossary.
    Each entry: [term (with full form), meaning, where it is used, tools / examples] */
 window.GLOSSARY = {
   d1: [

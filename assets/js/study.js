@@ -1,4 +1,4 @@
-/* The CISSP Reader — quiz, flashcards, mock exam, insights, personal library */
+/* StudyCISSP — quiz, flashcards, mock exam, insights, personal library */
 (function () {
   "use strict";
   const A = window.App, { D, byId, $, $$, esc, dc, ymd, today, addDays, fmtDur, fmtD, band, shuffle, pick, db } = A;

@@ -1,4 +1,4 @@
-# The CISSP Reader
+# StudyCISSP
 
 A book-like CISSP study companion for any learner, written against the
 **CISSP Exam Outline effective 15 April 2024** (in force until 14 April 2027).

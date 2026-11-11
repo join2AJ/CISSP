@@ -1,4 +1,4 @@
-/* The CISSP Reader — extra question bank and flashcards.
+/* StudyCISSP — extra question bank and flashcards.
    Every question carries a domain (d) and topic (t = section id). */
 window.BANK = {
   // topics of the end-of-chapter questions, in order

@@ -1,4 +1,4 @@
-/* The CISSP Reader — data layer.
+/* StudyCISSP — data layer.
    Cloud mode: Supabase (auth, Postgres with RLS, storage, edge function).
    Local mode: everything in this browser's localStorage (no accounts). */
 (function () {

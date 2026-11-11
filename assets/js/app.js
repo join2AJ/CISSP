@@ -1,4 +1,4 @@
-/* The CISSP Reader — core: state, router, personalisation, time tracking, reading views */
+/* StudyCISSP — core: state, router, personalisation, time tracking, reading views */
 (function () {
   "use strict";
 
@@ -87,6 +87,7 @@
         ${cta}</div>`;
     }).join("")}</div>`;
   };
+  App.publicMode = () => db.mode === "cloud" ? !db.user : !(App.profile && App.profile.onboarded);
   App.isAdmin = () => !!(App.profile && App.profile.role === "admin");
   App.isPrivileged = () => !!(App.profile && (App.profile.privileged || App.profile.role === "admin"));
   App.firstName = () => { const p = App.profile || {}; return (p.full_name || p.username || "").split(" ")[0] || "there"; };
@@ -265,7 +266,9 @@
     rendered = r.page === "domain" ? "domain:" + r.a : r.page + ":" + (r.a || "");
     if (observer) { observer.disconnect(); observer = null; }
     closeToc(); closeMenu();
-    document.body.classList.toggle("bare", !!def.bare);
+    const site = !!def.site || (!!def.public && App.publicMode());
+    document.body.classList.toggle("site", site);
+    document.body.classList.toggle("bare", !!def.bare || site);
     const my = ++token;
     let out = def.render(r);
     if (out && typeof out.then === "function") {
@@ -273,9 +276,9 @@
       try { out = await out; } catch (e) { out = `<div class="page-narrow"><h1 class="h-display">Something went wrong</h1><p class="lede">${esc(App.errMsg(e))}</p></div>`; }
       if (my !== token) return;
     }
-    view.innerHTML = out + (def.bare ? "" : footer());
+    view.innerHTML = out + (site ? (App.siteFooter ? App.siteFooter() : "") : def.bare ? "" : footer());
     view.classList.remove("view-enter"); void view.offsetWidth; view.classList.add("view-enter");
-    if (!def.bare) renderToc(r);
+    if (!def.bare && !site) renderToc(r);
     paintNav(r, def);
     document.documentElement.style.setProperty("--pc", r.page === "domain" && byId[r.a] ? `var(--${r.a})` : "var(--accent)");
     App.setTrack(def.area ? { area: typeof def.area === "function" ? def.area(r) : def.area, domain: r.page === "domain" ? r.a : "", topic: "" } : null);
@@ -286,7 +289,7 @@
       if (el) requestAnimationFrame(() => el.scrollIntoView({ block: "start" })); else window.scrollTo(0, 0);
     } else window.scrollTo(0, 0);
     if (r.page === "domain") { S.last = { d: r.a, s: r.b || null }; save(); }
-    document.title = (def.title ? (typeof def.title === "function" ? def.title(r) : def.title) + " · " : "") + "The CISSP Reader";
+    document.title = (def.title ? (typeof def.title === "function" ? def.title(r) : def.title) + " · " : "") + "StudyCISSP";
     onScroll();
   }
   App.route = route;
@@ -294,12 +297,18 @@
 
   function paintNav(r, def) {
     const key = def.nav || r.page;
-    $$(".mainnav a").forEach(a => a.classList.toggle("active", a.dataset.nav === key));
+    $$(".mainnav a, .pubnav a").forEach(a => a.classList.toggle("active", a.dataset.nav === key));
+    const signedIn = db.mode === "cloud" ? !!db.user : !!(App.profile && App.profile.onboarded);
+    const ps = $("#pubSignin"), pst = $("#pubStart");
+    if (ps) { ps.hidden = signedIn || r.page === "login"; }
+    if (pst) { pst.textContent = signedIn ? "Open dashboard" : "Get started"; pst.setAttribute("href", signedIn ? "#/" : "#/signup/gold"); }
+    $$(".pub-mobile-actions").forEach(x => { x.innerHTML = signedIn ? `<a href="#/" class="btn small primary">Open dashboard</a>` : `<a href="#/login" class="btn small">Sign in</a><a href="#/signup/gold" class="btn small primary">Get started</a>`; });
+    const pn = $("#pubnav"); if (pn) pn.classList.remove("open");
     const adm = $("#navAdmin"); if (adm) adm.hidden = !App.isAdmin();
     $$(".mainnav a").forEach(a => a.classList.toggle("locked", !!App.profile && !App.can(App.FEATURE[a.dataset.nav === "read" ? "read" : a.dataset.nav])));
     const signed = db.mode === "local" || !!db.user;
     $("#userBtn").hidden = !signed || (!!def.bare && !(App.profile && App.profile.onboarded)) || (db.mode === "cloud" && !db.user);
-    $(".mainnav").style.visibility = def.bare ? "hidden" : "";
+    $(".mainnav").style.visibility = def.bare && !document.body.classList.contains("site") ? "hidden" : "";
     $("#searchOpen").style.visibility = def.bare ? "hidden" : "";
     const ini = $("#userIni"); if (ini) { const p = App.profile || {}; ini.textContent = ((p.full_name || p.username || "•")[0] || "•").toUpperCase(); }
   }
@@ -362,7 +371,7 @@
   }
 
   function footer() {
-    return `<footer class="foot"><span>The CISSP Reader · an independent study companion, not affiliated with ISC2. CISSP is a registered mark of ISC2, Inc.</span><span><a href="#/privacy">Privacy &amp; trust</a> · Written to the CISSP Exam Outline effective 15 Apr 2024</span></footer>
+    return `<footer class="foot"><span>© ${new Date().getFullYear()} StudyCISSP · independent study material, not affiliated with ISC2. CISSP® is a registered mark of ISC2, Inc.</span><span class="foot-links"><a href="#/about">About CISSP</a><a href="#/faq">FAQ</a><a href="#/contact">Contact</a><a href="#/terms">Terms</a><a href="#/privacy">Privacy &amp; trust</a></span></footer>
     <button class="back-top" id="backTop" aria-label="Back to top">↑</button>`;
   }
 
@@ -693,6 +702,7 @@
         </div>
         <div class="land-teaser"><div class="anim" data-anim="handshake"></div></div>
       </section>
+      <section class="trust-strip"><span>✓ Written to the official 2024 exam outline</span><span>✓ Free for the first year</span><span>✓ Works on phone, tablet and laptop</span><span>✓ Your data, your control</span></section>
       <section class="facts">${P.exam.facts.map(f => `<div class="fact"><b>${esc(f.big)}</b><span>${esc(f.label)}</span></div>`).join("")}</section>
       <h2 class="h-section">Inside: the eight chapters</h2>
       <p class="sub">Every objective of the official exam outline, explained in plain language with the manager’s lens the exam rewards.</p>
@@ -704,7 +714,6 @@
       <div class="path">${P.pathway.map((s, i) => `<div class="step"><b>${i + 1}</b><h4>${esc(s.t)}</h4><p>${esc(s.d)}</p></div>`).join("")}</div>
       <p class="quote">“Every CISSP you admire once didn’t know what Biba was either.”</p>
       <p class="quote-by">Start today. One section at a time.</p>
-      <footer class="foot"><span>An independent study companion, not affiliated with ISC2. CISSP is a registered mark of ISC2, Inc.</span><span><a href="#/privacy">Privacy &amp; trust</a></span></footer>
     </div>`;
   }
 
@@ -749,7 +758,7 @@
 
   /* ---------------- admin / study choice ---------------- */
   function viewChoose() {
-    return `<div class="auth wide"><div class="auth-brand"><span class="brand-mark">C</span><div><b>The CISSP Reader</b><small>Read slowly. Pass once.</small></div></div>
+    return `<div class="auth wide">
       <h1 class="h-display" style="font-size:44px">Welcome back, <em>${esc(App.firstName())}</em></h1>
       <p class="lede">What would you like to do?</p>
       <div class="grid-2" style="margin-top:26px">
@@ -873,7 +882,7 @@
     $("#restartPlan").addEventListener("click", () => { if (confirm("Redraw the plan starting today? Ticked tasks stay ticked.")) { S.planStart = ymd(today()); save(); App.rerender(); } });
   } });
   App.register("tracker", { render: viewTracker, bind: bindTracker, title: "Tracker", nav: "insights", area: "insights" });
-  App.register("landing", { render: viewLanding, bind: () => { if (window.Anim) window.Anim.mountAll(view); }, title: "Welcome", bare: true, public: true });
+  App.register("landing", { render: viewLanding, bind: () => { if (window.Anim) window.Anim.mountAll(view); }, title: "CISSP study, made calm", public: true, site: true, nav: "landing" });
   App.register("plans", { render: viewPlans, bind: bindLocked, title: "Plans", nav: "plan", area: "other" });
   App.register("glossary", { render: viewGlossary, bind: bindGlossary, title: "Glossary", nav: "glossary", area: "read" });
   App.register("choose", { render: viewChoose, bind: bindChoose, title: "Welcome", bare: true });
@@ -976,6 +985,8 @@
     m.querySelectorAll("a").forEach(a => a.addEventListener("click", closeMenu));
   });
 
+  $("#pubMenuBtn").addEventListener("click", (e) => { e.stopPropagation(); const pn = $("#pubnav"); pn.classList.toggle("open"); $("#pubMenuBtn").setAttribute("aria-expanded", String(pn.classList.contains("open"))); });
+  document.addEventListener("click", (e) => { const pn = $("#pubnav"); if (pn && pn.classList.contains("open") && !pn.contains(e.target)) pn.classList.remove("open"); });
   $("#tocToggle").addEventListener("click", () => { toc.classList.add("open"); $("#scrim").classList.add("on"); });
   $("#scrim").addEventListener("click", closeToc);
 

@@ -1,4 +1,4 @@
-/* The CISSP Reader — chapter content, Domains 5–8 */
+/* StudyCISSP — chapter content, Domains 5–8 */
 window.DOMAINS = window.DOMAINS || [];
 
 window.DOMAINS.push({
