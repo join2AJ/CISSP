@@ -178,5 +178,19 @@ window.PAGES = {
       { ico: "⌘", t: "NIST Computer Security Resource Center", u: "https://csrc.nist.gov/", d: "Primary source for CSF 2.0, SP 800-37, 800-53, 800-61, 800-63, 800-88, 800-207 and FIPS 203–205.", tags: ["Free", "Reference"] },
       { ico: "⚑", t: "OWASP Top 10", u: "https://owasp.org/www-project-top-ten/", d: "Web application risks for Domain 8.", tags: ["Free", "Reference"] }
     ]}
-  ]
+  ],
+
+  /* defaults; the live values come from the database and are editable by the admin */
+  plans: [
+    { id: "silver", name: "Silver", tagline: "Read, understand, plan.", price: 0, currency: "INR", free_months: 12, sort: 1, active: true,
+      modules: ["chapters", "glossary", "plan", "flashcards"],
+      perks: ["All eight chapters with animations", "A–Z glossary", "Personal study plan from your exam date", "Chapter questions with explanations", "Spaced-repetition flashcards"] },
+    { id: "gold", name: "Gold", tagline: "Practise until it sticks.", price: 0, currency: "INR", free_months: 12, sort: 2, active: true,
+      modules: ["chapters", "glossary", "plan", "flashcards", "quiz", "mock", "insights"],
+      perks: ["Everything in Silver", "Quizzes by domain, topic and weak area", "Timed mock exams", "Insights: time spent, streaks, accuracy"] },
+    { id: "diamond", name: "Diamond", tagline: "Everything, plus your own library.", price: 0, currency: "INR", free_months: 12, sort: 3, active: true,
+      modules: ["chapters", "glossary", "plan", "flashcards", "quiz", "mock", "insights", "library"],
+      perks: ["Everything in Gold", "Personal library: upload notes, PDFs and videos", "Priority help from the administrator", "First access to new content"] }
+  ],
+  modules: { chapters: "Chapters", glossary: "Glossary", plan: "Study plan", flashcards: "Flashcards", quiz: "Quizzes", mock: "Mock exams", insights: "Insights & tracker", library: "My library" }
 };

@@ -58,6 +58,35 @@
 
   /* ---------------- profile & personalisation ---------------- */
   App.profile = null; App.attempts = []; App.mocks = []; App.timeRows = null;
+  /* plans & access */
+  App.plans = P.plans.slice();
+  App.planById = id => App.plans.find(p => p.id === id) || App.plans[0];
+  App.FEATURE = { read: "chapters", domain: "chapters", latest: "chapters", glossary: "glossary", plan: "plan", tactics: "plan", flashcards: "flashcards", quiz: "quiz", mock: "mock", insights: "insights", tracker: "insights", library: "library" };
+  App.planExpired = () => { const p = App.profile; return !!(p && p.plan_expires_at && new Date(p.plan_expires_at) < new Date()); };
+  App.can = (feature) => {
+    if (!feature || db.mode === "local") return true;
+    if (App.isAdmin() || App.isPrivileged()) return true;
+    if (!App.profile) return false;
+    if (App.planExpired()) return ["chapters", "glossary"].includes(feature);
+    return (App.planById(App.profile.plan).modules || []).includes(feature);
+  };
+  App.money = (v, cur) => { try { return new Intl.NumberFormat("en-IN", { style: "currency", currency: cur || "INR", maximumFractionDigits: v % 1 ? 2 : 0 }).format(v); } catch (e) { return (cur || "") + " " + v; } };
+  App.planCards = (opts = {}) => {
+    const cur = App.profile && App.profile.plan;
+    return `<div class="plans">${App.plans.filter(p => p.active !== false).map(p => {
+      const mine = cur === p.id && db.user;
+      const after = +p.price > 0 ? `then ${App.money(+p.price, p.currency)} a year` : "no charge set after that yet";
+      const cta = opts.signup ? `<a class="btn ${p.id === "gold" ? "primary" : ""}" href="#/signup/${p.id}">Start free with ${esc(p.name)}</a>`
+        : mine ? `<span class="btn ghost" aria-disabled="true">✓ Your plan</span>` : opts.request ? `<button class="btn" data-upgrade="${p.id}">Request ${esc(p.name)}</button>` : "";
+      return `<div class="plan plan-${p.id} ${mine ? "mine" : ""}">
+        <div class="plan-top"><span class="plan-gem"></span><b>${esc(p.name)}</b>${p.id === "gold" ? `<span class="plan-pop">Most popular</span>` : ""}</div>
+        <p class="plan-tag">${esc(p.tagline || "")}</p>
+        <div class="plan-price"><b>Free</b><span>for ${p.free_months} month${p.free_months == 1 ? "" : "s"}</span></div>
+        <p class="plan-after">${esc(after)}</p>
+        <ul>${(p.perks || []).map(x => `<li>${esc(x)}</li>`).join("")}</ul>
+        ${cta}</div>`;
+    }).join("")}</div>`;
+  };
   App.isAdmin = () => !!(App.profile && App.profile.role === "admin");
   App.isPrivileged = () => !!(App.profile && (App.profile.privileged || App.profile.role === "admin"));
   App.firstName = () => { const p = App.profile || {}; return (p.full_name || p.username || "").split(" ")[0] || "there"; };
@@ -213,15 +242,18 @@
     let def = routes[r.page] || routes.home;
     // gate
     if (db.mode === "cloud") {
-      if (!db.user && !def.public) return redirect("#/login");
+      if (!db.user && !def.public) return redirect("#/landing");
       if (db.user && App.profile) {
         if (!App.profile.consent_terms_at && !def.public && r.page !== "consent") return redirect("#/consent");
         if (App.profile.consent_terms_at && !App.profile.onboarded && !["welcome", "privacy", "consent", "choose"].includes(r.page) && !(def.admin && App.isAdmin())) return redirect("#/welcome");
         if (["login", "signup"].includes(r.page)) return redirect("#/");
       }
-    } else if (App.profile && !App.profile.onboarded && !["welcome", "privacy"].includes(r.page)) return redirect("#/welcome");
+    } else if (App.profile && !App.profile.onboarded && !def.public && !["welcome", "privacy"].includes(r.page)) return redirect("#/welcome");
     if (App.profile && App.isAdmin() && r.page === "home" && !sessionGet("cissp.mode")) return redirect("#/choose");
     if (def.admin && !App.isAdmin()) return redirect("#/");
+    if (db.mode === "cloud" && !db.user && !def.public && r.page !== "landing") return redirect("#/landing");
+    const feat = App.FEATURE[r.page];
+    if (feat && db.user !== undefined && App.profile && !App.can(feat)) def = Object.assign({}, def, { render: () => lockedView(feat), bind: bindLocked, area: "other" });
 
     // same chapter: just scroll
     if (r.page === "domain" && rendered === "domain:" + r.a && byId[r.a]) {
@@ -264,6 +296,7 @@
     const key = def.nav || r.page;
     $$(".mainnav a").forEach(a => a.classList.toggle("active", a.dataset.nav === key));
     const adm = $("#navAdmin"); if (adm) adm.hidden = !App.isAdmin();
+    $$(".mainnav a").forEach(a => a.classList.toggle("locked", !!App.profile && !App.can(App.FEATURE[a.dataset.nav === "read" ? "read" : a.dataset.nav])));
     const signed = db.mode === "local" || !!db.user;
     $("#userBtn").hidden = !signed;
     $(".mainnav").style.visibility = def.bare ? "hidden" : "";
@@ -359,6 +392,7 @@
         </div>
       </section>
 
+      ${planBanner()}
       <section class="facts">
         <div class="fact"><b>${streak}<small class="unit"> day${streak === 1 ? "" : "s"}</small></b><span>study streak (5+ min a day)</span></div>
         <div class="fact"><b>${fmtDur(wk)}</b><span>studied in the last 7 days</span></div>
@@ -440,6 +474,7 @@
       </ol></nav>
       <div class="prose" style="margin-top:44px">
         <p class="intro">${esc(d.intro)}</p>
+        ${App.personal && App.personal[d.id] ? `<div class="note personal"><p>${esc(App.personal[d.id])}</p></div>` : ""}
         ${(window.HISTORY || {})[d.id] ? `<div class="note history"><p>${esc(window.HISTORY[d.id])}</p></div>` : ""}
         ${secs}
       </div>
@@ -610,6 +645,68 @@
     </div>`;
   }
 
+  /* ---------------- plans: banner, locked, landing ---------------- */
+  function planBanner() {
+    const p = App.profile; if (db.mode !== "cloud" || !p || !p.plan_expires_at || App.isAdmin() || App.isPrivileged()) return "";
+    const left = Math.ceil((new Date(p.plan_expires_at) - new Date()) / 864e5), pl = App.planById(p.plan);
+    if (left < 0) return `<a class="warnbox banner" href="#/plans">Your free ${esc(pl.name)} period ended on ${fmtDY(p.plan_expires_at)}. Chapters and the glossary stay open. Ask your administrator to renew →</a>`;
+    if (left <= 30) return `<a class="okbox banner" href="#/plans">${left} day${left === 1 ? "" : "s"} left of your free ${esc(pl.name)} year. Plan ahead →</a>`;
+    return "";
+  }
+  function lockedView(feat) {
+    const name = (P.modules || {})[feat] || feat;
+    const which = App.plans.filter(p => (p.modules || []).includes(feat)).map(p => p.name);
+    const expired = App.planExpired();
+    return `<div class="page">
+      <div class="kicker">${expired ? "Free period ended" : "Upgrade"}</div>
+      <h1 class="h-display">${esc(name)} is <em>${expired ? "paused" : "waiting for you"}</em></h1>
+      <p class="lede">${expired ? `Your free ${esc(App.planById(App.profile.plan).name)} period has ended. Chapters and the glossary stay open; ask your administrator to renew.` : `${esc(name)} is part of ${which.join(" and ")}. Your current plan is ${esc(App.planById(App.profile.plan).name)}. Every plan is free for its first year.`}</p>
+      ${App.planCards({ request: true })}
+      <p class="sub" style="margin-top:18px">Upgrade requests go to your administrator, who can switch your plan straight away.</p>
+    </div>`;
+  }
+  function bindLocked() {
+    $$("[data-upgrade]").forEach(b => b.addEventListener("click", async () => {
+      try { await db.request("other", `Plan upgrade request: please move me to ${App.planById(b.dataset.upgrade).name}.`); b.textContent = "✓ Requested"; b.disabled = true; toast("Request sent to your administrator"); }
+      catch (e) { toast(App.errMsg(e)); }
+    }));
+  }
+  function viewPlans() {
+    const p = App.profile || {}, pl = App.planById(p.plan);
+    return `<div class="page">
+      <div class="kicker">Plans</div>
+      <h1 class="h-display">Every plan, <em>free for a year</em></h1>
+      ${db.mode === "cloud" && p.plan ? `<p class="lede">You’re on <b>${esc(pl.name)}</b>${p.plan_expires_at ? `, free until <b>${fmtDY(p.plan_expires_at)}</b>` : ""}.</p>` : `<p class="lede">Pick the depth that suits you. You can move up at any time.</p>`}
+      ${App.planCards({ request: db.mode === "cloud" && !App.isAdmin() })}
+    </div>`;
+  }
+  function viewLanding() {
+    const order = D;
+    return `<div class="landing">
+      <section class="hero land-hero">
+        <div>
+          <div class="kicker">A CISSP study companion</div>
+          <h1 class="h-display">Read slowly.<br><em>Pass once.</em></h1>
+          <p class="lede">Eight beautifully written chapters, small animations for the tricky ideas, a plan built around your exam date, and quizzes, flashcards and mock exams that show exactly where you stand. Whatever your background, you can do this.</p>
+          <div class="btn-row"><a class="btn primary" href="#/signup/gold">Create a free account</a><a class="btn" href="#/login">Sign in</a></div>
+        </div>
+        <div class="land-teaser"><div class="anim" data-anim="handshake"></div></div>
+      </section>
+      <section class="facts">${P.exam.facts.map(f => `<div class="fact"><b>${esc(f.big)}</b><span>${esc(f.label)}</span></div>`).join("")}</section>
+      <h2 class="h-section">Inside: the eight chapters</h2>
+      <p class="sub">Every objective of the official exam outline, explained in plain language with the manager’s lens the exam rewards.</p>
+      <div class="shelf">${order.map(d => `<a class="book" href="#/signup/silver" style="${dc(d)}"><div style="display:flex;justify-content:space-between"><span class="book-num">${roman[d.n]}</span><span class="tag plain">🔒 sign in</span></div><div class="book-title">${esc(d.title)}</div><div class="book-meta">${d.weight}% of exam · ${d.sections.length} sections</div><p class="land-lede">${esc(d.lede)}</p></a>`).join("")}</div>
+      <h2 class="h-section">What you get</h2>
+      <p class="sub">Three plans. Each one is free for its first year. Sign in to see your plan, your path and your progress.</p>
+      ${App.planCards({ signup: true })}
+      <h2 class="h-section">The pathway to CISSP</h2>
+      <div class="path">${P.pathway.map((s, i) => `<div class="step"><b>${i + 1}</b><h4>${esc(s.t)}</h4><p>${esc(s.d)}</p></div>`).join("")}</div>
+      <p class="quote">“Every CISSP you admire once didn’t know what Biba was either.”</p>
+      <p class="quote-by">Start today. One section at a time.</p>
+      <footer class="foot"><span>An independent study companion, not affiliated with ISC2. CISSP is a registered mark of ISC2, Inc.</span><span><a href="#/privacy">Privacy &amp; trust</a></span></footer>
+    </div>`;
+  }
+
   /* ---------------- glossary ---------------- */
   const G = window.GLOSSARY || {};
   const glossAll = () => Object.entries(G).flatMap(([d, list]) => list.map(e => ({ d, term: e[0], mean: e[1], where: e[2], tools: e[3] })));
@@ -705,6 +802,7 @@
       }
     }));
     bindQuizExtras();
+    if (window.Anim) window.Anim.mountAll(view);
     observer = new IntersectionObserver(entries => {
       entries.forEach(en => { if (en.isIntersecting) { currentSec = en.target.dataset.sec; markCurrent(); App.setTrack({ area: "read", domain: d.id, topic: currentSec }); } });
     }, { rootMargin: "-20% 0px -70% 0px" });
@@ -774,6 +872,8 @@
     $("#restartPlan").addEventListener("click", () => { if (confirm("Redraw the plan starting today? Ticked tasks stay ticked.")) { S.planStart = ymd(today()); save(); App.rerender(); } });
   } });
   App.register("tracker", { render: viewTracker, bind: bindTracker, title: "Tracker", nav: "insights", area: "insights" });
+  App.register("landing", { render: viewLanding, bind: () => { if (window.Anim) window.Anim.mountAll(view); }, title: "Welcome", bare: true, public: true });
+  App.register("plans", { render: viewPlans, bind: bindLocked, title: "Plans", nav: "plan", area: "other" });
   App.register("glossary", { render: viewGlossary, bind: bindGlossary, title: "Glossary", nav: "glossary", area: "read" });
   App.register("choose", { render: viewChoose, bind: bindChoose, title: "Welcome", bare: true });
   App.register("latest", { render: viewLatest, title: "What’s new", nav: "read", area: "read" });
@@ -867,6 +967,7 @@
     const m = $("#userMenu"); m.hidden = !m.hidden;
     const p = App.profile || {};
     m.innerHTML = `<div class="um-head"><b>${esc(p.full_name || p.username || "Learner")}</b><small>${esc(db.mode === "cloud" ? (p.email || "") : "Device-only mode")}</small>${App.isAdmin() ? `<span class="tag plain" style="margin-top:6px">Admin</span>` : ""}</div>
+      ${db.mode === "cloud" && p.plan ? `<a href="#/plans">Plan: ${esc(App.planById(p.plan).name)}${p.plan_expires_at ? " · free until " + fmtD(p.plan_expires_at) : ""}</a>` : ""}
       <a href="#/profile">Profile &amp; exam dates</a><a href="#/insights">Insights</a><a href="#/library">My library</a><a href="#/tracker">Scores &amp; error log</a><a href="#/privacy">Privacy &amp; my data</a>
       ${App.isAdmin() ? `<a href="#/admin">Admin console</a><a href="#/choose">Switch: study or admin</a>` : ""}
       ${db.mode === "cloud" ? `<button id="signOut">Sign out</button>` : ""}`;
@@ -878,6 +979,7 @@
   $("#scrim").addEventListener("click", closeToc);
 
   /* ---------------- start ---------------- */
+  App.loadPlans = async () => { try { const pl = await db.plans(); if (pl && pl.length) App.plans = pl; } catch (e) {} };
   App.afterLogin = async function () {
     const uidv = db.mode === "cloud" ? db.user.id : "local";
     stateKey = "cissp.v1:" + uidv;
@@ -892,6 +994,8 @@
     App.timeRows = null;
     [App.attempts, App.mocks] = await Promise.all([db.myAttempts().catch(() => []), db.myMocks().catch(() => [])]);
     if (App.loadCards) await App.loadCards();
+    App.personal = null;
+    if (db.mode === "cloud" && App.isPrivileged()) { try { const t = await db.privateContent("personal_notes"); if (t) App.personal = JSON.parse(t); } catch (e) {} }
     db.touch().catch(() => {});
   };
 
@@ -903,6 +1007,7 @@
     });
     if (hashErr) { setTimeout(() => toast(decodeURIComponent(hashErr[1].replace(/\+/g, " "))), 300); history.replaceState(null, "", "#/login"); }
     else if (/access_token=/.test(location.hash)) history.replaceState(null, "", recovering ? "#/reset" : "#/");
+    await App.loadPlans();
     if (db.user) { try { await App.afterLogin(); } catch (e) { toast(App.errMsg(e)); } }
     addEventListener("hashchange", route);
     route();

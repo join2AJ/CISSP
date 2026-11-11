@@ -64,6 +64,7 @@ window.DOMAINS.push({
         <li>The TGS issues a <strong>service ticket</strong> for that server.</li>
         <li>The user presents the service ticket to the server, which validates it with its own key.</li>
       </ol>
+      <div class="anim" data-anim="kerberos"></div>
       <p>Weaknesses: the KDC is a single point of failure and a high-value target; clocks must be in sync (timestamps prevent replay); and attacks such as <em>pass-the-ticket</em>, <em>Kerberoasting</em> (cracking service-account tickets offline) and <em>golden tickets</em> (forging TGTs with the stolen KRBTGT key) abuse it.</p>
       <h3>AAA protocols</h3>
       <div class="tbl-wrap"><table><thead><tr><th></th><th>RADIUS</th><th>TACACS+</th><th>Diameter</th></tr></thead><tbody>
@@ -317,6 +318,7 @@ window.DOMAINS.push({
       <tr><td>Incremental</td><td>Changes since last backup of any kind</td><td>Cleared</td><td>Last full + every incremental since</td></tr>
       <tr><td>Differential</td><td>Changes since last full</td><td>Not cleared</td><td>Last full + latest differential</td></tr>
       </tbody></table></div>
+      <div class="anim" data-anim="backup"></div>
       <p>Follow <strong>3-2-1</strong> (three copies, two media, one off-site) and keep at least one copy <strong>immutable or offline</strong> to survive ransomware. Test restores regularly.</p>
       <h3>Sites</h3>
       <div class="tbl-wrap"><table><thead><tr><th>Site</th><th>Ready in</th><th>Cost</th></tr></thead><tbody>

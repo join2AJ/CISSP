@@ -53,6 +53,7 @@ window.DOMAINS.push({
       <h3>Quantitative analysis</h3>
       <div class="formula">SLE = AV × EF &nbsp;&nbsp;·&nbsp;&nbsp; ALE = SLE × ARO<br>Safeguard value = ALE<sub>before</sub> − ALE<sub>after</sub> − annual cost of safeguard</div>
       <p>Asset value (AV) is what the asset is worth. Exposure factor (EF) is the percentage lost in one incident. Annualised rate of occurrence (ARO) is how often per year you expect it. A server worth $100,000 that would lose 40% of its value in a flood (SLE $40,000) expected once in 20 years (ARO 0.05) has an ALE of $2,000. Spending $5,000 a year to protect it is not justified on cost alone.</p>
+      <div class="anim" data-anim="ale"></div>
       <h3>Qualitative analysis</h3>
       <p>Qualitative methods rank risk with scales (high, medium, low), heat maps, scenarios and the Delphi technique (anonymous expert rounds that converge on a view). They are quicker and capture things that are hard to price, such as reputation. Most real programmes use both.</p>
       <h3>Responses</h3>
@@ -304,6 +305,7 @@ window.DOMAINS.push({
       <tr><td>Take–Grant</td><td>Rights propagation</td><td>Directed graph with take, grant, create, remove.</td></tr>
       <tr><td>Lattice / state machine / information flow / non-interference</td><td>Foundations</td><td>A secure state machine always moves between secure states; non-interference means high-level actions do not affect what low-level users see.</td></tr>
       </tbody></table></div>
+      <div class="anim" data-anim="models"></div>
       <div class="note memory"><p><strong>Bell–LaPadula keeps secrets: “no read up, no write down”</strong> (you cannot leak secrets downwards). <strong>Biba is the mirror: “no read down, no write up”</strong> (you cannot be contaminated by dirty data, nor contaminate cleaner data). Integrity is <em>“I”</em>nverted.</p></div>`,
       exam: "Recognising a model from one rule, especially BLP versus Biba and where Clark–Wilson fits." },
     { id: "evaluation", title: "Trusted computing, evaluation and hardware security",
@@ -369,6 +371,7 @@ window.DOMAINS.push({
       <p>A hash turns any input into a fixed-length digest. It is one-way and should be collision-resistant. <strong>MD5</strong> and <strong>SHA-1</strong> are broken for collision resistance. Use <strong>SHA-2</strong> (SHA-256/384/512) or <strong>SHA-3</strong>. A <strong>HMAC</strong> adds a secret key to give integrity and authenticity between parties sharing it. For passwords use slow, salted functions: bcrypt, scrypt, Argon2, PBKDF2. Salts defeat rainbow tables.</p>
       <h3>Digital signatures</h3>
       <p>The sender hashes the message and encrypts the hash with their <strong>private key</strong>. The receiver decrypts with the sender’s <strong>public key</strong> and compares hashes. That proves integrity, authenticity and non-repudiation, but not confidentiality.</p>
+      <div class="anim" data-anim="signature"></div>
       <div class="note memory"><p><strong>Whose key?</strong> To keep it secret, use the <em>recipient’s</em> public key. To prove it is you, use <em>your</em> private key. To check a signature, use the <em>sender’s</em> public key.</p></div>`,
       exam: "Which key is used for which operation, PFS, and which hashes are acceptable." },
     { id: "pki", title: "Cryptography III: PKI, key management and attacks",
@@ -451,6 +454,7 @@ window.DOMAINS.push({
     { id: "osi", title: "The OSI and TCP/IP models",
       body: `<p><strong>OSI</strong> stands for <strong>Open Systems Interconnection</strong>, a reference model published by the International Organization for Standardization (ISO) in 1984. <strong>TCP/IP</strong> stands for <strong>Transmission Control Protocol / Internet Protocol</strong>, the protocol suite the internet actually runs on. One is a map; the other is the territory.</p>
       <p>The <strong>OSI model</strong> is a teaching tool with seven layers. Each layer serves the one above and uses the one below. When data goes down the stack it is <em>encapsulated</em>: each layer wraps it with its own header.</p>
+      <div class="anim" data-anim="osi"></div>
       <div class="tbl-wrap"><table><thead><tr><th>#</th><th>Layer</th><th>PDU</th><th>Protocols / examples</th><th>Devices</th></tr></thead><tbody>
       <tr><td>7</td><td>Application</td><td>Data</td><td>HTTP, DNS, SMTP, SNMP, LDAP, SSH</td><td>WAF, proxy, L7 firewall</td></tr>
       <tr><td>6</td><td>Presentation</td><td>Data</td><td>Encoding, compression, encryption formats (ASCII, JPEG, TLS is often placed here)</td><td>—</td></tr>
@@ -464,25 +468,57 @@ window.DOMAINS.push({
       <div class="note memory"><p>Top down: <strong>All People Seem To Need Data Processing</strong>. Bottom up: <strong>Please Do Not Throw Sausage Pizza Away</strong>. Draw the table above on a blank sheet every few days until it is automatic.</p></div>
       <div class="note exam"><p>ARP sits at layer 2 (it maps IP to MAC). ICMP sits at layer 3. A switch with routing ability is a layer 3 switch. If the question mentions MAC addresses, think layer 2; IP addresses, layer 3; ports, layer 4.</p></div>`,
       exam: "Placing protocols, devices and attacks at the right layer." },
-    { id: "tcpip", title: "IP, TCP, UDP and the ports that matter",
-      body: `<p><strong>IPv4</strong> uses 32-bit addresses; private ranges are 10.0.0.0/8, 172.16.0.0/12 and 192.168.0.0/16, reached from the internet through NAT. <strong>IPv6</strong> uses 128-bit addresses, has IPsec support built into the design, and removes broadcast in favour of multicast. Dual-stack networks need security controls for both.</p>
+    { id: "tcpip", title: "IP addresses, classes, TCP, UDP and ports",
+      body: `<h3>IPv4 addresses and classes</h3>
+      <p><strong>IPv4</strong> addresses are 32 bits, written as four decimal numbers from 0 to 255 (for example <code>192.168.1.10</code>). Each address has a <strong>network</strong> part and a <strong>host</strong> part; the subnet mask says where one ends and the other begins.</p>
+      <p>The original internet split addresses into <strong>classes</strong> by their first number. In 1993 <strong>CIDR</strong> (Classless Inter-Domain Routing) replaced fixed classes with prefixes such as <code>/24</code>, so networks can be any size. You still need the classes: the exam and everyday conversation use them, and the private ranges follow them.</p>
+      <div class="tbl-wrap"><table><thead><tr><th>Class</th><th>First octet</th><th>Default mask</th><th>Private range</th><th>Used for</th></tr></thead><tbody>
+      <tr><td>A</td><td>1–126</td><td>255.0.0.0 (/8)</td><td>10.0.0.0 – 10.255.255.255</td><td>Very large networks: about 16.7 million hosts each</td></tr>
+      <tr><td>B</td><td>128–191</td><td>255.255.0.0 (/16)</td><td>172.16.0.0 – 172.31.255.255</td><td>Medium networks: about 65,000 hosts each</td></tr>
+      <tr><td>C</td><td>192–223</td><td>255.255.255.0 (/24)</td><td>192.168.0.0 – 192.168.255.255</td><td>Small networks: 254 hosts each</td></tr>
+      <tr><td>D</td><td>224–239</td><td>—</td><td>—</td><td>Multicast (one sender, many receivers: video streams, routing protocols)</td></tr>
+      <tr><td>E</td><td>240–255</td><td>—</td><td>—</td><td>Reserved / experimental</td></tr>
+      </tbody></table></div>
+      <p>Special addresses to recognise:</p>
+      <ul>
+        <li><strong>127.0.0.0/8</strong>: loopback. <code>127.0.0.1</code> is “this computer”, which is why 127 is missing from class A.</li>
+        <li><strong>169.254.0.0/16</strong>: APIPA / link-local. A host gives itself one of these when it can’t reach a DHCP server, a useful troubleshooting clue.</li>
+        <li><strong>0.0.0.0</strong>: “any” or “unknown” address; <strong>255.255.255.255</strong>: broadcast to the local network.</li>
+        <li><strong>Private ranges</strong> (RFC 1918, the three in the table) are not routed on the internet; they reach it through <strong>NAT</strong>, which also hides internal addressing.</li>
+      </ul>
+      <div class="note memory"><p>First octet: <strong>A</strong> starts with 1–126, <strong>B</strong> 128–191, <strong>C</strong> 192–223. Private: <strong>10</strong>, <strong>172.16–31</strong>, <strong>192.168</strong>. Think “ten, sixteen-to-thirty-one, one-nine-two”.</p></div>
+      <h3>IPv6</h3>
+      <p><strong>IPv6</strong> uses 128-bit addresses written as eight groups of hexadecimal, for example <code>2001:db8:0:0:0:0:0:1</code>, shortened to <code>2001:db8::1</code> (a run of zero groups becomes <code>::</code>, once per address). There are no classes; everything is prefix-based. It removes broadcast in favour of multicast, replaces ARP with the Neighbor Discovery Protocol, and lets hosts configure their own addresses (SLAAC). IPsec support was part of its design.</p>
+      <div class="tbl-wrap"><table><thead><tr><th>IPv6 prefix</th><th>Type</th><th>IPv4 equivalent</th></tr></thead><tbody>
+      <tr><td>::1</td><td>Loopback</td><td>127.0.0.1</td></tr>
+      <tr><td>fe80::/10</td><td>Link-local (same segment only)</td><td>169.254.x.x</td></tr>
+      <tr><td>fc00::/7</td><td>Unique local (private)</td><td>10.x / 172.16–31.x / 192.168.x</td></tr>
+      <tr><td>2000::/3</td><td>Global unicast (public internet)</td><td>Public addresses</td></tr>
+      <tr><td>ff00::/8</td><td>Multicast</td><td>Class D</td></tr>
+      </tbody></table></div>
+      <p>Many networks run <strong>dual stack</strong> (IPv4 and IPv6 together). Security tools and firewall rules must cover both, or IPv6 becomes an unmonitored side door. Tunnelling techniques that carry IPv6 inside IPv4 (6to4, Teredo) can also bypass controls.</p>
+      <div class="note exam"><p>Expect to recognise a class or private range from an address, spot loopback and APIPA, and know that NAT conserves addresses and hides internal hosts. Deep subnetting arithmetic is rarely tested.</p></div>
+      <h3>TCP and UDP</h3>
       <p><strong>TCP</strong> is connection-oriented and reliable: the three-way handshake (SYN, SYN-ACK, ACK), sequence numbers, acknowledgements and retransmission. <strong>UDP</strong> is connectionless, with no handshake or guarantee, used where speed matters (DNS queries, VoIP, streaming, QUIC).</p>
-      <div class="tbl-wrap"><table><thead><tr><th>Port</th><th>Service</th><th>Secure alternative</th></tr></thead><tbody>
-      <tr><td>20/21</td><td>FTP</td><td>SFTP (22) or FTPS (990)</td></tr>
-      <tr><td>22</td><td>SSH / SFTP / SCP</td><td>—</td></tr>
-      <tr><td>23</td><td>Telnet (cleartext)</td><td>SSH</td></tr>
-      <tr><td>25</td><td>SMTP</td><td>SMTP with STARTTLS; 587 for submission</td></tr>
-      <tr><td>53</td><td>DNS (UDP, TCP for zone transfers)</td><td>DNSSEC, DoH/DoT</td></tr>
-      <tr><td>80 / 443</td><td>HTTP / HTTPS</td><td>—</td></tr>
-      <tr><td>88</td><td>Kerberos</td><td>—</td></tr>
-      <tr><td>110 / 143</td><td>POP3 / IMAP</td><td>995 / 993</td></tr>
-      <tr><td>123</td><td>NTP</td><td>NTS</td></tr>
-      <tr><td>161/162</td><td>SNMP</td><td>SNMPv3</td></tr>
-      <tr><td>389</td><td>LDAP</td><td>LDAPS 636</td></tr>
-      <tr><td>445</td><td>SMB</td><td>SMB 3 with encryption; never expose to the internet</td></tr>
-      <tr><td>514</td><td>Syslog</td><td>Syslog over TLS (6514)</td></tr>
-      <tr><td>1812/1813</td><td>RADIUS</td><td>—</td></tr>
-      <tr><td>3389</td><td>RDP</td><td>Behind VPN or gateway with MFA</td></tr>
+      <div class="anim" data-anim="handshake"></div>
+      <h3>Ports that matter</h3>
+      <p>A port number tells the receiving computer which service should get the traffic. Ports 0–1023 are “well-known” ports for standard services. Know these and their secure replacements:</p>
+      <div class="tbl-wrap"><table class="ports"><thead><tr><th>Port</th><th>Service</th><th>What it does</th><th>Secure alternative</th></tr></thead><tbody>
+      <tr><td>20/21</td><td>FTP</td><td>File Transfer Protocol: moves files between computers. Port 21 carries commands, port 20 the data. Usernames, passwords and files travel in cleartext.</td><td>SFTP (22) or FTPS (990)</td></tr>
+      <tr><td>22</td><td>SSH / SFTP / SCP</td><td>Secure Shell: encrypted remote command line for administering servers; SFTP and SCP copy files over the same encrypted channel.</td><td>— (already secure)</td></tr>
+      <tr><td>23</td><td>Telnet</td><td>Old remote command line. Everything, including passwords, is sent in cleartext and can be sniffed.</td><td>SSH</td></tr>
+      <tr><td>25</td><td>SMTP</td><td>Simple Mail Transfer Protocol: servers relay email to each other. Unencrypted by default and abused for spam and spoofing.</td><td>STARTTLS; port 587 with authentication for users sending mail</td></tr>
+      <tr><td>53</td><td>DNS</td><td>Domain Name System: turns names like example.com into IP addresses. UDP for normal lookups, TCP for zone transfers and large replies. Target of poisoning and tunnelling.</td><td>DNSSEC (integrity); DNS over HTTPS / TLS (privacy); restrict zone transfers</td></tr>
+      <tr><td>80 / 443</td><td>HTTP / HTTPS</td><td>The web. HTTP (80) is cleartext; HTTPS (443) is HTTP inside TLS, encrypting and authenticating the session.</td><td>Use 443 only; redirect 80 and enable HSTS</td></tr>
+      <tr><td>88</td><td>Kerberos</td><td>Ticket-based single sign-on, the default in Active Directory domains.</td><td>— (protect the KDC; keep clocks in sync)</td></tr>
+      <tr><td>110 / 143</td><td>POP3 / IMAP</td><td>Mail clients fetching email. POP3 downloads and usually deletes from the server; IMAP keeps mail synchronised on the server. Both cleartext.</td><td>POP3S 995 / IMAPS 993</td></tr>
+      <tr><td>123</td><td>NTP</td><td>Network Time Protocol: keeps clocks in sync. Accurate time matters for logs, forensics and Kerberos. Can be abused for amplification attacks.</td><td>NTS (Network Time Security); internal trusted time sources</td></tr>
+      <tr><td>161 / 162</td><td>SNMP</td><td>Simple Network Management Protocol: monitors and configures network devices (161 queries, 162 traps/alerts). v1/v2c use cleartext “community strings” as passwords.</td><td>SNMPv3 (authentication and encryption)</td></tr>
+      <tr><td>389</td><td>LDAP</td><td>Lightweight Directory Access Protocol: queries directories such as Active Directory for users and groups. Cleartext binds expose credentials.</td><td>LDAPS 636, or LDAP with StartTLS</td></tr>
+      <tr><td>445</td><td>SMB</td><td>Server Message Block: Windows file and printer sharing. Exploited by WannaCry and many worms.</td><td>SMB 3 with encryption and signing; never expose to the internet</td></tr>
+      <tr><td>514</td><td>Syslog</td><td>Sends log messages from devices to a central log server (UDP, unauthenticated, cleartext).</td><td>Syslog over TLS (6514)</td></tr>
+      <tr><td>1812 / 1813</td><td>RADIUS</td><td>Remote Authentication Dial-In User Service: central authentication (1812) and accounting (1813) for VPN, Wi-Fi and network devices. Only the password is encrypted.</td><td>RADIUS over TLS (RadSec); TACACS+ (TCP 49) for device admin</td></tr>
+      <tr><td>3389</td><td>RDP</td><td>Remote Desktop Protocol: full graphical remote control of Windows machines. A favourite ransomware entry point when exposed.</td><td>Only behind a VPN or remote-desktop gateway, with MFA and lockout</td></tr>
       </tbody></table></div>`,
       exam: "Matching a service to its port and secure replacement; TCP versus UDP behaviour." },
     { id: "secure-protocols", title: "Secure channels: TLS, IPsec, VPN and email",

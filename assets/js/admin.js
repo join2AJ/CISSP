@@ -2,7 +2,7 @@
 (function () {
   "use strict";
   const A = window.App, { D, byId, $, $$, esc, dc, ymd, today, addDays, fmtDur, fmtD, fmtDY, band, db } = A;
-  const tabs = [["overview", "Overview"], ["learners", "Learners"], ["audit", "Audit trail"], ["requests", "Privacy requests"], ["add", "Add learner"]];
+  const tabs = [["overview", "Overview"], ["learners", "Learners"], ["audit", "Audit trail"], ["requests", "Privacy requests"], ["plans", "Plans & pricing"], ["add", "Add learner"]];
   let cache = null, auditF = { action: "", actor: "", from: "", to: "" }, lq = "", sortKey = "seconds_7d";
 
   const head = (tab) => `<div class="kicker">Admin console</div><h1 class="h-display">Who’s learning, <em>and how</em></h1>
@@ -28,6 +28,7 @@
     if (tab === "audit") return audit();
     if (tab === "requests") return requests(await load());
     if (tab === "add") return `<div class="page">${head("add")}${addForm()}</div>`;
+    if (tab === "plans") { await A.loadPlans(); return plansTab(); }
     return overview(await load());
   }
 
@@ -84,9 +85,10 @@
     const th = (k, l) => `<th><button class="sortbtn ${sortKey === k ? "on" : ""}" data-sort="${k}">${l}</button></th>`;
     return `<div class="page">${head("learners")}
       <div class="form-row"><label style="flex:1">Search<input id="lq" value="${esc(lq)}" placeholder="name, username or email"></label><button class="btn small" id="csv">Export CSV</button></div>
-      <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Learner</th>${th("seconds_7d", "7 days")}${th("total_seconds", "Total time")}${th("sections_read", "Read")}<th>Accuracy</th>${th("best_mock", "Best mock")}${th("target_date", "Exam")}${th("last_seen_at", "Last seen")}</tr></thead><tbody>
+      <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Learner</th><th>Plan</th>${th("seconds_7d", "7 days")}${th("total_seconds", "Total time")}${th("sections_read", "Read")}<th>Accuracy</th>${th("best_mock", "Best mock")}${th("target_date", "Exam")}${th("last_seen_at", "Last seen")}</tr></thead><tbody>
       ${rows.map(u => { const a = u.attempts ? Math.round(u.correct / u.attempts * 100) : null; return `<tr class="rowlink" data-href="#/admin/learners/${u.id}">
         <td><b>${esc(name(u))}</b>${u.role === "admin" ? ` <span class="tag plain">admin</span>` : ""}${!u.verified ? ` <span class="tag weak">unverified</span>` : ""}<div style="font-size:12px;color:var(--muted)">${esc(u.username || "")} · ${esc(u.email)}</div></td>
+        <td><span class="plan-chip plan-${esc(u.plan || "silver")}">${esc(A.planById(u.plan).name)}</span>${u.plan_expires_at && new Date(u.plan_expires_at) < new Date() ? `<div style="font-size:11px;color:var(--bad)">expired</div>` : ""}</td>
         <td>${fmtDur(u.seconds_7d)}</td><td>${fmtDur(u.total_seconds)}</td><td>${u.sections_read}/54</td><td><span class="band ${band(a)}">${a == null ? "—" : a + "%"}</span></td>
         <td>${u.best_mock == null ? "—" : `<span class="band ${band(u.best_mock)}">${u.best_mock}%</span>`}</td><td>${u.target_date ? fmtD(u.target_date) : "—"}</td><td>${u.last_seen_at ? fmtD(u.last_seen_at) : "never"}</td></tr>`; }).join("")}
       </tbody></table></div></div>`;
@@ -101,6 +103,10 @@
       <div class="card" style="margin-top:16px"><div style="display:flex;gap:16px;flex-wrap:wrap;align-items:baseline"><h3 style="font-size:28px;margin:0">${esc(name(u))}</h3><span class="tag plain">${esc(u.role)}</span>${u.verified ? `<span class="tag strong">verified</span>` : `<span class="tag weak">unverified</span>`}</div>
         <p>${esc(u.username || "")} · ${esc(u.email)} · joined ${fmtDY(u.created_at)} · exam ${u.target_date ? fmtDY(u.target_date) : "not set"} · analytics ${u.consent_analytics ? "on" : "off"}</p>
         <div class="btn-row"><button class="btn small" data-role="${u.role === "admin" ? "learner" : "admin"}">${u.role === "admin" ? "Remove admin" : "Make admin"}</button><button class="btn small" data-priv="${u.privileged ? 0 : 1}">${u.privileged ? "Hide private content" : "Show private content"}</button><button class="btn small danger-btn" id="erase">Erase learner…</button></div></div>
+      <div class="card" style="margin-top:14px"><h3>Plan</h3><div class="form-row">
+        <label>Plan<select id="uPlan">${A.plans.map(p => `<option value="${p.id}" ${p.id === u.plan ? "selected" : ""}>${esc(p.name)}</option>`).join("")}</select></label>
+        <label>Free until<input id="uExp" type="date" value="${u.plan_expires_at ? String(u.plan_expires_at).slice(0, 10) : ""}"></label>
+        <button class="btn small primary" id="uPlanSave">Save plan</button></div></div>
       <div id="detailBody"><div class="loading"><span></span><span></span><span></span></div></div></div>`;
   }
   async function fillDetail(id) {
@@ -147,6 +153,23 @@
     </div>`;
   }
 
+  function plansTab() {
+    const M = A.P.modules || {};
+    return `<div class="page">${head("plans")}
+      <p class="sub">Change prices, free periods and what each plan includes. Changes apply straight away to what learners see. A new free period applies to new sign-ups; extend an existing learner from their page under Learners.</p>
+      <div class="plan-edit">${A.plans.map(p => `<form class="card stack plan-form plan-${p.id}" data-plan="${p.id}">
+        <div class="plan-top"><span class="plan-gem"></span><b>${esc(p.name)}</b></div>
+        <div class="form-row"><label style="flex:1">Name<input name="name" value="${esc(p.name)}" maxlength="30"></label><label style="flex:2">Tagline<input name="tagline" value="${esc(p.tagline || "")}" maxlength="160"></label></div>
+        <div class="form-row"><label>Price per year after the free period<input name="price" type="number" min="0" step="1" value="${esc(p.price)}" style="min-width:110px"></label>
+          <label>Currency<select name="currency">${["INR", "USD", "EUR", "GBP", "AED", "SGD"].map(c => `<option ${c === p.currency ? "selected" : ""}>${c}</option>`).join("")}</select></label>
+          <label>Free period (months)<input name="free_months" type="number" min="0" max="120" value="${esc(p.free_months)}" style="min-width:90px"></label>
+          <label class="check" style="align-self:center"><input type="checkbox" name="active" ${p.active !== false ? "checked" : ""}><span>Offered</span></label></div>
+        <div><div class="hint" style="margin-bottom:6px">Modules included</div><div class="mod-grid">${Object.entries(M).map(([k, l]) => `<label class="check"><input type="checkbox" name="mod" value="${k}" ${(p.modules || []).includes(k) ? "checked" : ""}><span>${esc(l)}</span></label>`).join("")}</div></div>
+        <label>What you get (one line each, shown on the cards)<textarea name="perks" rows="5">${esc((p.perks || []).join("\n"))}</textarea></label>
+        <button class="btn small primary">Save ${esc(p.name)}</button></form>`).join("")}</div>
+      <h2 class="h-section">Preview</h2>${A.planCards({})}</div>`;
+  }
+
   function addForm() {
     return `<div class="card stack" style="max-width:640px">
       <h3>Create a learner account</h3>
@@ -173,6 +196,10 @@
         fillDetail(r.b);
         $$("[data-role]").forEach(b => b.addEventListener("click", async () => { if (!confirm(`Change role to ${b.dataset.role}?`)) return; try { await db.admin.updateProfile(r.b, { role: b.dataset.role }); await load(true); A.rerender(); } catch (e) { A.toast(A.errMsg(e)); } }));
         $$("[data-priv]").forEach(b => b.addEventListener("click", async () => { try { await db.admin.updateProfile(r.b, { privileged: b.dataset.priv === "1" }); await load(true); A.rerender(); } catch (e) { A.toast(A.errMsg(e)); } }));
+        const ps = $("#uPlanSave"); if (ps) ps.addEventListener("click", async () => {
+          const exp = $("#uExp").value;
+          try { await db.admin.updateProfile(r.b, { plan: $("#uPlan").value, plan_expires_at: exp ? new Date(exp + "T23:59:59").toISOString() : null }); A.toast("Plan saved"); await load(true); A.rerender(); } catch (e) { A.toast(A.errMsg(e)); }
+        });
         const er = $("#erase"); if (er) er.addEventListener("click", async () => {
           const u = cache.users.find(x => x.id === r.b);
           const reason = prompt(`Erase ${name(u)} permanently? This deletes their account, data and files and pseudonymises their audit entries.\n\nType a reason (e.g. "erasure request #12") to confirm:`);
@@ -189,6 +216,16 @@
       const id = b.dataset.rsave, status = $(`[data-rs="${id}"]`).value;
       try { await db.admin.updateRequest(id, { status, resolution: $(`[data-rr="${id}"]`).value.trim() || null, resolved_at: ["done", "rejected"].includes(status) ? new Date().toISOString() : null, resolved_by: db.user.id }); A.toast("Saved"); await load(true); A.rerender(); }
       catch (e) { A.toast(A.errMsg(e)); }
+    }));
+    if (tab === "plans") $$(".plan-form").forEach(f => f.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const g = n => f.elements[n];
+      const patch = { name: g("name").value.trim(), tagline: g("tagline").value.trim(), price: Math.max(0, +g("price").value || 0), currency: g("currency").value,
+        free_months: Math.max(0, Math.min(120, parseInt(g("free_months").value, 10) || 0)), active: g("active").checked,
+        modules: Array.from(f.querySelectorAll('input[name="mod"]:checked')).map(x => x.value),
+        perks: g("perks").value.split("\n").map(x => x.trim()).filter(Boolean).slice(0, 12) };
+      if (!patch.name) return A.toast("Give the plan a name");
+      try { await db.admin.updatePlan(f.dataset.plan, patch); await A.loadPlans(); A.toast(`${patch.name} saved`); A.rerender(); } catch (x) { A.toast(A.errMsg(x)); }
     }));
     if (tab === "add") {
       $("#nUser").addEventListener("input", e => { e.target.value = e.target.value.toLowerCase().replace(/[^a-z0-9_.-]/g, ""); });

@@ -45,8 +45,9 @@
   }
 
   /* ---------------- signup ---------------- */
-  function viewSignup() {
+  function viewSignup(r) {
     if (!cloud) return viewLogin();
+    const pre = (r && r.a) || "gold";
     return shell(`<div class="auth-card">
       <h1>Start your CISSP journey</h1><p class="auth-sub">Free. A personal plan, quizzes, flashcards and mock exams, built around your exam date.</p>
       <form id="suForm" class="stack">
@@ -54,6 +55,9 @@
         <label>Username <small id="uHint" class="hint"></small><input id="sUser" maxlength="32" autocomplete="username" pattern="[a-z0-9_.\\-]{3,32}" required placeholder="lowercase letters, digits, . _ -"></label>
         <label>Email<input id="sEmail" type="email" autocomplete="email" required></label>
         <label>Password <small class="hint">at least 10 characters</small><input id="sPw" type="password" minlength="10" autocomplete="new-password" required></label>
+        <fieldset class="plan-pick"><legend>Your plan <small class="hint">free for the first year</small></legend>
+          ${A.plans.filter(p => p.active !== false).map(p => `<label class="pp pp-${p.id}"><input type="radio" name="sPlan" value="${p.id}" ${p.id === pre ? "checked" : ""}><span><b>${esc(p.name)}</b><small>${esc(p.tagline || "")} · free ${p.free_months} months</small></span></label>`).join("")}
+        </fieldset>
         <label class="check"><input type="checkbox" id="sAge" required><span>I am 18 or older.</span></label>
         <label class="check"><input type="checkbox" id="sConsent" required><span>I have read the <a href="#/privacy" target="_blank">privacy notice</a> and consent to my account, study plan and study activity being processed to run this service. I can withdraw consent or delete my account at any time.</span></label>
         <button class="btn primary" id="sGo">Create account</button>
@@ -76,7 +80,8 @@
         const username = $("#sUser").value.trim();
         if (!(await db.usernameAvailable(username))) throw new Error("That username is taken or reserved.");
         const email = $("#sEmail").value.trim();
-        await db.signUp({ email, password: $("#sPw").value, username, full_name: $("#sName").value.trim(), consent: $("#sConsent").checked });
+        const plan = (f.querySelector('input[name="sPlan"]:checked') || {}).value || "silver";
+        await db.signUp({ email, password: $("#sPw").value, username, full_name: $("#sName").value.trim(), consent: $("#sConsent").checked, plan });
         $(".auth-card").innerHTML = `<h1>Check your inbox</h1><p class="auth-sub">We sent a verification link to <b>${esc(email)}</b>. Open it to activate your account, then sign in.</p><p class="hint">Nothing after a few minutes? Check spam, or sign in and use “Resend verification email”.</p><a class="btn primary" href="#/login">Go to sign in</a>`;
       } catch (err) { $("#sMsg").innerHTML = `<div class="warnbox">${esc(A.errMsg(err))}</div>`; busy(b, false, "Create account"); }
     });
@@ -176,6 +181,7 @@
       <h1 class="h-display">You, <em>and your exam</em></h1>
       <p class="lede">Change anything here and your plan, path and focus areas update straight away.</p>
       <form id="pfForm" class="card stack" style="margin-top:26px">
+        ${cloud && p.plan ? `<div class="plan-line plan-${esc(p.plan)}"><span class="plan-gem"></span><div><b>${esc(A.planById(p.plan).name)} plan</b><small>${p.plan_expires_at ? "Free until " + fmtDY(p.plan_expires_at) : "Free"} · <a href="#/plans">compare plans</a></small></div></div>` : ""}
         <h3>About you</h3>
         <div class="form-row">
           <label style="flex:1">Full name<input id="pName" maxlength="80" value="${esc(p.full_name || "")}"></label>

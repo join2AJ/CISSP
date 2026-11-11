@@ -31,10 +31,10 @@
 
     /* ---------- auth ---------- */
     async usernameAvailable(u) { if (!cloud) return true; return must(await sb.rpc("username_available", { p: u })); },
-    async signUp({ email, password, username, full_name, consent }) {
+    async signUp({ email, password, username, full_name, consent, plan }) {
       return must(await sb.auth.signUp({ email, password, options: {
         emailRedirectTo: location.origin + location.pathname,
-        data: { username, full_name, consent: consent ? "true" : "false" } } }));
+        data: { username, full_name, plan: plan || "silver", consent: consent ? "true" : "false" } } }));
     },
     async signIn(identifier, password) {
       let email = identifier.trim();
@@ -50,6 +50,12 @@
     async resetPassword(email) { return must(await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname })); },
     async updatePassword(password) { const r = must(await sb.auth.updateUser({ password })); db.logEvent("user.password_changed", {}); return r; },
     async signOut() { if (!cloud) return; await db.logEvent("user.logout", {}); await sb.auth.signOut(); },
+
+    /* ---------- plans ---------- */
+    async plans() {
+      if (!cloud) return null;
+      return must(await sb.from("plans").select("*").order("sort"));
+    },
 
     /* ---------- profile ---------- */
     async getProfile() {
@@ -183,6 +189,7 @@
       },
       requests: async () => must(await sb.from("dsr_requests").select("*").order("created_at", { ascending: false })),
       updateRequest: async (id, patch) => must(await sb.from("dsr_requests").update(patch).eq("id", id)),
+      updatePlan: async (id, patch) => must(await sb.from("plans").update(patch).eq("id", id)),
       updateProfile: async (id, patch) => must(await sb.from("profiles").update(patch).eq("id", id)),
       userDetail: async (id) => {
         const [time, attempts, mocks, resources] = await Promise.all([

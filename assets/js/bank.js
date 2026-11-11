@@ -111,6 +111,12 @@ window.BANK = {
     { d: "d4", t: "wireless", q: "In 802.1X, which component is the access point or switch?",
       o: ["Supplicant", "Authenticator", "Authentication server", "Relying party"], a: 1,
       w: "Supplicant = client; authenticator = AP/switch; authentication server = RADIUS." },
+    { d: "d4", t: "tcpip", q: "A workstation shows the address 169.254.20.7 and can’t reach anything. What is the MOST likely cause?",
+      o: ["It is on a class B private network", "It could not reach a DHCP server and assigned itself an APIPA address", "It is using IPv6", "Its DNS server is down"], a: 1,
+      w: "169.254.0.0/16 is APIPA (link-local). Windows assigns it when no DHCP server answers, so the host has no usable network configuration." },
+    { d: "d4", t: "tcpip", q: "Which address range is reserved for private use and NOT routed on the public internet?",
+      o: ["172.32.0.0 – 172.40.255.255", "192.169.0.0 – 192.169.255.255", "172.16.0.0 – 172.31.255.255", "11.0.0.0 – 11.255.255.255"], a: 2,
+      w: "RFC 1918 private ranges are 10.0.0.0/8, 172.16.0.0–172.31.255.255 and 192.168.0.0/16. The others are public look-alikes." },
 
     // ---------- D5 ----------
     { d: "d5", t: "aaa", q: "Which combination is true multi-factor authentication?",
@@ -268,7 +274,11 @@ window.BANK = {
       ["DNSSEC provides", "Integrity and origin authentication of DNS data, not confidentiality."],
       ["SPF / DKIM / DMARC", "Allowed senders / message signature / policy and reporting."],
       ["SDN", "Separates control plane from data plane."],
-      ["SYN flood defence", "SYN cookies, rate limiting, DDoS scrubbing."]
+      ["SYN flood defence", "SYN cookies, rate limiting, DDoS scrubbing."],
+      ["IPv4 classes A / B / C (first octet)", "A 1–126 (/8), B 128–191 (/16), C 192–223 (/24). D 224–239 is multicast; E 240–255 reserved."],
+      ["RFC 1918 private ranges", "10.0.0.0/8, 172.16.0.0/12 (172.16–172.31), 192.168.0.0/16."],
+      ["127.0.0.1 and 169.254.x.x", "Loopback (this computer) and APIPA (self-assigned when DHCP fails)."],
+      ["IPv6 ::1 / fe80::/10 / fc00::/7", "Loopback / link-local / unique local (private)."]
     ],
     d5: [
       ["Type I error", "False rejection (FRR)."],
