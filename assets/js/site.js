@@ -51,13 +51,15 @@
   function viewPricing() {
     const plans = A.plans.filter(p => p.active !== false), M = P.modules || {};
     return `<div class="site-page">
-      <section class="site-hero center">${pageHead("Pricing", "Every plan, <em>free for a year</em>", "Start with the depth that suits you and move up any time.")}</section>
+      <section class="site-hero center">${pageHead("Pricing", "Small price. <em>Big reason to finish.</em>", "One honest yearly price, less than a cup of chai a day. Finish the 90-day challenge and you get it back.")}</section>
       ${A.planCards({ signup: !(db.mode === "cloud" && db.user) })}
+      ${A.challengeBlock()}
       <h2 class="h-section">Compare plans</h2>
       <div class="tbl-wrap"><table class="tbl compare"><thead><tr><th>What’s included</th>${plans.map(p => `<th class="plan-${p.id}"><span class="plan-chip plan-${p.id}">${esc(p.name)}</span></th>`).join("")}</tr></thead><tbody>
         ${Object.entries(M).map(([k, l]) => `<tr><td>${esc(l)}</td>${plans.map(p => `<td class="cmp">${(p.modules || []).includes(k) ? `<span class="yes">✓</span>` : `<span class="no">-</span>`}</td>`).join("")}</tr>`).join("")}
         <tr><td>Free period</td>${plans.map(p => `<td class="cmp">${p.free_months} months</td>`).join("")}</tr>
-        <tr><td>After the free period</td>${plans.map(p => `<td class="cmp">${+p.price > 0 ? A.money(+p.price, p.currency) + " / year" : "To be announced"}</td>`).join("")}</tr>
+        <tr><td>Price</td>${plans.map(p => `<td class="cmp">${+p.price > 0 ? A.money(+p.price, p.currency) + " / year" : "Free"}</td>`).join("")}</tr>
+        <tr><td>90-day challenge reward</td>${plans.map(p => `<td class="cmp">${+p.price > 0 ? (+p.free_months ? "Next year free" : A.money(+p.price, p.currency) + " back") : "-"}</td>`).join("")}</tr>
       </tbody></table></div>
       <p class="sub" style="margin-top:14px">No card needed to start. We’ll tell you well before any free period ends.</p>
       ${cta()}

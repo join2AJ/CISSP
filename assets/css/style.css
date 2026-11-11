@@ -1687,3 +1687,47 @@ sub, sup { font-size: max(12px, .72em); }
 .start-arrow { flex: none; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: color-mix(in srgb, var(--accent-ink) 16%, transparent); font-size: 18px; }
 .toc-prio.strong { color: color-mix(in srgb, var(--good) 72%, var(--ink)); }
 .toc-prio.weak { color: color-mix(in srgb, var(--bad) 85%, var(--ink)); }
+
+/* pricing: price first, per-day line, challenge promise */
+.plan-ribbon { display: inline-block; margin: 2px 0 6px; padding: 3px 10px; border-radius: 99px; font: 700 12px var(--sans); letter-spacing: .04em; color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.plan .plan-price b { font-family: var(--display); font-size: 46px; font-weight: 600; letter-spacing: -.02em; line-height: 1; }
+.plan .plan-price span { font-size: 14px; color: var(--muted); margin-left: 6px; }
+.plan .plan-after { margin: 6px 0 2px; font-size: 13.5px; color: var(--ink-2); }
+.plan-back { margin: 10px 0 14px; padding: 8px 10px; border-radius: 10px; font-size: 13.5px; font-weight: 600; color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--card)); border: 1px dashed color-mix(in srgb, var(--accent) 40%, transparent); }
+
+/* the 90-day challenge */
+.chal { margin: 70px 0 30px; padding: 40px 34px; border-radius: 26px; background: linear-gradient(160deg, #1f5c43, #163f2f); color: #f7f3ea; }
+.chal .kicker { color: #e3b95a; }
+.chal-hero h2 { font-family: var(--display); font-weight: 500; font-size: clamp(30px, 4.6vw, 48px); line-height: 1.08; letter-spacing: -.02em; margin: 10px 0 10px; }
+.chal-hero h2 em { color: #e3b95a; font-style: italic; }
+.chal-hero p { font-size: 17px; opacity: .9; margin: 0; }
+.chal-story { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 30px 0 8px; }
+.chal-story > div { padding: 16px; border-radius: 16px; background: rgb(255 255 255 / .07); border: 1px solid rgb(255 255 255 / .12); display: grid; gap: 4px; }
+.chal-story b { font: 700 12px var(--sans); letter-spacing: .1em; text-transform: uppercase; color: #e3b95a; }
+.chal-story span { font-family: var(--display); font-size: 21px; }
+.chal-story p { grid-column: 1 / -1; margin: 10px 0 0; font-family: var(--serif); font-size: 18px; line-height: 1.55; opacity: .92; }
+.chal-how { list-style: none; padding: 0; margin: 26px 0 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.chal-how li { display: grid; grid-template-columns: 40px 1fr; gap: 12px; padding: 18px; border-radius: 18px; background: #f7f3ea; color: #1d1b17; }
+.chal-how li > b { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: #1f5c43; color: #f7f3ea; font-family: var(--display); font-size: 18px; }
+.chal-how h4 { margin: 2px 0 4px; font-family: var(--display); font-size: 19px; font-weight: 600; }
+.chal-how p { margin: 0; font-size: 14px; line-height: 1.5; color: #4a463e; }
+.chal-line { margin: 24px 0 0; font-family: var(--display); font-style: italic; font-size: 21px; text-align: center; color: #e3b95a; }
+@media (max-width: 760px) { .chal { padding: 28px 20px; border-radius: 20px; } .chal-story, .chal-how { grid-template-columns: 1fr; } }
+
+/* dashboard tracker */
+.chal-mini { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-top: 18px; border-left: 4px solid #e3b95a; }
+.chal-mini h3 { margin: 4px 0 4px; font-family: var(--display); }
+.chal-mini p { margin: 0; color: var(--ink-2); font-size: 14.5px; max-width: 60ch; }
+.chal-track { margin-top: 18px; border-left: 4px solid #e3b95a; }
+.chal-track.done { border-left-color: var(--good); }
+.chal-track-head { display: flex; flex-wrap: wrap; gap: 14px; justify-content: space-between; align-items: center; }
+.chal-track-head h3 { margin: 4px 0 2px; font-family: var(--display); font-size: 22px; }
+.chal-days { flex: 0 1 260px; height: 10px; border-radius: 99px; background: var(--paper-2); overflow: hidden; }
+.chal-days i { display: block; height: 100%; background: linear-gradient(90deg, #e3b95a, #b8892a); border-radius: 99px; }
+.chal-goals { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 16px 0 12px; }
+.chal-goal { display: grid; gap: 6px; padding: 12px; border-radius: 12px; border: 1px solid var(--rule-2); text-decoration: none; color: var(--ink); font-size: 14px; font-weight: 600; }
+.chal-goal small { color: var(--muted); font-weight: 500; font-size: 12.5px; }
+.chal-goal .meter i { background: #b8892a; }
+.chal-goal.ok { border-color: color-mix(in srgb, var(--good) 45%, var(--rule-2)); }
+.chal-goal.ok .meter i { background: var(--good); }
+@media (max-width: 760px) { .chal-goals { grid-template-columns: 1fr 1fr; } }

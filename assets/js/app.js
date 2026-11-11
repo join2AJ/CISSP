@@ -75,18 +75,77 @@
     const cur = App.profile && App.profile.plan;
     return `<div class="plans">${App.plans.filter(p => p.active !== false).map(p => {
       const mine = cur === p.id && db.user;
-      const after = +p.price > 0 ? `then ${App.money(+p.price, p.currency)} a year` : "no charge set after that yet";
-      const cta = opts.signup ? `<a class="btn ${p.id === "gold" ? "primary" : ""}" href="#/signup/${p.id}">Start free with ${esc(p.name)}</a>`
+      const price = +p.price || 0, free = +p.free_months || 0, day = price / 365;
+      const cta = opts.signup ? `<a class="btn ${p.id === "gold" ? "primary" : ""}" href="#/signup/${p.id}">${free ? `Start free with ${esc(p.name)}` : `Start for ${App.money(price, p.currency)} →`}</a>`
         : mine ? `<span class="btn ghost" aria-disabled="true">✓ Your plan</span>` : opts.request ? `<button class="btn" data-upgrade="${p.id}">Request ${esc(p.name)}</button>` : "";
       return `<div class="plan plan-${p.id} ${mine ? "mine" : ""}">
         <div class="plan-top"><span class="plan-gem"></span><b>${esc(p.name)}</b>${p.id === "gold" ? `<span class="plan-pop">Most popular</span>` : ""}</div>
         <p class="plan-tag">${esc(p.tagline || "")}</p>
-        <div class="plan-price"><b>Free</b><span>for ${p.free_months} month${p.free_months == 1 ? "" : "s"}</span></div>
-        <p class="plan-after">${esc(after)}</p>
+        ${free ? `<div class="plan-ribbon">First ${free} month${free == 1 ? "" : "s"} free</div>` : ""}
+        ${price ? `<div class="plan-price"><b>${App.money(price, p.currency)}</b><span>/ year${free ? " after that" : ""}</span></div>
+          <p class="plan-after">That’s ${App.money(Math.round(day * 100) / 100, p.currency)} a day, less than a cup of chai.</p>
+          <p class="plan-back">↺ ${free ? "Finish the 90-day challenge and your next year is free" : `Finish the 90-day challenge and get your ${App.money(price, p.currency)} back`}</p>`
+          : `<div class="plan-price"><b>Free</b><span>for ${free} month${free == 1 ? "" : "s"}</span></div>`}
         <ul>${(p.perks || []).map(x => `<li>${esc(x)}</li>`).join("")}</ul>
         ${cta}</div>`;
     }).join("")}</div>`;
   };
+  /* the 90-day challenge: four goals that add up to exam readiness */
+  App.challengeOffer = () => {
+    const g = App.planById("gold") || App.plans[0] || {}, price = +g.price || 0, free = +g.free_months || 0;
+    return { price, money: price ? App.money(price, g.currency) : "", free, refund: price > 0 && !free };
+  };
+  App.challengeBlock = () => {
+    const o = App.challengeOffer();
+    return `<section class="chal" aria-label="The 90-day CISSP challenge">
+      <div class="chal-hero"><span class="kicker">The 90-day CISSP challenge</span>
+        <h2>Disappear for 90 days.<br><em>Come back exam-ready.</em></h2>
+        <p>Just 60 minutes a day. 90 days. One certification.</p></div>
+      <div class="chal-story">
+        <div><b>Day 1</b><span>You’re motivated.</span></div>
+        <div><b>Day 5</b><span>You miss a session.</span></div>
+        <div><b>Day 10</b><span>Work gets busy.</span></div>
+        <p>A few weeks later the book is on the shelf and the exam date is closer. Most people don’t fail the CISSP; they stop studying for it. That’s why we built the challenge.</p>
+      </div>
+      <ol class="chal-how">
+        <li><b>1</b><div><h4>${o.free ? `Start free` : `Join for ${o.money}`}</h4><p>${o.free ? `Your first ${o.free} months are free${o.price ? `, then ${o.money} a year` : ""}.` : `That’s all you pay to start, about ${App.money(Math.round(o.price / 365 * 100) / 100)} a day.`}</p></div></li>
+        <li><b>2</b><div><h4>Finish four goals in 90 days</h4><p>Read all 55 sections · answer 500 questions · score 70%+ in a mock · study on 60 different days. Your dashboard tracks every one.</p></div></li>
+        <li><b>3</b><div><h4>${o.refund ? `Get your ${o.money} back` : `Get your next year free`}</h4><p>${o.refund ? `Complete the challenge and we refund the full ${o.money}.` : `Complete the challenge and your next year is on us.`}</p></div></li>
+      </ol>
+      ${o.price ? `<p class="chal-line">So your ${o.money} isn’t just a fee. It’s your reason to show up, every day, until you’re ready.</p>` : ""}
+    </section>`;
+  };
+  App.challenge = () => {
+    const S0 = App.state(), start = S0.challengeStart; if (!start) return null;
+    const end = ymd(addDays(parseD(start), 90)), left = Math.max(0, daysTo(end));
+    const readN = D.reduce((n, d) => n + d.sections.filter(s => S0.read[d.id + ":" + s.id]).length, 0), allN = D.reduce((n, d) => n + d.sections.length, 0);
+    const since = r => (r.created_at || "9999") >= start;
+    const ans = App.attempts.filter(since).length;
+    const best = Math.max(0, ...App.mocks.filter(since).map(m => Math.round(m.correct / m.total * 100)));
+    const days = new Set((App.timeRows || []).filter(r => r.day >= start && r.seconds >= 300).map(r => r.day)).size;
+    const goals = [["Read every section", readN, allN, `${readN} of ${allN}`, "#/read"], ["Answer 500 questions", Math.min(ans, 500), 500, `${ans} answered`, "#/quiz"],
+      ["Score 70%+ in a mock", Math.min(best, 70), 70, best ? `best ${best}%` : "no mock yet", "#/mock"], ["Study on 60 days", Math.min(days, 60), 60, `${days} days`, "#/insights"]];
+    const done = goals.every(g => g[1] >= g[2]);
+    return { start, end, left, goals, done, day: Math.min(90, 90 - left + 1) };
+  };
+  function challengeCard() {
+    const c = App.challenge(), o = App.challengeOffer();
+    if (!c) return `<section class="card chal-mini"><div><span class="kicker">The 90-day challenge</span><h3>60 minutes a day for 90 days</h3>
+      <p>Four goals: every section, 500 questions, a 70% mock and 60 study days. ${o.refund ? `Finish and get your ${o.money} back.` : o.price ? "Finish and your next year is free." : ""}</p></div>
+      <button class="btn primary" id="chalStart">I’m in. Start my 90 days</button></section>`;
+    return `<section class="card chal-track ${c.done ? "done" : ""}">
+      <div class="chal-track-head"><div><span class="kicker">The 90-day challenge</span><h3>${c.done ? "Challenge complete. Well done." : `Day ${c.day} of 90`}</h3>
+        <p class="hint" style="margin:0">${c.done ? (o.refund ? `Claim your ${o.money} refund below.` : "Claim your reward below.") : `${c.left} days left · ends ${fmtDY(c.end)}`}</p></div>
+        <div class="chal-days" aria-hidden="true"><i style="width:${Math.round(c.day / 90 * 100)}%"></i></div></div>
+      <div class="chal-goals">${c.goals.map(([t, v, max, lbl, h]) => `<a class="chal-goal ${v >= max ? "ok" : ""}" href="${h}"><span>${v >= max ? "✓ " : ""}${t}</span><span class="meter"><i style="width:${Math.round(v / max * 100)}%"></i></span><small>${lbl}</small></a>`).join("")}</div>
+      ${c.done ? `<button class="btn primary" id="chalClaim" ${App.state().challengeClaimed ? "disabled" : ""}>${App.state().challengeClaimed ? "✓ Claimed. Your administrator has been told" : o.refund ? `Claim my ${o.money} refund` : "Claim my reward"}</button>` : ""}
+    </section>`;
+  }
+  function bindChallenge() {
+    const s = $("#chalStart"); if (s) s.addEventListener("click", () => { S.challengeStart = ymd(today()); save(); db.logEvent("user.challenge_started", {}); toast("Your 90 days start today. See you tomorrow."); App.rerender(); });
+    const c = $("#chalClaim"); if (c) c.addEventListener("click", () => { const ch = App.challenge(); if (!ch || !ch.done) return;
+      S.challengeClaimed = new Date().toISOString(); save(); db.logEvent("user.challenge_completed", { start: ch.start, end: ch.end }); toast("Claimed. Your administrator will be in touch."); App.rerender(); });
+  }
   App.publicMode = () => db.mode === "cloud" ? !db.user : !(App.profile && App.profile.onboarded);
   App.isAdmin = () => !!(App.profile && App.profile.role === "admin");
   App.isPrivileged = () => !!(App.profile && (App.profile.privileged || App.profile.role === "admin"));
@@ -585,6 +644,7 @@
       </section>
 
       ${readinessCard()}
+      ${challengeCard()}
       <h2 class="h-section">Where you are</h2>
       <div class="dash-grid">
         ${tile({ k: "Reading", v: `${all.r}<small>/${all.t}</small>`, s: "sections understood", pct: all.pct, go: cont ? "Continue" : "Chapters", href: cont ? cont.href : "#/read" })}
@@ -1175,6 +1235,7 @@
       </section>
       <section class="trust-strip"><span>✓ Written to the official 2024 exam outline</span><span>✓ Free for the first year</span><span>✓ Works on phone, tablet and laptop</span><span>✓ Your data, your control</span></section>
       <section class="facts">${P.exam.facts.map(f => `<div class="fact"><b>${esc(f.big)}</b><span>${esc(f.label)}</span></div>`).join("")}</section>
+      ${App.challengeBlock()}
       <h2 class="h-section">Inside: the eight chapters</h2>
       <p class="sub">Every objective of the official exam outline, explained in plain language with the manager’s lens the exam rewards.</p>
       <div class="shelf">${order.map(d => `<a class="book" href="#/signup/silver" style="${dc(d)}"><div style="display:flex;justify-content:space-between"><span class="book-num">${roman[d.n]}</span><span class="tag plain">🔒 sign in</span></div><div class="book-title">${esc(d.title)}</div><div class="book-meta">${d.weight}% of exam · ${d.sections.length} sections</div><p class="land-lede">${esc(d.lede)}</p></a>`).join("")}</div>
@@ -1396,7 +1457,7 @@
     });
   }
 
-  App.register("home", { render: viewHome, area: "other", nav: "home" });
+  App.register("home", { render: viewHome, bind: bindChallenge, area: "other", nav: "home" });
   App.register("read", { render: viewChapters, title: "Chapters", nav: "read", area: "read" });
   App.register("domain", { render: viewDomain, bind: bindDomain, nav: "read", area: "read", title: r => byId[r.a] ? `D${byId[r.a].n} ${byId[r.a].title}` : "Chapter" });
   App.register("plan", { render: viewPlan, title: "Study plan", nav: "plan", area: "plan", bind: (r) => {
