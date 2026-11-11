@@ -437,7 +437,11 @@
   }
 
   function footer() {
-    return `<footer class="foot"><span>© ${new Date().getFullYear()} StudyCISSP · independent study material, not affiliated with ISC2. CISSP® is a registered mark of ISC2, Inc.</span><span class="foot-links"><a href="#/about">About CISSP</a><a href="#/faq">FAQ</a><a href="#/contact">Contact</a><a href="#/terms">Terms</a><a href="#/privacy">Privacy &amp; trust</a></span></footer>
+    return `<footer class="foot">
+      <div class="foot-top"><a class="foot-brand" href="#/"><b>Study<span>CISSP</span></b><small>read slowly · pass once</small></a>
+        <nav class="foot-links" aria-label="Footer"><a href="#/about">About CISSP</a><a href="#/faq">FAQ</a><a href="#/contact">Contact</a><a href="#/terms">Terms</a><a href="#/privacy">Privacy &amp; trust</a></nav></div>
+      <p class="foot-legal">© ${new Date().getFullYear()} StudyCISSP. Independent study material, not affiliated with ISC2. CISSP® is a registered mark of ISC2, Inc.</p>
+    </footer>
     <button class="back-top" id="backTop" aria-label="Back to top">↑</button>`;
   }
 
@@ -660,7 +664,7 @@
           <span><span class="meter"><i style="width:${p.pct}%"></i></span> <span id="chPct">${p.pct}%</span></span>
         </div>
         <p class="encourage">${esc(enc)}</p>
-        <div class="btn-row"><a class="btn primary" href="#/domain/${d.id}/${start.id}">${firstUnread && p.r ? "Continue at" : "Start reading"} ${d.n}.${si + 1} ${esc(start.title)} →</a>${p.pct === 100 ? `<a class="btn" href="#/domain/${d.id}/memorise">★ Memorise &amp; practice</a>` : ""}</div>
+        <div class="btn-row"><a class="start-btn" href="#/domain/${d.id}/${start.id}"><span><small>${firstUnread && p.r ? "Continue at" : "Start reading"}</small><b>${d.n}.${si + 1} ${esc(start.title)}</b></span><span class="start-arrow" aria-hidden="true">→</span></a>${p.pct === 100 ? `<a class="btn" href="#/domain/${d.id}/memorise">★ Memorise &amp; practice</a>` : ""}</div>
       </header>
       <div class="prose">
         <p class="intro">${esc(d.intro)}</p>
