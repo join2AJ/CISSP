@@ -995,19 +995,26 @@
   App.afterLogin = async function () {
     const uidv = db.mode === "cloud" ? db.user.id : "local";
     stateKey = "cissp.v1:" + uidv;
-    App.profile = await db.getProfile();
-    let st = null;
-    if (db.mode === "cloud") { try { st = await db.loadState(); } catch (e) {} }
-    if (!st) st = loadLocal(stateKey);
-    if (!st) { const legacy = loadLocal("cissp.v1"); if (legacy && (db.mode === "local" || (App.profile.privileged))) st = legacy; }
+    const cloud = db.mode === "cloud";
+    // load everything at once: one network round-trip of waiting instead of seven
+    const [profile, cloudState, attempts, mocks, notes] = await Promise.all([
+      db.getProfile(),
+      cloud ? db.loadState().catch(() => null) : Promise.resolve(null),
+      db.myAttempts().catch(() => []),
+      db.myMocks().catch(() => []),
+      cloud ? db.privateContent("personal_notes").catch(() => null) : Promise.resolve(null),
+      App.loadCards ? App.loadCards() : Promise.resolve()
+    ]);
+    App.profile = profile;
+    let st = cloudState || loadLocal(stateKey);
+    if (!st) { const legacy = loadLocal("cissp.v1"); if (legacy && (!cloud || profile.privileged)) st = legacy; }
     S = Object.assign(blank(), st || {});
     if (!S.planStart) S.planStart = ymd(today());
     save();
     App.timeRows = null;
-    [App.attempts, App.mocks] = await Promise.all([db.myAttempts().catch(() => []), db.myMocks().catch(() => [])]);
-    if (App.loadCards) await App.loadCards();
+    App.attempts = attempts; App.mocks = mocks;
     App.personal = null;
-    if (db.mode === "cloud" && App.isPrivileged()) { try { const t = await db.privateContent("personal_notes"); if (t) App.personal = JSON.parse(t); } catch (e) {} }
+    if (notes && App.isPrivileged()) { try { App.personal = JSON.parse(notes); } catch (e) {} }
     db.touch().catch(() => {});
   };
 
