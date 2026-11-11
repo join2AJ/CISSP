@@ -108,7 +108,8 @@
     const out = [];
     D.forEach(d => d.questions.forEach((q, i) => out.push({ id: `${d.id}-c${i}`, d: d.id, t: (B.chapterTopics[d.id] || [])[i] || "", q: q.q, o: q.options, a: q.answer, w: q.why, chapter: i })));
     const idx = {};
-    B.questions.forEach(q => { idx[q.d] = (idx[q.d] || 0) + 1; out.push({ id: `${q.d}-b${idx[q.d]}`, d: q.d, t: q.t, q: q.q, o: q.o, a: q.a, w: q.w }); });
+    B.questions.forEach(q => { if (q.src) { out.push({ id: q.id, d: q.d, t: q.t, q: q.q, o: q.o, a: q.a, w: q.w, src: q.src }); return; }
+      idx[q.d] = (idx[q.d] || 0) + 1; out.push({ id: `${q.d}-b${idx[q.d]}`, d: q.d, t: q.t, q: q.q, o: q.o, a: q.a, w: q.w }); });
     return out;
   })();
   /* Shuffle answer options so the right answer isn't always in the same place.
@@ -345,14 +346,21 @@
     (root || view).querySelectorAll(".prose table, .tbl.stackable").forEach(t => {
       if (t.dataset.stacked) return; t.dataset.stacked = "1"; t.classList.add("stack");
       const heads = [...t.querySelectorAll("thead th")].map(th => th.textContent.trim());
-      t.querySelectorAll("tbody tr").forEach(tr => [...tr.children].forEach((td, i) => { if (heads[i]) td.setAttribute("data-label", heads[i]); }));
+      t.querySelectorAll("tbody tr").forEach(tr => [...tr.children].forEach((td, i) => {
+        if (heads[i]) td.setAttribute("data-label", heads[i]);
+        // keep text and inline tags together so the grid has one value cell, not a cell per fragment
+        if (td.childNodes.length && !(td.children.length === 1 && td.firstElementChild.classList.contains("cv"))) { const v = document.createElement("span"); v.className = "cv"; while (td.firstChild) v.appendChild(td.firstChild); td.appendChild(v); }
+      }));
     });
   };
   App.rerender = () => { rendered = null; const y = scrollY; route().then(() => scrollTo(0, y)); };
 
   function paintNav(r, def) {
     const key = def.nav || r.page;
-    $$(".mainnav a, .pubnav a").forEach(a => a.classList.toggle("active", a.dataset.nav === key));
+    const navKey = r.page === "domain" ? "read" : (document.querySelector(`.mainnav [data-nav="${r.page}"]`) ? r.page : key);
+    $$(".pubnav a").forEach(a => a.classList.toggle("active", a.dataset.nav === key));
+    $$(".mainnav a").forEach(a => a.classList.toggle("active", a.dataset.nav === navKey));
+    $$(".mainnav .nav-group").forEach(g => { g.classList.remove("open"); g.querySelector(".nav-top").setAttribute("aria-expanded", "false"); g.classList.toggle("active", !!g.querySelector(`[data-nav="${navKey}"]`)); });
     const signedIn = db.mode === "cloud" ? !!db.user : !!(App.profile && App.profile.onboarded);
     const ps = $("#pubSignin"), pst = $("#pubStart");
     if (ps) { ps.hidden = signedIn || r.page === "login"; }
@@ -372,10 +380,8 @@
   function renderToc(r) {
     const all = allProgress();
     const order = App.pathOrder();
-    let h = `<div class="mob-nav">
-      ${[["", "Home"], ["read", "Chapters"], ["quiz", "Quiz"], ["flashcards", "Flashcards"], ["mock", "Mock exam"], ["glossary", "Glossary"], ["plan", "Plan"], ["insights", "Insights"], ["library", "My library"]].concat(App.isAdmin() ? [["admin", "Admin"]] : []).map(([k, v]) => `<a href="#/${k}">${v}</a>`).join("")}
-    </div>`;
-    h += `<div class="toc-head">Your path · weakest first</div><ol class="toc-list">`;
+    let h = `<div class="mob-nav"><a href="#/" class="${r.page === "home" ? "active" : ""}">Home</a>${App.isAdmin() ? `<a href="#/admin">Admin</a>` : ""}</div>`;
+    h += `<div class="toc-head">Chapters · weakest first</div><ol class="toc-list">`;
     order.forEach(d => {
       const p = domProgress(d);
       const active = r.page === "domain" && r.a === d.id;
@@ -385,11 +391,12 @@
       h += `</li>`;
     });
     const L = (k, ico, t) => `<li><a href="#/${k}" class="${r.page === k ? "active" : ""}"><span class="toc-num">${ico}</span>${t}</a></li>`;
-    h += `</ol><div class="toc-head">Practise</div><ol class="toc-list">
-      ${L("glossary", "Aa", "Glossary A-Z")}${L("quiz", "?", "Quiz by domain or topic")}${L("flashcards", "❐", "Flashcards")}${L("mock", "◷", "Mock exam")}
-    </ol><div class="toc-head">Companion</div><ol class="toc-list">
-      ${L("plan", "▤", "My study plan")}${L("insights", "◔", "Insights & time spent")}${L("tracker", "▦", "Scores & error log")}${L("library", "❏", "My library")}
-      ${L("tactics", "◎", "Exam tactics")}${L("latest", "✦", "What’s new, 2024-2026")}${L("resources", "§", "Resources")}${L("privacy", "⚿", "Privacy & trust")}
+    h += `</ol><div class="toc-head">Learn more</div><ol class="toc-list">
+      ${L("glossary", "Aa", "Glossary A-Z")}${L("latest", "✦", "What’s new, 2024-2026")}${L("resources", "§", "Resources")}
+    </ol><div class="toc-head">Practise</div><ol class="toc-list">
+      ${L("quiz", "?", "Quiz by domain or topic")}${L("flashcards", "❐", "Flashcards")}${L("mock", "◷", "Mock exam")}${L("tactics", "◎", "Exam tactics")}
+    </ol><div class="toc-head">Progress</div><ol class="toc-list">
+      ${L("plan", "▤", "My study plan")}${L("insights", "◔", "Insights & time spent")}${L("tracker", "▦", "Scores & error log")}${L("library", "❏", "My library")}${L("privacy", "⚿", "Privacy & trust")}
     </ol>
     <div class="toc-card"><b>${all.pct}%</b>read · ${all.r} of ${all.t} sections<div class="meter" style="margin-top:10px"><i style="width:${all.pct}%;background:var(--accent)"></i></div></div>`;
     toc.innerHTML = h;
@@ -445,6 +452,33 @@
     }
     return null;
   }
+  /* priority matrix: exam weight against how far behind you are in each domain */
+  function priorityMatrix() {
+    const rows = D.map(d => {
+      const p = domProgress(d), sc = App.domainScore(d.id), pr = prio(d);
+      const readGap = 100 - p.pct, scoreGap = sc.v == null ? 40 : Math.max(0, 80 - sc.v) * 2.5;
+      const need = readGap * 0.45 + Math.min(100, scoreGap) * 0.4 + (pr === "weak" ? 25 : pr === "strong" ? -10 : 0);
+      const why = [p.pct < 100 ? `${p.pct}% read` : "all read", sc.v == null ? "no score yet" : `scoring ${sc.v}%`].concat(pr === "weak" ? ["focus domain"] : []).join(" · ");
+      return { d, p, sc, need, why, big: d.weight >= 13 };
+    });
+    // the four domains furthest behind are urgent (ties go to the bigger share), plus anything scoring under 65%
+    const ranked = rows.slice().sort((a, b) => b.need - a.need || b.d.weight - a.d.weight || a.d.n - b.d.n);
+    rows.forEach(r => { r.urgent = (ranked.indexOf(r) < 4 && r.need > 15) || (r.sc.v != null && r.sc.v < 65); });
+    const go = (r) => r.p.pct < 80 ? { href: `#/domain/${r.d.id}`, t: "Read" } : { href: `#/quiz/run/domain/${r.d.id}`, t: "Quiz" };
+    const chip = (r) => { const g = go(r); return `<a class="pm-chip" href="${g.href}" style="${dc(r.d)}"><span class="toc-dot" style="background:var(--${r.d.id})"></span><b>D${r.d.n} ${esc(r.d.short)}</b><small>${r.d.weight}% · ${esc(r.why)}</small><span class="pm-go">${g.t} →</span></a>`; };
+    const Q = [
+      { k: "now", t: "Do now", s: "Big share of the exam and you are behind", f: r => r.big && r.urgent },
+      { k: "fresh", t: "Keep fresh", s: "Big share and on track. Short quizzes and flashcards", f: r => r.big && !r.urgent },
+      { k: "quick", t: "Quick wins", s: "Smaller share, but behind. A few focused sessions", f: r => !r.big && r.urgent },
+      { k: "keep", t: "Maintain", s: "Smaller share and on track. Light review only", f: r => !r.big && !r.urgent }
+    ];
+    return `<section class="pm" aria-label="Priority matrix">
+      <div class="pm-grid">${Q.map(q => { const list = rows.filter(q.f).sort((a, b) => b.need - a.need);
+        return `<div class="pm-q pm-${q.k}"><div class="pm-h"><b>${q.t}</b><small>${q.s}</small></div>${list.length ? list.map(chip).join("") : `<p class="pm-empty">Nothing here right now.</p>`}</div>`; }).join("")}</div>
+      <div class="pm-axis-x"><span>Behind: unread or a low score</span><span>On track</span></div>
+    </section>`;
+  }
+
   async function viewHome() {
     await App.loadTime();
     const all = allProgress(), ph = App.currentPhase(), nx = nextSection();
@@ -511,6 +545,10 @@
         ${tile({ k: "Study time", v: fmtDur(wk), s: `this week · target ${Math.round(weekTarget / 3600)}h`, pct: wk / weekTarget * 100, go: "Insights", href: "#/insights" })}
         ${tile({ k: "Plan", v: ph ? `${tasks.filter(x => x.done).length}/${tasks.length}` : "-", s: ph ? "tasks done in this stage" : "set your exam date", pct: ph && tasks.length ? tasks.filter(x => x.done).length / tasks.length * 100 : null, go: "Open plan", href: "#/plan" })}
       </div>
+
+      <h2 class="h-section">What to work on first</h2>
+      <p class="sub">Every domain can fail you, so nothing here is unimportant. Up is a bigger share of the exam, left is where you are behind. It updates as you read and quiz.</p>
+      ${priorityMatrix()}
 
       <details class="howto" ${firstTime ? "open" : ""}>
         <summary>How StudyCISSP works <small>(what each part is for)</small></summary>
@@ -1221,6 +1259,15 @@
 
   $("#pubMenuBtn").addEventListener("click", (e) => { e.stopPropagation(); const pn = $("#pubnav"); pn.classList.toggle("open"); $("#pubMenuBtn").setAttribute("aria-expanded", String(pn.classList.contains("open"))); });
   document.addEventListener("click", (e) => { const pn = $("#pubnav"); if (pn && pn.classList.contains("open") && !pn.contains(e.target)) pn.classList.remove("open"); });
+  const closeGroups = (except) => $$(".mainnav .nav-group.open").forEach(x => { if (x !== except) { x.classList.remove("open"); x.querySelector(".nav-top").setAttribute("aria-expanded", "false"); } });
+  $$(".mainnav .nav-group").forEach(g => {
+    const btn = g.querySelector(".nav-top");
+    const set = (on) => { closeGroups(g); g.classList.toggle("open", on); btn.setAttribute("aria-expanded", String(on)); };
+    btn.addEventListener("click", (e) => { e.stopPropagation(); set(!g.classList.contains("open")); });
+    g.addEventListener("keydown", (e) => { if (e.key === "Escape") { set(false); btn.focus(); } });
+    g.addEventListener("focusout", (e) => { if (e.relatedTarget && !g.contains(e.relatedTarget)) set(false); });
+  });
+  document.addEventListener("click", (e) => { if (!e.target.closest(".nav-group")) closeGroups(); });
   $("#tocToggle").addEventListener("click", () => { toc.classList.add("open"); $("#scrim").classList.add("on"); });
   $("#scrim").addEventListener("click", closeToc);
 

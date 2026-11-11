@@ -78,12 +78,13 @@
         <p class="q-stem">${esc(q.q)}</p>
         <div class="q-opts">${q.o.map((o, j) => { let c = ""; if (ans != null) { if (j === q.a) c = "correct"; else if (j === ans) c = "wrong"; }
           return `<button class="opt ${c}" data-pick="${j}" ${ans != null ? "disabled" : ""}><span class="l">${L[j]}</span><span>${esc(o)}</span></button>`; }).join("")}</div>
-        ${ans != null ? `<div class="why"><b style="color:${ans === q.a ? "var(--good)" : "var(--bad)"}">${ans === q.a ? pick(["Correct.", "Exactly right.", "Yes. Well reasoned."]) : "Not this time. The answer is " + L[q.a] + "."}</b>${esc(q.w)}
+        ${ans != null ? `<div class="why"><b style="color:${ans === q.a ? "var(--good)" : "var(--bad)"}">${ans === q.a ? pick(["Correct.", "Exactly right.", "Yes. Well reasoned."]) : "Not this time. The answer is " + L[q.a] + "."}</b>${esc(q.w)}${srcNote(q)}
           <div class="actions">${nextButtons()}${ans === q.a ? "" : `<button class="btn small" id="logMiss">+ Error log</button>`}<a class="btn small ghost" href="#/domain/${d.id}${q.t ? "/" + q.t : ""}">Read the section</a></div></div>` : `<p class="hint">Press 1-4 or A-D to answer.</p>`}
       </div>
     </div>`;
   }
 
+  function srcNote(q) { return q.src === "cs" ? `<span class="q-src">Question from <a href="https://github.com/ThanhNguyxnOrg/awesome-cert-sherpa" target="_blank" rel="noopener">CertSherpa</a> (MIT licence).</span>` : ""; }
   function scoreSoFar() {
     const done = Q.answers.filter(a => a != null).length; if (!done) return "";
     const right = Q.items.filter((q, i) => Q.answers[i] === q.a).length;
@@ -246,67 +247,138 @@
   let F = null, autoDone = null;
   addEventListener("hashchange", () => { autoDone = null; });
 
+  // glossary terms as a second set of cards, reviewed with the same spacing
+  A.termCards = (() => { const out = [], G = window.GLOSSARY || {};
+    Object.keys(G).forEach(d => (G[d] || []).forEach(t => { if (!byId[d]) return;
+      const slug = String(t[0]).toLowerCase().replace(/\(.*?\)/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
+      out.push({ id: `g-${d}-${slug}`, d, front: t[0], back: t[1], use: t[2] || "", term: true }); }));
+    return out; })();
+  const prefGet = (k, v) => { try { const x = localStorage.getItem("fc." + k); return x == null ? v : x === "1"; } catch (e) { return v; } };
+  const prefSet = (k, v) => { try { localStorage.setItem("fc." + k, v ? "1" : "0"); } catch (e) {} };
+  let lastAgain = [];
+  const dueIn = (list) => list.filter(c => !CS[c.id] || CS[c.id].due <= ymd(today()));
+
   function viewFlash(r) {
     if (F && F.key !== location.hash) F = null;
-    const dom = r.a && byId[r.a] ? r.a : null;
-    if (F && F.key === location.hash && F.i < F.deck.length) return flashRunner();
-    if (F && F.key === location.hash && F.i >= F.deck.length) {
-      const k = F.known, t = F.deck.length; F = null;
-      return `<div class="page-narrow"><div class="kicker">Session complete</div><h1 class="h-display">${k} of ${t} <em>remembered</em></h1>
-        <p class="lede">${k === t ? "A clean sweep. Those cards will come back later, spaced further apart." : "Cards you’re still learning will come back sooner. That’s how memory sticks."}</p>
-        <div class="btn-row">${(() => { const cur = (location.hash.split("/")[2] || ""); const nd = byId[cur] ? D[D.indexOf(byId[cur]) + 1] : null; return nd ? `<a class="btn primary" href="#/flashcards/${nd.id}">Next deck: D${nd.n} ${esc(nd.short)} →</a><a class="btn" href="#/flashcards">All decks</a>` : `<a class="btn primary" href="#/flashcards">Back to decks</a>`; })()}<a class="btn" href="#/quiz/run/weak">Test it with a quiz</a></div></div>`;
-    }
+    if (F && F.i < F.deck.length) return flashRunner();
+    if (F && F.i >= F.deck.length) return flashSummary();
     const mastered = A.cards.filter(c => CS[c.id] && CS[c.id].box >= 4).length;
+    const tDue = dueIn(A.termCards).length, rev = prefGet("rev", false);
     return `<div class="page-narrow">
       <div class="kicker">Flashcards</div>
       <h1 class="h-display">Little and <em>often</em></h1>
-      <p class="lede">${A.cards.length} cards. Each card you know moves to a longer interval (1, 3, 7, 16, 35 days); anything you miss comes back tomorrow. ${mastered} mastered so far.</p>
-      <div class="grid-2" style="margin-top:28px">
-        <button class="card focus deck" data-deck="due"><span class="kicker">Today</span><h3>${A.dueCards().length} cards due</h3><p>All domains, in your path order.</p></button>
+      <p class="lede">${A.cards.length} concept cards and ${A.termCards.length} glossary terms. Cards you know come back later and later (1, 3, 7, 16, 35 days). Cards you miss come back again in the same session, then tomorrow. ${mastered} concept cards mastered so far.</p>
+      <div class="fc-how"><span><b>Tap</b> to turn the card</span><span><b>Swipe right</b> or press 2 if you knew it</span><span><b>Swipe left</b> or press 1 if you didn’t</span></div>
+      <label class="switch fc-rev"><input type="checkbox" id="fcRev" ${rev ? "checked" : ""}><span></span>Reverse: show the meaning, recall the term</label>
+      <div class="grid-2" style="margin-top:18px">
+        <button class="card focus deck" data-deck="due"><span class="kicker">Today</span><h3>${A.dueCards().length} concept cards due</h3><p>All domains, in your path order.</p></button>
+        <button class="card focus deck" data-deck="terms"><span class="kicker">Glossary</span><h3>${tDue} terms due</h3><p>Full forms and meanings, ${A.termCards.length} terms in all.</p></button>
         <button class="card focus deck" data-deck="weak"><span class="kicker">Focus</span><h3>Focus domains</h3><p>${D.filter(d => A.prio(d) === "weak").map(d => "D" + d.n).join(", ") || "Set focus domains in your profile"}</p></button>
+        <button class="card focus deck" data-deck="hard"><span class="kicker">Tricky</span><h3>${A.cards.concat(A.termCards).filter(c => CS[c.id] && CS[c.id].box === 1 && CS[c.id].reviews > 0).length} cards I keep missing</h3><p>Everything still in the first box.</p></button>
       </div>
       <h2 class="h-section">Decks by domain</h2>
-      <div class="dom-grid">${A.pathOrder().map(d => { const all = A.cards.filter(c => c.d === d.id), due = A.dueCards(d.id).length, m = all.filter(c => CS[c.id] && CS[c.id].box >= 4).length;
-        return `<button class="dom-tile deck" data-deck="${d.id}" style="${dc(d)}"><span class="toc-dot" style="background:var(--${d.id})"></span><b>D${d.n} ${esc(d.short)}</b><small>${all.length} cards · ${due} due · ${m} mastered</small><span class="meter"><i style="width:${Math.round(m / all.length * 100)}%"></i></span></button>`; }).join("")}</div>
+      <div class="dom-grid">${A.pathOrder().map(d => { const all = A.cards.filter(c => c.d === d.id), due = A.dueCards(d.id).length, m = all.filter(c => CS[c.id] && CS[c.id].box >= 4).length, nt = A.termCards.filter(c => c.d === d.id).length;
+        return `<button class="dom-tile deck" data-deck="${d.id}" style="${dc(d)}"><span class="toc-dot" style="background:var(--${d.id})"></span><b>D${d.n} ${esc(d.short)}</b><small>${all.length} cards · ${due} due · ${m} mastered</small><span class="meter"><i style="width:${all.length ? Math.round(m / all.length * 100) : 0}%"></i></span></button>
+        ${nt ? `<button class="dom-tile deck terms" data-deck="t-${d.id}" style="${dc(d)}"><span class="toc-dot" style="background:var(--${d.id})"></span><b>D${d.n} terms</b><small>${nt} glossary terms · ${dueIn(A.termCards.filter(c => c.d === d.id)).length} due</small></button>` : ""}`; }).join("")}</div>
     </div>`;
   }
+  function flashSummary() {
+    const k = F.known.size, t = F.unique, missed = F.missedList, cur = location.hash.split("/")[2] || "";
+    const nd = byId[cur] ? D[D.indexOf(byId[cur]) + 1] : null; const again = F.again;
+    F = null; lastAgain = again;
+    return `<div class="page-narrow"><div class="kicker">Session complete</div><h1 class="h-display">${k} of ${t} <em>first time</em></h1>
+      <p class="lede">${!missed.length ? "A clean sweep. These cards will come back later, spaced further apart." : `You got the rest on a second look. The ${missed.length} below come back tomorrow, because that is how memory sticks.`}</p>
+      ${missed.length ? `<div class="card fc-missed"><h3>Worth another look</h3>${missed.map(c => `<div class="kv"><span><b>${esc(c.front)}</b><br><small>${esc(c.back)}</small></span>${c.term ? `<a href="#/glossary">Glossary</a>` : `<a href="#/domain/${c.d}">D${byId[c.d].n}</a>`}</div>`).join("")}</div>` : ""}
+      <div class="btn-row">${missed.length ? `<button class="btn primary" id="fcAgain">Go through the ${missed.length} again</button>` : ""}${nd ? `<a class="btn ${missed.length ? "" : "primary"}" href="#/flashcards/${nd.id}">Next deck: D${nd.n} ${esc(nd.short)} →</a>` : ""}<a class="btn" href="#/flashcards">All decks</a><a class="btn ghost" href="#/quiz/run/weak">Test it with a quiz</a></div>
+</div>`;
+  }
   function flashRunner() {
-    const c = F.deck[F.i], d = byId[c.d];
+    const c = F.deck[F.i], d = byId[c.d], rev = F.rev;
+    const front = rev ? c.back : c.front, back = rev ? c.front : c.back;
+    const left = F.deck.length - F.i, learning = F.missedIds.size;
     return `<div class="page-narrow runner" style="${dc(d)}">
-      <div class="run-top"><a href="#/flashcards" class="btn small ghost" id="fQuit">← Decks</a><span class="run-label">${esc(F.label)}</span><span class="run-count">${F.i + 1} / ${F.deck.length}</span></div>
+      <div class="run-top"><a href="#/flashcards" class="btn small ghost" id="fQuit">← Decks</a><span class="run-label">${esc(F.label)}${rev ? " · reversed" : ""}</span><span class="run-count">${left} left</span></div>
       <div class="run-bar"><i style="width:${Math.round(F.i / F.deck.length * 100)}%"></i></div>
-      <div class="flip ${F.flipped ? "on" : ""}" id="flip" tabindex="0" aria-live="polite">
-        <div class="face front"><span class="kicker" style="--kc:var(--dc)">D${d.n} ${esc(d.short)}</span><p>${esc(c.front)}</p><small>Tap or press space to reveal</small></div>
-        <div class="face back"><span class="kicker" style="--kc:var(--dc)">${esc(c.front)}</span><p>${esc(c.back)}</p></div>
+      <div class="fc-tally"><span class="ok">${F.known.size} known</span><span class="no">${learning} learning</span>${c.again ? `<span class="re">second look</span>` : ""}</div>
+      <div class="flip ${F.flipped ? "on" : ""}" id="flip" tabindex="0" aria-live="polite" role="button" aria-label="Flashcard. Press space to turn.">
+        <div class="face front"><span class="kicker" style="--kc:var(--dc)">D${d.n} ${c.term ? "term" : esc(d.short)}</span><p class="${front.length > 120 ? "long" : ""}">${esc(front)}</p><small>Tap or press space to turn</small></div>
+        <div class="face back"><span class="kicker" style="--kc:var(--dc)">${esc(rev ? "The term" : front.length > 70 ? "Answer" : front)}</span><p class="${back.length > 160 ? "long" : ""}">${esc(back)}</p>${c.use && !rev ? `<small class="fc-use">Used in: ${esc(c.use)}</small>` : ""}</div>
+        <span class="swipe-tag no">Still learning</span><span class="swipe-tag ok">Got it</span>
       </div>
-      <div class="fc-actions" ${F.flipped ? "" : "hidden"}><button class="btn" data-grade="0">Still learning <kbd>1</kbd></button><button class="btn primary" data-grade="1">Got it <kbd>2</kbd></button></div>
+      <div class="fc-actions" ${F.flipped ? "" : "hidden"}><button class="btn" data-grade="0">← Still learning <kbd>1</kbd></button><button class="btn primary" data-grade="1">Got it → <kbd>2</kbd></button></div>
+      <div class="fc-foot">${F.hist.length ? `<button class="btn small ghost" id="fcUndo">↶ Undo last <kbd>U</kbd></button>` : "<span></span>"}<span class="hint">Swipe the card after turning it.</span></div>
     </div>`;
+  }
+  function startDeck(deck, label, again) {
+    deck = deck.slice(0, 30).map(c => Object.assign({}, c, { again: !!again }));
+    F = { deck, i: 0, flipped: false, known: new Set(), missedIds: new Set(), missedList: [], unique: deck.length, label, key: location.hash, rev: prefGet("rev", false), hist: [], again: [] };
+    A.rerender();
   }
   function bindFlash(r) {
     keyHandler = null;
+    const rv = $("#fcRev"); if (rv) rv.addEventListener("change", () => prefSet("rev", rv.checked));
+    const ag = $("#fcAgain"); if (ag) ag.addEventListener("click", () => { const ids = lastAgain; const all = A.cards.concat(A.termCards); startDeck(shuffle(all.filter(c => ids.includes(c.id))), "Missed cards", true); });
     $$(".deck").forEach(b => b.addEventListener("click", () => {
       const k = b.dataset.deck; let deck, label;
       if (k === "due") { deck = A.pathOrder().flatMap(d => A.dueCards(d.id)); label = "Due today"; }
+      else if (k === "terms") { deck = A.pathOrder().flatMap(d => shuffle(dueIn(A.termCards.filter(c => c.d === d.id)))); label = "Glossary terms"; }
       else if (k === "weak") { const w = D.filter(d => A.prio(d) === "weak").map(d => d.id); deck = shuffle(A.cards.filter(c => w.includes(c.d))); label = "Focus domains"; }
+      else if (k === "hard") { deck = shuffle(A.cards.concat(A.termCards).filter(c => CS[c.id] && CS[c.id].box === 1 && CS[c.id].reviews > 0)); label = "Cards I keep missing"; }
+      else if (k.startsWith("t-")) { const dd = k.slice(2), all = A.termCards.filter(c => c.d === dd); deck = dueIn(all); if (!deck.length) deck = all; deck = shuffle(deck); label = `D${byId[dd].n} terms`; }
       else { deck = A.dueCards(k); if (!deck.length) deck = A.cards.filter(c => c.d === k); deck = shuffle(deck); label = `D${byId[k].n} ${byId[k].short}`; }
-      if (!deck.length) { A.toast("Nothing due. Pick a domain deck to review anyway."); return; }
-      F = { deck: deck.slice(0, 30), i: 0, flipped: false, known: 0, label, key: location.hash };
-      A.rerender();
+      if (!deck.length) { A.toast(k === "hard" ? "Nothing stuck in the first box. Nice." : "Nothing due. Pick a domain deck to review anyway."); return; }
+      startDeck(deck, label);
     }));
     if (r.a && byId[r.a] && !F && autoDone !== location.hash) { autoDone = location.hash; const b = $(`.deck[data-deck="${r.a}"]`); if (b) b.click(); return; }
     const flip = $("#flip"); if (!flip) return;
     const turn = () => { F.flipped = !F.flipped; flip.classList.toggle("on", F.flipped); $(".fc-actions").hidden = !F.flipped; };
-    flip.addEventListener("click", turn);
     const grade = (g) => {
-      const c = F.deck[F.i], prev = CS[c.id] || { card_id: c.id, box: 1, reviews: 0 };
-      const box = g ? Math.min(5, prev.box + (CS[c.id] ? 1 : 2)) : 1;
-      const st = { card_id: c.id, box, due: ymd(addDays(today(), INTERVAL[box])), reviews: (prev.reviews || 0) + 1 };
-      CS[c.id] = st; db.saveCard(st).catch(() => {});
-      if (g) F.known++;
+      const c = F.deck[F.i];
+      F.hist.push({ i: F.i, len: F.deck.length, prev: CS[c.id] ? Object.assign({}, CS[c.id]) : null, id: c.id, known: new Set(F.known), missedIds: new Set(F.missedIds), missedList: F.missedList.slice(), again: F.again.slice(), saved: !c.again });
+      if (!c.again) { // spacing is updated on the first look only; second looks are practice
+        const prev = CS[c.id] || { card_id: c.id, box: 1, reviews: 0 };
+        const box = g ? Math.min(5, prev.box + (CS[c.id] ? 1 : 2)) : 1;
+        const st = { card_id: c.id, box, due: ymd(addDays(today(), INTERVAL[box])), reviews: (prev.reviews || 0) + 1 };
+        CS[c.id] = st; db.saveCard(st).catch(() => {});
+      }
+      if (g) { if (!c.again) F.known.add(c.id); F.missedIds.delete(c.id); }
+      else {
+        if (!F.missedIds.has(c.id) && !F.missedList.some(x => x.id === c.id)) { F.missedList.push(c); F.again.push(c.id); }
+        F.missedIds.add(c.id);
+        const tries = F.deck.filter(x => x.id === c.id).length;
+        if (tries < 3) { const at = Math.min(F.deck.length, F.i + 4 + Math.floor(Math.random() * 3)); F.deck.splice(at, 0, Object.assign({}, c, { again: true })); }
+      }
       F.i++; F.flipped = false; A.rerender();
     };
+    const undo = () => {
+      const h = F.hist.pop(); if (!h) return;
+      if (h.saved) { if (h.prev) { CS[h.id] = h.prev; db.saveCard(h.prev).catch(() => {}); } else { const st = { card_id: h.id, box: 1, due: ymd(today()), reviews: 0 }; delete CS[h.id]; db.saveCard(st).catch(() => {}); } }
+      if (F.deck.length > h.len) { const idx = F.deck.findIndex((x, j) => j > h.i && x.id === h.id && x.again); if (idx > 0) F.deck.splice(idx, 1); }
+      Object.assign(F, { i: h.i, known: h.known, missedIds: h.missedIds, missedList: h.missedList, again: h.again, flipped: true }); A.rerender();
+    };
     $$("[data-grade]").forEach(b => b.addEventListener("click", () => grade(+b.dataset.grade)));
-    keyHandler = (e) => { if (e.key === " ") { e.preventDefault(); turn(); } else if (F.flipped && (e.key === "1" || e.key === "2")) grade(e.key === "2" ? 1 : 0); };
+    const u = $("#fcUndo"); if (u) u.addEventListener("click", undo);
+    // swipe: drag the turned card left or right
+    let x0 = null, y0 = 0, dx = 0, moved = false;
+    flip.addEventListener("pointerdown", (e) => { x0 = e.clientX; y0 = e.clientY; dx = 0; moved = false; });
+    flip.addEventListener("pointermove", (e) => {
+      if (x0 == null) return; dx = e.clientX - x0;
+      if (!moved && Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(e.clientY - y0)) { moved = true; try { flip.setPointerCapture(e.pointerId); } catch (er) {} }
+      if (moved && F.flipped) { flip.style.transform = `translateX(${dx}px) rotate(${dx / 30}deg)`; flip.classList.toggle("lean-ok", dx > 60); flip.classList.toggle("lean-no", dx < -60); }
+    });
+    const end = () => {
+      if (x0 == null) return; const d = dx; x0 = null;
+      flip.style.transform = ""; flip.classList.remove("lean-ok", "lean-no");
+      if (moved && F.flipped && Math.abs(d) > 90) grade(d > 0 ? 1 : 0);
+      else if (moved && !F.flipped && Math.abs(d) > 40) turn();
+    };
+    flip.addEventListener("pointerup", end); flip.addEventListener("pointercancel", () => { x0 = null; flip.style.transform = ""; flip.classList.remove("lean-ok", "lean-no"); });
+    flip.addEventListener("click", () => { if (moved) { moved = false; return; } turn(); });
+    keyHandler = (e) => {
+      if (e.key === " " || e.key === "Enter") { e.preventDefault(); turn(); }
+      else if (F.flipped && (e.key === "1" || e.key === "2" || e.key === "ArrowLeft" || e.key === "ArrowRight")) grade(e.key === "2" || e.key === "ArrowRight" ? 1 : 0);
+      else if (e.key.toLowerCase() === "u") undo();
+    };
   }
 
   /* ======================= INSIGHTS ======================= */

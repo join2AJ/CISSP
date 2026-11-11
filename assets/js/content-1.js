@@ -51,7 +51,7 @@ window.DOMAINS.push({
     { id: "risk", title: "Risk management, the way ISC2 frames it",
       body: `<p>Risk is the likelihood that a <strong>threat</strong> exploits a <strong>vulnerability</strong> and causes <strong>impact</strong> to an <strong>asset</strong>. Reduce any of those and you reduce risk. The process is to identify assets, assess threats and vulnerabilities, analyse risk, choose a response, implement controls, and monitor.</p>
       <h3>Quantitative analysis</h3>
-      <div class="formula">SLE = AV × EF &nbsp;&nbsp;·&nbsp;&nbsp; ALE = SLE × ARO<br>Safeguard value = ALE<sub>before</sub> − ALE<sub>after</sub> − annual cost of safeguard</div>
+      <div class="formula">SLE = AV × EF<br>ALE = SLE × ARO<br>Safeguard value = ALE<sub>before</sub> − ALE<sub>after</sub> − annual cost of safeguard</div>
       <p>Asset value (AV) is what the asset is worth. Exposure factor (EF) is the percentage lost in one incident. Annualised rate of occurrence (ARO) is how often per year you expect it. A server worth $100,000 that would lose 40% of its value in a flood (SLE $40,000) expected once in 20 years (ARO 0.05) has an ALE of $2,000. Spending $5,000 a year to protect it is not justified on cost alone.</p>
       <div class="anim" data-anim="ale"></div>
       <h3>Qualitative analysis</h3>
@@ -357,7 +357,7 @@ window.DOMAINS.push({
         <li><strong>CTR</strong>: turns a block cipher into a stream; parallelisable.</li>
         <li><strong>GCM</strong>: counter mode with authentication (AEAD). Default in TLS 1.3.</li>
       </ul>
-      <div class="formula">Keys for n users - symmetric: n(n−1)/2 &nbsp;·&nbsp; asymmetric: 2n<br>e.g. 100 users → 4,950 shared keys vs 200 keys</div>`,
+      <div class="formula">Keys for n users<br>Symmetric: n(n−1)/2<br>Asymmetric: 2n<br>100 users: 4,950 keys vs 200</div>`,
       exam: "Choosing an algorithm or mode, and the key-count formulas." },
     { id: "crypto-asym", title: "Cryptography II: asymmetric, hashing and signatures",
       body: `<p>Asymmetric cryptography uses a key pair. What one key does, only the other can undo. It solves key distribution and enables digital signatures, but it is slow, so real systems use it to exchange a symmetric session key (<strong>hybrid cryptography</strong>, as in TLS).</p>

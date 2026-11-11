@@ -31,15 +31,35 @@
       <span class="brand-text"><b>Study<span>CISSP</span></b><small>read slowly · pass once</small></span>
     </a>
     <nav class="mainnav" aria-label="Study">
-      <a href="#/" data-nav="home">Home</a>
-      <a href="#/read" data-nav="read">Chapters</a>
-      <a href="#/quiz" data-nav="quiz">Quiz</a>
-      <a href="#/flashcards" data-nav="flashcards">Flashcards</a>
-      <a href="#/glossary" data-nav="glossary">Glossary</a>
-      <a href="#/mock" data-nav="mock">Mock</a>
-      <a href="#/plan" data-nav="plan">Plan</a>
-      <a href="#/insights" data-nav="insights">Insights</a>
-      <a href="#/admin" data-nav="admin" id="navAdmin" hidden>Admin</a>
+      <a class="nav-top" href="#/" data-nav="home">Home</a>
+      <div class="nav-group" data-group="learn">
+        <button class="nav-top" type="button" aria-expanded="false" aria-haspopup="true">Learn<svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><path d="M2.5 4.5L6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
+        <div class="nav-menu" role="menu">
+          <a href="#/read" data-nav="read" role="menuitem"><b>Chapters</b><small>All 8 domains, one page at a time</small></a>
+          <a href="#/glossary" data-nav="glossary" role="menuitem"><b>Glossary</b><small>Terms A-Z and where they are used</small></a>
+          <a href="#/latest" data-nav="latest" role="menuitem"><b>What’s new</b><small>2024-2026 changes worth knowing</small></a>
+          <a href="#/resources" data-nav="resources" role="menuitem"><b>Resources</b><small>Free official PDFs and good books</small></a>
+        </div>
+      </div>
+      <div class="nav-group" data-group="practise">
+        <button class="nav-top" type="button" aria-expanded="false" aria-haspopup="true">Practise<svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><path d="M2.5 4.5L6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
+        <div class="nav-menu" role="menu">
+          <a href="#/quiz" data-nav="quiz" role="menuitem"><b>Quiz</b><small>By domain or by topic</small></a>
+          <a href="#/flashcards" data-nav="flashcards" role="menuitem"><b>Flashcards</b><small>Spaced review, a few minutes a day</small></a>
+          <a href="#/mock" data-nav="mock" role="menuitem"><b>Mock exam</b><small>Timed and weighted like the real one</small></a>
+          <a href="#/tactics" data-nav="tactics" role="menuitem"><b>Exam tactics</b><small>How to read a CISSP question</small></a>
+        </div>
+      </div>
+      <div class="nav-group" data-group="progress">
+        <button class="nav-top" type="button" aria-expanded="false" aria-haspopup="true">Progress<svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><path d="M2.5 4.5L6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
+        <div class="nav-menu" role="menu">
+          <a href="#/plan" data-nav="plan" role="menuitem"><b>Study plan</b><small>Week by week to your exam date</small></a>
+          <a href="#/insights" data-nav="insights" role="menuitem"><b>Insights</b><small>Time spent and weakest areas</small></a>
+          <a href="#/tracker" data-nav="tracker" role="menuitem"><b>Scores & error log</b><small>Every miss, so you don’t repeat it</small></a>
+          <a href="#/library" data-nav="library" role="menuitem"><b>My library</b><small>Your own notes and files</small></a>
+        </div>
+      </div>
+      <a class="nav-top" href="#/admin" data-nav="admin" id="navAdmin" hidden>Admin</a>
     </nav>
     <nav class="pubnav" id="pubnav" aria-label="Site">
       <a href="#/landing" data-nav="landing">Home</a>
@@ -125,6 +145,7 @@
   <script src="assets/js/pages.js?v=dev"></script>
   <script src="assets/js/bank.js?v=dev"></script>
   <script src="assets/js/bank2.js?v=dev"></script>
+  <script src="assets/js/bank3.js?v=dev"></script>
   <script src="assets/js/glossary.js?v=dev"></script>
   <script src="assets/js/anims.js?v=dev"></script>
   <script src="assets/js/db.js?v=dev"></script>
