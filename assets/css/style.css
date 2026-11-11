@@ -20,19 +20,19 @@
 }
 
 :root[data-theme="paper"], :root:not([data-theme]) {
-  --paper: #f6f8fc;
-  --paper-2: #edf1f8;
-  --card: #ffffff;
-  --ink: #0e1a2b;
-  --ink-2: #2b3a51;
-  --muted: #5d6b80;
-  --rule: #d6deea;
-  --rule-2: #e5ebf4;
+  --paper: #f7f3ea;
+  --paper-2: #efe9dc;
+  --card: #fffdf8;
+  --ink: #1d1b17;
+  --ink-2: #3b372f;
+  --muted: #6f685b;
+  --rule: #ddd4c1;
+  --rule-2: #e9e2d2;
   --accent: #1747c9;
   --accent-ink: #ffffff;
-  --hl: #ffe9a8;
-  --shadow: 0 1px 2px rgba(14,26,43,.05), 0 10px 30px -14px rgba(14,26,43,.22);
-  --good: #13795b; --warn: #b4690e; --bad: #c0392b;
+  --hl: #f3e2a6;
+  --shadow: 0 1px 2px rgba(40,30,10,.06), 0 8px 30px -12px rgba(40,30,10,.18);
+  --good: #2c7a4b; --warn: #b06d10; --bad: #b23a3a;
   color-scheme: light;
 }
 :root[data-theme="sepia"] {
@@ -52,21 +52,21 @@
   color-scheme: light;
 }
 :root[data-theme="night"] {
-  --paper: #0b1220;
-  --paper-2: #111a2c;
-  --card: #131d31;
-  --ink: #e7edf7;
-  --ink-2: #c4cfe0;
-  --muted: #8d9ab0;
-  --rule: #26324a;
-  --rule-2: #1c273c;
-  --accent: #82a7ff;
-  --accent-ink: #0b1220;
-  --hl: #4b4320;
-  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 30px -12px rgba(0,0,0,.65);
-  --good: #5fd3a3; --warn: #f0b45e; --bad: #ff8a80;
-  --d1: #ff8f9a; --d2: #f2c467; --d3: #b9a2ff; --d4: #6fd0f0;
-  --d5: #7fdca7; --d6: #ff9bd0; --d7: #a5b4ff; --d8: #ffab76;
+  --paper: #14171a;
+  --paper-2: #1b1f23;
+  --card: #1c2125;
+  --ink: #e7e1d4;
+  --ink-2: #cfc8b9;
+  --muted: #958e80;
+  --rule: #2e353b;
+  --rule-2: #252b30;
+  --accent: #8fb0ff;
+  --accent-ink: #10162a;
+  --hl: #4a4224;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 30px -12px rgba(0,0,0,.6);
+  --good: #7cc495; --warn: #e2a85a; --bad: #ec8b84;
+  --d1: #ec8b92; --d2: #e2b65e; --d3: #b9a2ec; --d4: #77c1dd;
+  --d5: #84cf9f; --d6: #ea93c3; --d7: #9eaaf0; --d8: #f0a170;
   color-scheme: dark;
 }
 :root[data-face="sans"] { --body-face: var(--sans); }
@@ -1078,7 +1078,7 @@ body.bare .landing ~ * { display: none; }
    StudyCISSP identity, site chrome and public pages
    ========================================================== */
 .brand-mark { background: linear-gradient(140deg, #2a5cf0, #1236a8); color: #fff; font-style: normal; box-shadow: 0 4px 12px -4px rgba(23,71,201,.6); }
-:root[data-theme="night"] .brand-mark { background: linear-gradient(140deg, #4c7bff, #2448c4); }
+:root[data-theme="night"] .brand-mark { background: linear-gradient(140deg, #4c7bff, #2448c4); color: #fff; }
 .brand-text b { font-family: var(--sans); font-weight: 700; font-size: 18px; letter-spacing: -.02em; }
 .brand-text b span { color: var(--accent); }
 .h-display { letter-spacing: -.01em; }
@@ -1098,9 +1098,9 @@ body.bare .landing ~ * { display: none; }
 .theme-pick { grid-template-columns: repeat(3, 1fr); }
 .tp { display: grid; gap: 6px; justify-items: center; padding: 8px 4px; border-radius: 10px; border: 1px solid var(--rule); background: var(--paper); font-size: 12.5px; }
 .tp i { width: 100%; height: 30px; border-radius: 6px; border: 1px solid rgba(0,0,0,.08); }
-.tp-light i { background: linear-gradient(#fff 50%, #edf1f8 50%); }
+.tp-light i { background: linear-gradient(#fffdf8 50%, #f7f3ea 50%); }
 .tp-sepia i { background: linear-gradient(#f8eedb 50%, #e8d9bb 50%); }
-.tp-night i { background: linear-gradient(#131d31 50%, #0b1220 50%); }
+.tp-night i { background: linear-gradient(#1c2125 50%, #14171a 50%); }
 .tp.on, .size-pick button.on, .face-pick button.on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
 .size-pick { grid-template-columns: 1fr 1.6fr 1fr; }
 .face-pick { grid-template-columns: 1fr 1fr; }
