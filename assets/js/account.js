@@ -11,7 +11,7 @@
 
   /* ---------------- login ---------------- */
   function viewLogin() {
-    if (!cloud) return shell(`<div class="auth-card"><h1>Device-only mode</h1><p>The online database isn’t connected yet, so there are no accounts. Everything you do is saved in this browser only.</p><a class="btn primary" href="#/">Continue</a></div>`);
+    if (!cloud) return shell(`<div class="auth-card"><h1>Accounts are coming soon</h1><p class="auth-sub">Online accounts aren’t switched on yet. You can still study now: your plan and progress are saved privately in this browser.</p><div class="btn-row"><a class="btn primary" href="#/welcome">Set up my plan on this device</a><a class="btn ghost" href="#/landing">Back</a></div></div>`);
     return shell(`<div class="auth-card">
       <h1>Welcome back</h1><p class="auth-sub">Every session moves you closer. Sign in to pick up where you left off.</p>
       <form id="loginForm" class="stack">
@@ -82,7 +82,9 @@
         const email = $("#sEmail").value.trim();
         const plan = (f.querySelector('input[name="sPlan"]:checked') || {}).value || "silver";
         await db.signUp({ email, password: $("#sPw").value, username, full_name: $("#sName").value.trim(), consent: $("#sConsent").checked, plan });
-        $(".auth-card").innerHTML = `<h1>Check your inbox</h1><p class="auth-sub">We sent a verification link to <b>${esc(email)}</b>. Open it to activate your account, then sign in.</p><p class="hint">Nothing after a few minutes? Check spam, or sign in and use “Resend verification email”.</p><a class="btn primary" href="#/login">Go to sign in</a>`;
+        $(".auth-card").innerHTML = `<div class="dots verify-dots"><span class="on"></span><span class="on"></span><span></span><span></span></div><h1>Check your inbox</h1><p class="auth-sub">We sent a verification link to <b>${esc(email)}</b>. Open it to activate your account. You’ll come straight back here.</p>
+          <ol class="land-steps small"><li><b>✓</b>Account created</li><li><b>2</b>Verify your email</li><li><b>3</b>Three quick questions about your exam</li><li><b>4</b>Your personal plan</li></ol>
+          <p class="hint">Nothing after a few minutes? Check spam, or sign in and use “Resend verification email”.</p><a class="btn primary" href="#/login">Go to sign in</a>`;
       } catch (err) { $("#sMsg").innerHTML = `<div class="warnbox">${esc(A.errMsg(err))}</div>`; busy(b, false, "Create account"); }
     });
   }
@@ -131,16 +133,16 @@
     const d = W.data, s = W.step;
     const dots = [1, 2, 3].map(i => `<span class="${i <= s ? "on" : ""}"></span>`).join("");
     let body = "";
-    if (s === 1) body = `<h1>Hello${d.full_name ? ", " + esc(d.full_name.split(" ")[0]) : ""}. Let’s build your plan.</h1>
-      <p class="auth-sub">Three quick steps. Thousands of people with all kinds of backgrounds pass the CISSP. A plan that fits your life is what gets you there.</p>
+    if (s === 1) body = `<span class="kicker">Step 1 of 3</span><h1>${cloud ? `You’re verified${d.full_name ? ", " + esc(d.full_name.split(" ")[0]) : ""}. Welcome.` : "Welcome. Let’s build your plan."}</h1>
+      <p class="auth-sub">Three quick questions so your plan fits your exam date and what you already know. It takes about a minute.</p>
       <div class="stack"><label>What should we call you?<input id="wName" maxlength="80" value="${esc(d.full_name)}"></label>
       <label>Years of paid security experience<input id="wExp" type="number" min="0" max="60" value="${esc(d.experience_years)}"><small class="hint">CISSP needs five years in two or more domains. Less? You can still pass and become an Associate of ISC2.</small></label></div>`;
-    if (s === 2) body = `<h1>When is your exam?</h1><p class="auth-sub">A date turns a wish into a plan. Pick a target even if you haven’t booked yet.</p>
+    if (s === 2) body = `<span class="kicker">Step 2 of 3</span><h1>When is your exam?</h1><p class="auth-sub">A date turns a wish into a plan. Pick a target even if you haven’t booked yet.</p>
       <div class="stack"><label>Target exam date<input id="wTarget" type="date" min="${ymd(addDays(today(), 7))}" value="${esc(d.target_date)}"></label>
       <label>Latest possible date <small class="hint">optional, e.g. before an outline change or a work deadline</small><input id="wLatest" type="date" value="${esc(d.latest_date)}"></label>
       <label class="check"><input type="checkbox" id="wBooked" ${d.exam_booked ? "checked" : ""}><span>I’ve already booked it with Pearson VUE</span></label>
       <label>Hours you can study in a normal week <b id="wHv">${d.weekly_hours}</b><input id="wHours" type="range" min="2" max="30" value="${d.weekly_hours}"></label></div>`;
-    if (s === 3) body = `<h1>What do you already know?</h1><p class="auth-sub">Be honest; nobody else sees this. “New to me” domains go first in your plan and get the most time.</p>
+    if (s === 3) body = `<span class="kicker">Step 3 of 3</span><h1>What do you already know?</h1><p class="auth-sub">Be honest; nobody else sees this. “New to me” domains go first in your plan and get the most time.</p>
       <div class="assess">${D.map(dm => `<div class="as-row" style="${dc(dm)}"><div><span class="toc-dot" style="display:inline-block;background:var(--${dm.id})"></span> <b>D${dm.n} ${esc(dm.title)}</b><small>${esc(dm.lede.split(".")[0])}.</small></div>
         <div class="seg3">${levels.map(([v, l, h]) => `<button type="button" data-as="${dm.id}:${v}" class="${(d.self_assessment[dm.id] || "") === v ? "on" : ""}" title="${h}">${l}</button>`).join("")}</div></div>`).join("")}</div>`;
     return shell(`<div class="auth-card wizard"><div class="dots">${dots}</div>${body}

@@ -246,9 +246,9 @@
       if (db.user && App.profile) {
         if (!App.profile.consent_terms_at && !def.public && r.page !== "consent") return redirect("#/consent");
         if (App.profile.consent_terms_at && !App.profile.onboarded && !["welcome", "privacy", "consent", "choose"].includes(r.page) && !(def.admin && App.isAdmin())) return redirect("#/welcome");
-        if (["login", "signup"].includes(r.page)) return redirect("#/");
+        if (["login", "signup", "landing"].includes(r.page)) return redirect("#/");
       }
-    } else if (App.profile && !App.profile.onboarded && !def.public && !["welcome", "privacy"].includes(r.page)) return redirect("#/welcome");
+    } else if (App.profile && !App.profile.onboarded && !def.public && !["welcome", "privacy", "signup", "login"].includes(r.page)) return redirect("#/landing");
     if (App.profile && App.isAdmin() && r.page === "home" && !sessionGet("cissp.mode")) return redirect("#/choose");
     if (def.admin && !App.isAdmin()) return redirect("#/");
     if (db.mode === "cloud" && !db.user && !def.public && r.page !== "landing") return redirect("#/landing");
@@ -298,7 +298,7 @@
     const adm = $("#navAdmin"); if (adm) adm.hidden = !App.isAdmin();
     $$(".mainnav a").forEach(a => a.classList.toggle("locked", !!App.profile && !App.can(App.FEATURE[a.dataset.nav === "read" ? "read" : a.dataset.nav])));
     const signed = db.mode === "local" || !!db.user;
-    $("#userBtn").hidden = !signed;
+    $("#userBtn").hidden = !signed || (!!def.bare && !(App.profile && App.profile.onboarded)) || (db.mode === "cloud" && !db.user);
     $(".mainnav").style.visibility = def.bare ? "hidden" : "";
     $("#searchOpen").style.visibility = def.bare ? "hidden" : "";
     const ini = $("#userIni"); if (ini) { const p = App.profile || {}; ini.textContent = ((p.full_name || p.username || "•")[0] || "•").toUpperCase(); }
@@ -688,7 +688,8 @@
           <div class="kicker">A CISSP study companion</div>
           <h1 class="h-display">Read slowly.<br><em>Pass once.</em></h1>
           <p class="lede">Eight beautifully written chapters, small animations for the tricky ideas, a plan built around your exam date, and quizzes, flashcards and mock exams that show exactly where you stand. Whatever your background, you can do this.</p>
-          <div class="btn-row"><a class="btn primary" href="#/signup/gold">Create a free account</a><a class="btn" href="#/login">Sign in</a></div>
+          <div class="btn-row">${db.mode === "cloud" ? `<a class="btn primary" href="#/signup/gold">Create a free account</a><a class="btn" href="#/login">Sign in</a>` : `<a class="btn primary" href="#/welcome">Start studying on this device</a>`}</div>
+          ${db.mode === "cloud" ? `<ol class="land-steps"><li><b>1</b>Create your free account</li><li><b>2</b>Verify your email</li><li><b>3</b>Tell us your exam date and what you know</li><li><b>4</b>Get your personal plan</li></ol>` : `<ol class="land-steps"><li><b>1</b>Tell us your exam date and what you know</li><li><b>2</b>Get your personal plan</li></ol>`}
         </div>
         <div class="land-teaser"><div class="anim" data-anim="handshake"></div></div>
       </section>
@@ -1006,7 +1007,10 @@
       if (ev === "PASSWORD_RECOVERY") { recovering = true; redirect("#/reset"); }
     });
     if (hashErr) { setTimeout(() => toast(decodeURIComponent(hashErr[1].replace(/\+/g, " "))), 300); history.replaceState(null, "", "#/login"); }
-    else if (/access_token=/.test(location.hash)) history.replaceState(null, "", recovering ? "#/reset" : "#/");
+    else if (/access_token=/.test(location.hash)) {
+      if (/type=signup/.test(location.hash)) setTimeout(() => toast("Email verified. Welcome aboard!"), 600);
+      history.replaceState(null, "", recovering ? "#/reset" : "#/");
+    }
     await App.loadPlans();
     if (db.user) { try { await App.afterLogin(); } catch (e) { toast(App.errMsg(e)); } }
     addEventListener("hashchange", route);
