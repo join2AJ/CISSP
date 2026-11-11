@@ -155,11 +155,10 @@
 
   function requests(c) {
     return `<div class="page">${head("requests")}
-      <p class="sub">Data-subject requests under GDPR and DPDP. Aim to respond within 30 days. Erasure can be done directly from a learner’s page.</p>
-      ${c.requests.length ? c.requests.map(r => { const u = c.users.find(x => x.id === r.user_id); const age = Math.round((Date.now() - new Date(r.created_at)) / 864e5);
-        return `<div class="card" style="margin-bottom:14px"><div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><span class="tag ${r.status === "open" ? "weak" : r.status === "done" ? "strong" : "medium"}">${esc(r.status)}</span><b>${esc(r.kind)}</b><span class="phase-date">${fmtDY(r.created_at)} · ${age} days ago</span><span style="margin-left:auto">${u ? `<a href="#/admin/learners/${u.id}">${esc(name(u))}</a>` : esc(r.user_label || "erased user")}</span></div>
-          <p style="margin-top:10px">${esc(r.details || "")}</p>
-          <div class="form-row"><label>Status<select data-rs="${r.id}">${["open", "in_progress", "done", "rejected"].map(s => `<option ${s === r.status ? "selected" : ""}>${s}</option>`).join("")}</select></label><label style="flex:1">Response to learner<textarea data-rr="${r.id}" maxlength="2000">${esc(r.resolution || "")}</textarea></label><button class="btn small primary" data-rsave="${r.id}">Save</button></div></div>`; }).join("") : `<p class="sub">No requests. 🎉</p>`}
+      <p class="sub">Data-subject requests under DPDP and GDPR. Each one is acknowledged automatically when raised. Reply within 4 days, or the learner gets an automatic update. Complete within 30 days. Every step is logged. Erasure can be done directly from a learner’s page.</p>
+      ${c.requests.length ? c.requests.map(r => { const u = c.users.find(x => x.id === r.user_id);
+        return A.requestCard(r, { who: u ? `<a href="#/admin/learners/${u.id}">${esc(name(u))}</a>` : esc(r.user_label || "erased user"),
+          extra: `<div class="form-row"><label>Status<select data-rs="${r.id}">${["open", "in_progress", "done", "rejected"].map(s => `<option value="${s}" ${s === r.status ? "selected" : ""}>${s.replace("_", " ")}</option>`).join("")}</select></label><label style="flex:1">Reply to learner (each new reply is added to the history)<textarea data-rr="${r.id}" maxlength="2000">${esc(r.resolution || "")}</textarea></label><button class="btn small primary" data-rsave="${r.id}">Save</button></div>` }); }).join("") : `<p class="sub">No requests.</p>`}
     </div>`;
   }
 
@@ -224,7 +223,7 @@
     }
     if (tab === "requests") $$("[data-rsave]").forEach(b => b.addEventListener("click", async () => {
       const id = b.dataset.rsave, status = $(`[data-rs="${id}"]`).value;
-      try { await db.admin.updateRequest(id, { status, resolution: $(`[data-rr="${id}"]`).value.trim() || null, resolved_at: ["done", "rejected"].includes(status) ? new Date().toISOString() : null, resolved_by: db.user.id }); A.toast("Saved"); await load(true); A.rerender(); }
+      try { await db.admin.updateRequest(id, { status, resolution: $(`[data-rr="${id}"]`).value.trim() || null }); A.toast("Saved"); await load(true); A.rerender(); }
       catch (e) { A.toast(A.errMsg(e)); }
     }));
     if (tab === "plans") $$(".plan-form").forEach(f => f.addEventListener("submit", async (e) => {

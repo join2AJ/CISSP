@@ -112,7 +112,8 @@
     <form class="card stack" id="contactForm" name="contact">
       <p hidden><label>Leave this empty<input name="bot-field"></label></p>
       <div class="form-row"><label style="flex:1">Your name<input name="name" required maxlength="80" autocomplete="name"></label><label style="flex:1">Email<input name="email" type="email" required autocomplete="email"></label></div>
-      <label>Topic<select name="topic"><option>General question</option><option>Plans and pricing</option><option>Content or a topic request</option><option>Account help</option><option>Privacy request</option><option>Feedback</option></select></label>
+      <label>Topic<select name="topic"><option>General question</option><option>Plans and pricing</option><option>Content or a topic request</option><option>Can’t sign in</option><option>Feedback</option></select></label>
+      <p class="hint">Requests about your own data (a copy, a correction, deletion, withdrawing consent or a grievance) are taken only from the account owner: sign in and use <a href="#/privacy">Privacy &amp; trust → Raise a request</a>. That way you get a reference number, an automatic acknowledgement and a full record.</p>
       <label>Message<textarea name="message" required maxlength="3000" rows="6"></textarea></label>
       <label class="check"><input type="checkbox" required><span>I agree that StudyCISSP may use these details to reply to me, as described in the <a href="#/privacy">privacy notice</a>.</span></label>
       <button class="btn primary" id="cSend">Send message</button>

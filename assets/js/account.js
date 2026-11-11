@@ -1,7 +1,7 @@
 /* StudyCISSP - sign-in, onboarding, profile, privacy & trust centre */
 (function () {
   "use strict";
-  const A = window.App, { D, byId, $, $$, esc, dc, ymd, today, addDays, fmtDY, db } = A;
+  const A = window.App, { D, byId, $, $$, esc, dc, ymd, today, addDays, fmtD, fmtDY, db } = A;
   const C = window.CISSP_CONFIG || {};
   const VERSION = C.privacyVersion || "2026-11-v1";
   const cloud = db.mode === "cloud";
@@ -224,12 +224,30 @@
     });
   }
 
+  /* ---------------- privacy requests: reference, deadlines and full history ---------------- */
+  const KIND = { access: "Access / copy", rectify: "Correction", erase: "Erasure", restrict: "Restrict processing", withdraw_consent: "Withdraw consent", grievance: "Grievance", other: "Other / nomination" };
+  const WHO = { learner: "You", system: "Automatic", admin: "Administrator" };
+  A.requestCard = (r, opts = {}) => {
+    const open = r.status === "open" || r.status === "in_progress";
+    const autoAt = new Date(new Date(r.created_at).getTime() + 4 * 864e5), dueAt = r.due_at ? new Date(r.due_at) : new Date(new Date(r.created_at).getTime() + 30 * 864e5);
+    const answered = (r.events || []).some(e => e.actor === "admin" && e.kind === "reply");
+    const left = Math.ceil((dueAt - Date.now()) / 864e5);
+    const timing = !open ? `Closed ${r.resolved_at ? fmtDY(r.resolved_at) : ""}`
+      : `${answered || r.auto_replied_at ? "" : (autoAt > Date.now() ? `Automatic update ${fmtD(autoAt.toISOString())} if no reply · ` : "Automatic update due now · ")}Due ${fmtDY(dueAt.toISOString())} (${left >= 0 ? left + " days left" : Math.abs(left) + " days overdue"})`;
+    return `<div class="card dsr ${open ? "" : "closed"} ${open && left < 5 ? "late" : ""}">
+      <div class="dsr-top"><b>${esc(r.ref || "Request")}</b><span class="tag plain">${esc(KIND[r.kind] || r.kind)}</span><span class="tag ${r.status === "done" ? "strong" : r.status === "rejected" ? "weak" : "medium"}">${esc(r.status.replace("_", " "))}</span>${opts.who ? `<span class="dsr-who">${opts.who}</span>` : ""}</div>
+      <p class="dsr-time">Raised ${fmtDY(r.created_at)} · ${timing}</p>
+      <ol class="dsr-log">${(r.events || []).map(e => `<li class="dsr-${e.actor}"><span class="dsr-meta">${WHO[e.actor] || e.actor}${e.kind === "auto_reply" ? " reply" : e.kind === "acknowledged" ? " acknowledgement" : ""} · ${new Date(e.at).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span><p>${esc(e.body || "")}</p></li>`).join("") || `<li><p>${esc(r.details || "")}</p></li>`}</ol>
+      ${opts.extra || ""}
+    </div>`;
+  };
+
   /* ---------------- privacy & trust centre ---------------- */
   const controller = C.contactEmail ? `<a href="mailto:${esc(C.contactEmail)}">${esc(C.contactEmail)}</a>` : "the site administrator (use “Raise a request” below)";
   function notice() {
     return `<div class="prose" style="max-width:none">
       <p class="intro">This notice explains what StudyCISSP collects, why, and the control you have over it. It is written to meet the EU General Data Protection Regulation (GDPR) and India’s Digital Personal Data Protection Act 2023 (DPDP) with the DPDP Rules 2025. Version ${esc(VERSION)}.</p>
-      <h3>Who is responsible</h3><p>The operator of this site is the data controller (a “Data Fiduciary” under DPDP). Contact and grievance officer: ${controller}. We aim to acknowledge requests within 7 days and resolve them within 30 days.</p>
+      <h3>Who is responsible</h3><p>The operator of this site is the data controller (a “Data Fiduciary” under DPDP). Contact and grievance officer: ${controller}. Requests are acknowledged automatically the moment you raise them, answered within 4 days (or you get an automatic update), and completed within 30 days. Requests can only be raised by the signed-in owner of an account with a verified email address.</p>
       <h3>What we collect</h3><ul>
         <li><strong>Account</strong>: email, username, name, and a password hash managed by our authentication provider. We never see your password.</li>
         <li><strong>Your plan</strong>: exam dates, weekly hours, years of experience and your self-assessment per domain.</li>
@@ -244,6 +262,17 @@
         <li>Security and accountability (audit trail, sign-in and device records): legitimate interest in protecting accounts and detecting misuse (GDPR Art. 6(1)(f)); a legitimate use under DPDP. Precise GPS location: your consent, which you can withdraw at any time.</li>
       </ul>
       <p>We don’t sell data, show ads, use your data to train AI models, or make automated decisions with legal effect. Your administrator can see learner progress and the audit trail to support learners and keep the service secure.</p>
+      <h3>How we use your data for analysis</h3>
+      <p>All analysis happens inside StudyCISSP. We don’t use third-party analytics, advertising trackers or tracking cookies; the browser storage we use only keeps your settings and progress.</p>
+      <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Data</th><th>What we work out</th><th>What it is used for</th><th>Who sees it</th><th>Your control</th></tr></thead><tbody>
+        <tr><td>Active study time per topic and day</td><td>Totals per day, domain and topic; streaks</td><td>Insights page, dashboard tiles, weekly target</td><td>You; the administrator per learner, for support</td><td>Switch off study analytics below</td></tr>
+        <tr><td>Quiz and mock answers</td><td>Accuracy per domain and topic, weakest areas, mock trend</td><td>Weakest-first chapter order, the “What to work on first” matrix, plan checkpoints</td><td>You; the administrator per learner</td><td>Core to the service; delete your account to erase</td></tr>
+        <tr><td>Flashcard reviews</td><td>When each card is next due</td><td>Spaced repetition</td><td>You</td><td>Erased with your account</td></tr>
+        <tr><td>Exam dates, weekly hours, self-assessment</td><td>Days per domain and stage</td><td>Your study plan</td><td>You; the administrator</td><td>Change any time on the Plan or Profile page</td></tr>
+        <tr><td>Sign-in and device records</td><td>New devices or places, counts by device, browser and country</td><td>Account security and spotting misuse</td><td>The administrator only</td><td>Kept 180 days; GPS only if you switch it on</td></tr>
+        <tr><td>Audit trail</td><td>Who did what and when</td><td>Accountability and investigations</td><td>The administrator; your own entries are in your export</td><td>Pseudonymised when you delete your account</td></tr>
+        <tr><td>All learners together</td><td>Totals and averages (active learners, average accuracy per domain, popular sections)</td><td>Improving the content and the site</td><td>The administrator, as totals</td><td>Nobody is singled out; nothing is shared outside StudyCISSP</td></tr>
+      </tbody></table></div>
       <h3>Who processes it for us</h3><ul>
         <li><strong>Supabase</strong> (database, authentication, file storage), hosted in the region chosen at set-up. Data is encrypted in transit (TLS) and at rest.</li>
         <li><strong>Netlify</strong> (website hosting, and turning your IP address into an approximate location; no other location service is used).</li>
@@ -309,16 +338,19 @@
       </div>
       ${cloud && A.isAdmin() ? `<div class="card" style="margin-top:16px"><h3>Your recent sign-ins and devices</h3><p>We keep these for 180 days to protect your account. Don’t recognise one? Change your password and raise a request below.</p>
         ${access.length ? `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>When</th><th>Where (approx.)</th><th>Device</th><th>IP</th></tr></thead><tbody>${access.map(x => `<tr><td style="white-space:nowrap">${new Date(x.at).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}${x.event === "sign_in" ? ` <span class="tag plain">sign-in</span>` : ""}</td><td>${esc([x.city, x.region, x.country].filter(Boolean).join(", ") || "-")}${x.geo_source === "gps" ? " · GPS" : ""}</td><td>${esc([x.device_model, x.device_type, x.os, x.browser].filter(Boolean).join(" · "))}</td><td style="font-family:var(--mono);font-size:12px">${esc(x.ip || "-")}</td></tr>`).join("")}</tbody></table></div>` : `<p class="hint">No records yet.</p>`}</div>` : ""}
-      ${cloud ? `<div class="card" style="margin-top:16px"><h3>Raise a request</h3><p>For corrections you can’t make yourself, restriction, nomination, a grievance or any question about your data.</p>
+      ${cloud ? `<div class="card" style="margin-top:16px" id="raise"><h3>Raise a request</h3><p>For corrections you can’t make yourself, restriction, nomination, a grievance or any question about your data. Requests can only be raised here, by the signed-in owner of the account, so we know it is really you.</p>
+        <ol class="dsr-steps"><li><b>Straight away</b> you get a reference number and an acknowledgement.</li><li><b>Within 4 days</b> the administrator replies, or you get an automatic update.</li><li><b>Within 30 days</b> the request is completed or we explain why not.</li><li>Every step is listed below and kept in the audit trail.</li></ol>
+        ${db.user && !db.user.email_confirmed_at ? `<div class="warnbox">Verify your email address first. Requests can only come from a verified account.</div>` : ""}
         <div class="form-row"><label>Type<select id="rqKind"><option value="rectify">Correction</option><option value="access">Access / copy</option><option value="restrict">Restrict processing</option><option value="erase">Erasure</option><option value="withdraw_consent">Withdraw consent</option><option value="grievance">Grievance</option><option value="other">Other / nomination</option></select></label>
         <label style="flex:1">Details<textarea id="rqText" maxlength="2000" placeholder="Tell us what you need"></textarea></label><button class="btn small primary" id="rqGo">Send</button></div>
-        ${reqs.length ? `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Sent</th><th>Type</th><th>Status</th><th>Response</th></tr></thead><tbody>${reqs.map(r => `<tr><td>${fmtDY(r.created_at)}</td><td>${esc(r.kind)}</td><td><span class="tag plain">${esc(r.status)}</span></td><td>${esc(r.resolution || "")}</td></tr>`).join("")}</tbody></table></div>` : ""}</div>
+        </div>
+        ${reqs.length ? `<h3 style="margin-top:22px">Your requests</h3>${reqs.map(r => A.requestCard(r)).join("")}` : ""}
         <p class="hint">Consent recorded ${p.consent_terms_at ? "on " + fmtDY(p.consent_terms_at) : ""} for notice version ${esc(p.consent_version || "-")}.</p>` : `<p class="hint">Device-only mode: all data lives in this browser and never leaves it.</p>`}` : "";
     return `<div class="page-narrow">
       <div class="kicker">Privacy &amp; trust</div>
       <h1 class="h-display">Your data, <em>handled well</em></h1>
       <p class="lede">A security certification deserves a site that practises what it teaches: privacy by design, least privilege, and an audit trail.</p>
-      ${!signed ? `<div class="btn-row"><a class="btn" href="#/login">Back to sign in</a></div>` : ""}
+      ${!signed ? `<div class="card" style="margin-top:22px"><h3>Requests about your data</h3><p>To see, correct, download or delete your data, or to raise a grievance, sign in with your verified email address and use <b>Raise a request</b> on this page. We only act on requests from the account owner, which is how we know a request is genuine.</p><div class="btn-row"><a class="btn primary" href="#/login">Sign in</a><a class="btn" href="#/signup">Create an account</a></div></div>` : ""}
       ${rights}
       <h2 class="h-section">Privacy notice</h2>
       ${notice()}
@@ -352,7 +384,7 @@
     });
     const rq = $("#rqGo"); if (rq) rq.addEventListener("click", async () => {
       const t = $("#rqText").value.trim(); if (!t) return A.toast("Add a few details");
-      try { await db.request($("#rqKind").value, t); A.toast("Request sent. We’ll respond within 30 days."); A.rerender(); } catch (e) { A.toast(A.errMsg(e)); }
+      try { await db.request($("#rqKind").value, t); A.toast("Request sent. Your reference and acknowledgement are below."); A.rerender(); } catch (e) { A.toast(A.errMsg(e)); }
     });
   }
 

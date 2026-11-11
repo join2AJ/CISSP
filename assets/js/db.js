@@ -151,10 +151,21 @@
     /* ---------- privacy rights ---------- */
     async request(kind, details) {
       if (!cloud) throw new Error("Requests need the online database.");
+      if (!db.user) throw new Error("Sign in to raise a request about your account.");
+      if (!db.user.email_confirmed_at) throw new Error("Verify your email address first. Requests can only come from a verified account.");
       const p = await db.getProfile();
       must(await sb.from("dsr_requests").insert({ user_id: uid(), user_label: p.username || p.email, kind, details }));
     },
-    async myRequests() { if (!cloud) return []; return must(await sb.from("dsr_requests").select("*").eq("user_id", uid()).order("created_at", { ascending: false })); },
+    async myRequests() {
+      if (!cloud || !db.user) return [];
+      try { await sb.rpc("dsr_check_auto_replies"); } catch (e) {}
+      const [reqs, ev] = await Promise.all([
+        sb.from("dsr_requests").select("*").eq("user_id", uid()).order("created_at", { ascending: false }),
+        sb.from("dsr_events").select("*").eq("user_id", uid()).order("at", { ascending: true })]);
+      const list = must(reqs), events = ev.error ? [] : (ev.data || []);  // history table arrives with migration 0006
+      list.forEach(r => { r.events = events.filter(e => e.request_id === r.id); });
+      return list;
+    },
     async exportMyData() {
       if (!cloud) { const o = {}; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k.startsWith("cissp")) o[k] = localStorage.getItem(k); } return o; }
       return must(await sb.rpc("export_my_data"));
@@ -195,7 +206,13 @@
         if (to) q = q.lte("at", to + "T23:59:59");
         return must(await q);
       },
-      requests: async () => must(await sb.from("dsr_requests").select("*").order("created_at", { ascending: false })),
+      requests: async () => {
+        try { await sb.rpc("dsr_check_auto_replies"); } catch (e) {}
+        const [reqs, ev] = await Promise.all([sb.from("dsr_requests").select("*").order("created_at", { ascending: false }), sb.from("dsr_events").select("*").order("at", { ascending: true })]);
+        const list = must(reqs), events = ev.error ? [] : (ev.data || []);
+        list.forEach(r => { r.events = events.filter(e => e.request_id === r.id); });
+        return list;
+      },
       updateRequest: async (id, patch) => must(await sb.from("dsr_requests").update(patch).eq("id", id)),
       access: async (since) => must(await sb.from("access_log").select("user_id,at,event,country,city,device_type,browser,os").gte("at", since).order("at", { ascending: false }).limit(5000)),
       updatePlan: async (id, patch) => must(await sb.from("plans").update(patch).eq("id", id)),
