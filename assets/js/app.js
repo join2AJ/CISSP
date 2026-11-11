@@ -149,10 +149,11 @@
   App.plan = function () {
     const start = parseD(S.planStart || ymd(today()));
     const target = parseD(App.examTarget());
+    const MIX = { read: [0.62, 0.23], balanced: [0.55, 0.25], practice: [0.45, 0.32] }[S.planMix || "balanced"] || [0.55, 0.25];
     const latest = parseD(App.examLatest());
     const taperStart = addDays(target, -3);
     const total = Math.max(14, Math.round((taperStart - start) / 864e5));
-    const i1 = Math.round(total * 0.55), i2 = Math.round(total * 0.25), i3 = total - i1 - i2;
+    const i1 = Math.round(total * MIX[0]), i2 = Math.round(total * MIX[1]), i3 = total - i1 - i2;
     const need = { weak: 3, medium: 2, strong: 1.1 };
     const order = App.pathOrder();
     const deep = order.filter(d => prio(d) !== "strong"), fast = order.filter(d => prio(d) === "strong");
@@ -381,7 +382,9 @@
     const all = allProgress();
     const order = App.pathOrder();
     let h = `<div class="mob-nav"><a href="#/" class="${r.page === "home" ? "active" : ""}">Home</a>${App.isAdmin() ? `<a href="#/admin">Admin</a>` : ""}</div>`;
-    h += `<div class="toc-head">Chapters · weakest first</div><ol class="toc-list">`;
+    const inGroup = (pages) => pages.includes(r.page);
+    const onChapters = r.page === "domain" || r.page === "read";
+    h += `<details class="toc-group" ${onChapters || window.innerWidth > 1000 ? "open" : ""}><summary class="toc-head">Chapters <small>weakest first · ${all.pct}% read</small></summary><ol class="toc-list">`;
     order.forEach(d => {
       const p = domProgress(d);
       const active = r.page === "domain" && r.a === d.id;
@@ -391,13 +394,12 @@
       h += `</li>`;
     });
     const L = (k, ico, t) => `<li><a href="#/${k}" class="${r.page === k ? "active" : ""}"><span class="toc-num">${ico}</span>${t}</a></li>`;
-    h += `</ol><div class="toc-head">Learn more</div><ol class="toc-list">
-      ${L("glossary", "Aa", "Glossary A-Z")}${L("latest", "✦", "What’s new, 2024-2026")}${L("resources", "§", "Resources")}
-    </ol><div class="toc-head">Practise</div><ol class="toc-list">
-      ${L("quiz", "?", "Quiz by domain or topic")}${L("flashcards", "❐", "Flashcards")}${L("mock", "◷", "Mock exam")}${L("tactics", "◎", "Exam tactics")}
-    </ol><div class="toc-head">Progress</div><ol class="toc-list">
-      ${L("plan", "▤", "My study plan")}${L("insights", "◔", "Insights & time spent")}${L("tracker", "▦", "Scores & error log")}${L("library", "❏", "My library")}${L("privacy", "⚿", "Privacy & trust")}
-    </ol>
+    const G = (title, pages, body) => `<details class="toc-group" ${inGroup(pages) || window.innerWidth > 1000 ? "open" : ""}><summary class="toc-head">${title}</summary><ol class="toc-list">${body}</ol></details>`;
+    h += `</ol></details>`
+      + G("Learn more", ["glossary", "latest", "resources"], L("glossary", "Aa", "Glossary A-Z") + L("latest", "✦", "What’s new, 2024-2026") + L("resources", "§", "Resources"))
+      + G("Practise", ["quiz", "flashcards", "mock", "tactics"], L("quiz", "?", "Quiz by domain or topic") + L("flashcards", "❐", "Flashcards") + L("mock", "◷", "Mock exam") + L("tactics", "◎", "Exam tactics"))
+      + G("Progress", ["plan", "insights", "tracker", "library", "privacy"], L("plan", "▤", "My study plan") + L("insights", "◔", "Insights & time spent") + L("tracker", "▦", "Scores & error log") + L("library", "❏", "My library") + L("privacy", "⚿", "Privacy & trust"));
+    h += `
     <div class="toc-card"><b>${all.pct}%</b>read · ${all.r} of ${all.t} sections<div class="meter" style="margin-top:10px"><i style="width:${all.pct}%;background:var(--accent)"></i></div></div>`;
     toc.innerHTML = h;
   }
@@ -770,6 +772,48 @@
       db.logEvent("user.calendar_export", {}); toast("Calendar file downloaded. Open it to add your sessions.");
     });
   }
+  function planSettings() {
+    const p = App.profile || {}, sa = p.self_assessment || {}, mix = S.planMix || "balanced";
+    const lv = [["new", "New to me"], ["some", "Some"], ["confident", "Confident"]];
+    const st = S.planStart || ymd(today());
+    return `<details class="card plan-set" id="planSet">
+      <summary><span><b>Plan settings</b><small>Exam ${fmtDY(App.examTarget())} · ${p.weekly_hours || 10} h a week · ${({ read: "more reading", balanced: "balanced", practice: "more practice" })[mix]} · from ${fmtD(st)}</small></span><span class="btn small">Change</span></summary>
+      <div class="ps-grid stack">
+        <label>Target exam date<input type="date" id="psTarget" min="${ymd(addDays(today(), 7))}" value="${esc(p.target_date || App.examTarget())}"></label>
+        <label>Latest possible date (optional)<input type="date" id="psLatest" value="${esc(p.latest_date || "")}"></label>
+        <label>Plan starts on<input type="date" id="psStart" value="${esc(st)}"></label>
+        <label>Hours a week <b id="psHv">${p.weekly_hours || 10}</b><input type="range" id="psHours" min="2" max="30" value="${p.weekly_hours || 10}"></label>
+      </div>
+      <div class="ps-block"><span class="set-label">Pace</span>
+        <div class="seg3" id="psMix" style="--dc:var(--accent)">${[["read", "More reading", "62% reading, 23% practice, 15% review"], ["balanced", "Balanced", "55% reading, 25% practice, 20% review"], ["practice", "More practice", "45% reading, 32% practice, 23% review"]].map(([v, l, h]) => `<button type="button" data-mix="${v}" class="${mix === v ? "on" : ""}" title="${h}">${l}</button>`).join("")}</div>
+        <p class="hint" id="psMixHint"></p></div>
+      <div class="ps-block"><span class="set-label">How confident are you in each domain?</span>
+        <div class="ps-doms">${D.map(dm => `<div class="ps-dom" style="${dc(dm)}"><span><span class="toc-dot" style="display:inline-block;background:var(--${dm.id})"></span> D${dm.n} ${esc(dm.short)} <small>${dm.weight}%</small></span>
+          <div class="seg3">${lv.map(([v, l]) => `<button type="button" data-psa="${dm.id}:${v}" class="${(sa[dm.id] || "some") === v ? "on" : ""}">${l}</button>`).join("")}</div></div>`).join("")}</div></div>
+      <div class="btn-row"><button class="btn small primary" id="psSave">Save and redraw my plan</button><button class="btn small ghost" id="restartPlan">Restart from today</button></div>
+    </details>`;
+  }
+  function bindPlanSettings() {
+    if (!$("#planSet")) return;
+    const sa = Object.assign({}, (App.profile || {}).self_assessment || {}); let mix = S.planMix || "balanced";
+    const mixHint = () => { const b = $(`[data-mix="${mix}"]`); $("#psMixHint").textContent = b ? b.title + "." : ""; };
+    mixHint();
+    $("#psHours").addEventListener("input", e => { $("#psHv").textContent = e.target.value; });
+    $$("[data-mix]").forEach(b => b.addEventListener("click", () => { mix = b.dataset.mix; $$("[data-mix]").forEach(x => x.classList.toggle("on", x === b)); mixHint(); }));
+    $$("[data-psa]").forEach(b => b.addEventListener("click", () => { const [id, v] = b.dataset.psa.split(":"); sa[id] = v; $$(`[data-psa^="${id}:"]`).forEach(x => x.classList.toggle("on", x === b)); }));
+    $("#psSave").addEventListener("click", async (e) => {
+      const t = $("#psTarget").value, l = $("#psLatest").value || null, s = $("#psStart").value || ymd(today()), h = +$("#psHours").value;
+      if (!t) return toast("Pick a target exam date");
+      if (l && l < t) return toast("The latest date must be on or after the target date");
+      if (s >= t) return toast("The plan has to start before the exam date");
+      e.target.disabled = true;
+      try {
+        App.profile = await db.updateProfile({ target_date: t, latest_date: l, weekly_hours: h, self_assessment: sa });
+        S.planStart = s; S.planMix = mix; save(); db.logEvent("user.plan_settings", { mix });
+        toast("Plan redrawn"); App.rerender();
+      } catch (err) { e.target.disabled = false; toast(App.errMsg ? App.errMsg(err) : String(err.message || err)); }
+    });
+  }
   function viewPlan() {
     const now = today(), pl = App.plan(), ph = App.currentPhase();
     const phases = pl.phases.map(p => {
@@ -795,9 +839,9 @@
     return `<div class="page-narrow">
       <div class="kicker">Your study plan</div>
       <h1 class="h-display">${weeks} weeks, <em>one attempt</em></h1>
-      <p class="lede">Built from your target date and self-assessment. Focus domains get the most days; strengths share a fast pass. Change your dates or ratings in <a href="#/profile">your profile</a> and the plan redraws itself.</p>
+      <p class="lede">Built from your exam date and how confident you feel in each domain. Focus domains get the most days; strengths share a fast pass. Change anything below and the plan redraws itself.</p>
       <div class="grid-2" style="margin-top:28px">${countdown()}</div>
-      <div class="btn-row"><button class="btn small ghost" id="restartPlan">Restart the plan from today</button></div>
+      ${planSettings()}
       ${scheduleCard()}
       <h2 class="h-section">Checkpoints</h2>
       <p class="sub">Checked automatically from your quiz accuracy, Tracker scores and mock exams.</p>
@@ -900,7 +944,8 @@
           <div class="btn-row" style="margin-top:14px"><a class="btn primary small" href="resources/ISC2-Ultimate-Guide-to-the-CISSP.pdf" target="_blank" rel="noopener">Open the PDF</a><a class="btn small" href="resources/ISC2-Ultimate-Guide-to-the-CISSP.pdf" download>Download</a></div>
         </div>
       </div>
-      <details class="pdf-view"><summary>Read the ISC2 guide here</summary><iframe src="resources/ISC2-Ultimate-Guide-to-the-CISSP.pdf#view=FitH" title="The Ultimate Guide to the CISSP (ISC2)" loading="lazy"></iframe><p class="hint">If it doesn’t show on your phone, use Open the PDF above.</p></details>
+      <details class="pdf-view"><summary>Read the ISC2 guide here</summary><iframe src="resources/ISC2-Ultimate-Guide-to-the-CISSP.pdf#view=FitH" title="The Ultimate Guide to the CISSP (ISC2)" loading="lazy"></iframe></details>
+      <div class="card own-copy"><h3>Your own copy of the Sybex books</h3><p>The Official Study Guide and Practice Tests are paid books, so they can’t be shared on this site. If you own a copy, upload it to <a href="#/library">My library</a>. Files there are private to your account and open on any device you sign in on.</p></div>
       ${P.resources.map(g => `<h2 class="h-section">${esc(g.group)}</h2>${g.items.map(r => `<div class="res"><div class="res-ico">${r.ico}</div><div><h4><a href="${esc(r.u)}" target="_blank" rel="noopener">${esc(r.t)} ↗</a></h4><p>${esc(r.d)}</p><div class="tags">${r.tags.map(t => `<span class="tag plain">${esc(t)}</span>`).join("")}</div></div></div>`).join("")}`).join("")}
       <div id="privateBlock"></div>
     </div>`;
@@ -1150,6 +1195,7 @@
   App.register("domain", { render: viewDomain, bind: bindDomain, nav: "read", area: "read", title: r => byId[r.a] ? `D${byId[r.a].n} ${byId[r.a].title}` : "Chapter" });
   App.register("plan", { render: viewPlan, title: "Study plan", nav: "plan", area: "plan", bind: (r) => {
     $("#restartPlan").addEventListener("click", () => { if (confirm("Redraw the plan starting today? Ticked tasks stay ticked.")) { S.planStart = ymd(today()); save(); App.rerender(); } });
+    bindPlanSettings();
     bindSchedule();
     if (r.a === "schedule") { const el = $("#schedule"); if (el) requestAnimationFrame(() => el.scrollIntoView({ block: "start" })); }
   } });
@@ -1268,6 +1314,8 @@
     g.addEventListener("focusout", (e) => { if (e.relatedTarget && !g.contains(e.relatedTarget)) set(false); });
   });
   document.addEventListener("click", (e) => { if (!e.target.closest(".nav-group")) closeGroups(); });
+  const killBadge = () => document.querySelectorAll('#nl-badge-frame, iframe[title="Powered by Netlify"]').forEach(x => x.remove());
+  new MutationObserver(killBadge).observe(document.body, { childList: true }); killBadge();
   $("#tocToggle").addEventListener("click", () => { toc.classList.add("open"); $("#scrim").classList.add("on"); });
   $("#scrim").addEventListener("click", closeToc);
 
