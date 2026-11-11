@@ -1013,6 +1013,8 @@
     }
     await App.loadPlans();
     if (db.user) { try { await App.afterLogin(); } catch (e) { toast(App.errMsg(e)); } }
+    // a bookmarked or autocompleted #/welcome should not skip the public page
+    if (db.mode === "local" && /^#\/welcome/.test(location.hash) && !(App.profile && App.profile.onboarded)) history.replaceState(null, "", "#/landing");
     addEventListener("hashchange", route);
     route();
     if (db.mode === "local" && !App._localNote) { App._localNote = true; }

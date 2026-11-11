@@ -2,7 +2,8 @@
   publish = "."
   # Keep unlicensed copies of commercial books off the public site, and don't publish
   # server-side sources. This only affects the deployed copy, not the repository.
-  command = "rm -f resources/ISC2\\ CISSP\\ Certified*.pdf && rm -rf supabase"
+  # Each deploy stamps script/style links with the commit, so browsers always load fresh files.
+  command = "rm -f resources/ISC2\\ CISSP\\ Certified*.pdf && rm -rf supabase && sed -i \"s/?v=dev/?v=${COMMIT_REF:-$(date +%s)}/g\" index.html"
 
 [[headers]]
   for = "/*"
@@ -17,7 +18,12 @@
 [[headers]]
   for = "/assets/*"
   [headers.values]
-    Cache-Control = "public, max-age=600, must-revalidate"
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache"
 
 [[headers]]
   for = "/resources/*.pdf"
