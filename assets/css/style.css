@@ -1238,3 +1238,77 @@ body.site .toc { display: none; }
   .sec-finish { padding: 16px; }
   .big-next { font-size: 15px; }
 }
+
+/* ==========================================================
+   Cross-device polish: lighter spacing, calmer headings,
+   readable small text, comfortable touch targets
+   ========================================================== */
+.page, .page-narrow { padding-top: 36px; }
+.site-page, .landing { padding-top: 34px; }
+.hero { padding: 40px 0 30px; gap: 40px; }
+.h-display { font-size: clamp(32px, 4.6vw, 54px); margin: 10px 0 14px; }
+.hero .h-display { font-size: clamp(40px, 5.6vw, 66px); }
+.ch-head { padding: 40px 0 24px; }
+.ch-head .h-display { font-size: clamp(32px, 4.6vw, 50px); }
+.ch-numeral { font-size: 150px; top: 18px; }
+.h-section { font-size: clamp(24px, 2.6vw, 30px); margin: 48px 0 8px; }
+.lede { font-size: calc(var(--fs) + 1px); }
+.fact { padding-top: 20px; padding-bottom: 20px; }
+.fact b { font-size: 34px; }
+.count { padding: 14px 18px; }
+.count-num { font-size: 46px; min-width: 80px; }
+.result .h-display { font-size: clamp(30px, 4.2vw, 44px); }
+.quote { margin-top: 54px; font-size: clamp(22px, 2.6vw, 30px); }
+
+/* nothing below 12px */
+.kicker, .tag, .anim-k, .plan-chip, .prose th, .tbl th, .contents-box h3, .toc-head { font-size: 12px; }
+.plan-pop, .now-pill { font-size: 11.5px; }
+.hint, .book-meta, .phase-date, .q-top, .legend, .dc-axis, .lib-meta, .sr-k, .run-score, .status { font-size: 12.5px; }
+.pkt { font-size: 11.5px; } .pkt i { font-size: 10.5px; }
+.toc-pct, .book-pct, .auto-tag, .set-label { font-size: 12px; }
+
+/* touch screens: fingers need bigger targets */
+@media (pointer: coarse) {
+  .btn.small, .chip, .seg-tabs button, .seg-tabs a { min-height: 40px; }
+  .chip[style*="height:26px"] { height: 34px !important; }
+  .steps a { height: 40px; min-width: 48px; }
+  .opt { min-height: 50px; padding: 12px 14px; }
+  .anim-ctl button { width: 40px; height: 40px; }
+  .anim-dots { gap: 4px; }
+  .anim-dots button { width: 22px; height: 22px; background: transparent; position: relative; }
+  .anim-dots button::after { content: ""; position: absolute; inset: 7px; border-radius: 50%; background: var(--rule); }
+  .anim-dots button.on { width: 34px; }
+  .anim-dots button.on::after { inset: 7px 4px; border-radius: 6px; background: var(--dc, var(--accent)); }
+  .icon-btn, .display-btn, .search-btn, .user-btn { min-width: 40px; height: 40px; }
+  .toc-list a { padding: 10px 8px; }
+  .faq summary { padding-top: 18px; padding-bottom: 18px; }
+  .understood.small { min-height: 40px; }
+}
+
+/* phones: tighter, cleaner reading */
+@media (max-width: 640px) {
+  .page, .page-narrow { padding-top: 20px; }
+  .site-page, .landing { padding-top: 18px; }
+  .hero { padding: 18px 0 22px; gap: 22px; }
+  .h-display { font-size: clamp(30px, 8.4vw, 36px); }
+  .hero .h-display { font-size: clamp(36px, 10.5vw, 42px); }
+  .ch-head { padding: 22px 0 16px; }
+  .ch-head .h-display { font-size: clamp(28px, 8vw, 34px); }
+  .h-section { font-size: 23px; margin-top: 36px; }
+  .lede { font-size: 17.5px; }
+  .prose { hyphens: manual; -webkit-hyphens: manual; }
+  .sec h2 { font-size: 1.4em; }
+  .fact b { font-size: 28px; }
+  .count-num { font-size: 38px; min-width: 64px; }
+  .btn-row { margin-top: 18px; }
+  .sec-page { padding-top: 12px; }
+  .steps { margin-top: 10px; }
+  .q.big { padding: 18px 16px 16px; }
+  .quote { margin-top: 40px; }
+  .anim-cap { font-size: 15.5px; }
+  .osi-l { font-size: 12px; }
+}
+/* animation labels: readable on every screen */
+.mv-lv em, .kb-n small, .sg-s small, .mv-t small, .fact .unit, .bk-c span { font-size: 12px; }
+.hs-a span { font-size: 11.5px; }
+@media (max-width: 640px) { .hs-a span { font-size: 11px; } .bk-c span { font-size: 11px; } .sg-s small { font-size: 11.5px; } }

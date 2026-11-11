@@ -12,10 +12,11 @@
   async function load(force) {
     if (cache && !force && Date.now() - cache.t < 60000) return cache;
     const since = ymd(addDays(today(), -89));
-    const [users, time, attempts, mocks, requests] = await Promise.all([
-      db.admin.users(), db.admin.time(since), db.admin.attempts(addDays(today(), -89).toISOString()), db.admin.mocks(), db.admin.requests()
+    const [users, time, attempts, mocks, requests, access] = await Promise.all([
+      db.admin.users(), db.admin.time(since), db.admin.attempts(addDays(today(), -89).toISOString()), db.admin.mocks(), db.admin.requests(),
+      db.admin.access(addDays(today(), -29).toISOString()).catch(() => [])
     ]);
-    cache = { t: Date.now(), users, time, attempts, mocks, requests, since };
+    cache = { t: Date.now(), users, time, attempts, mocks, requests, access, since };
     return cache;
   }
   const name = (u) => u ? (u.full_name || u.username || u.email) : "—";
@@ -71,12 +72,20 @@
         <div class="card"><h3>Most-studied topics</h3>${topics.length ? topics.map(([k, v]) => `<div class="kv"><span>${sec(k)}</span><b>${fmtDur(v)}</b></div>`).join("") : "<p>No reading time yet.</p>"}</div>
         <div class="card"><h3>Hardest topics (most misses)</h3>${hard.length ? hard.map(([k, v]) => `<div class="kv"><span>${sec(k)}</span><b>${v} misses</b></div>`).join("") : "<p>No quiz data yet.</p>"}</div>
         <div class="card"><h3>Where time goes</h3>${Object.entries(byArea).sort((a, b) => b[1] - a[1]).map(([k, v]) => `<div class="kv"><span>${esc(k)}</span><b>${fmtDur(v)}</b></div>`).join("") || "<p>—</p>"}</div>
+        <div class="card"><h3>Devices (30 days)</h3>${tally(c.access, x => x.device_type) || "<p>No visits recorded yet.</p>"}</div>
+        <div class="card"><h3>Where learners sign in from (30 days)</h3>${tally(c.access, x => [x.city, x.country].filter(Boolean).join(", ")) || "<p>No visits recorded yet.</p>"}</div>
+        <div class="card"><h3>Browsers and systems (30 days)</h3>${tally(c.access, x => [x.os, (x.browser || "").split(" ")[0]].filter(Boolean).join(" · ")) || "<p>—</p>"}</div>
         <div class="card"><h3>Exams in the next 30 days</h3>${upcoming.length ? upcoming.map(u => `<div class="kv"><a href="#/admin/learners/${u.id}">${esc(name(u))}</a><b>${fmtD(u.target_date)}</b></div>`).join("") : "<p>None scheduled.</p>"}</div>
       </div>
       <div class="btn-row"><button class="btn small ghost" id="refresh">Refresh data</button></div>
     </div>`;
   }
 
+  function tally(rows, keyFn) {
+    const t = {}; (rows || []).forEach(r => { const k = keyFn(r) || "unknown"; t[k] = (t[k] || 0) + 1; });
+    const total = (rows || []).length;
+    return Object.entries(t).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([k, v]) => `<div class="kv"><span>${esc(k)}</span><b>${v} · ${Math.round(v / total * 100)}%</b></div>`).join("");
+  }
   function learners(c, id) {
     if (id) return detail(c, id);
     const q = lq.toLowerCase();
@@ -121,6 +130,7 @@
       el.innerHTML = `<h2 class="h-section">Last 30 days</h2><div class="daychart">${series.map(x => `<div class="dc-col" title="${fmtD(x)}: ${fmtDur(perDay[x] || 0)}"><i style="height:${Math.round((perDay[x] || 0) / maxD * 100)}%"></i></div>`).join("")}</div>
         <h2 class="h-section">By domain</h2><div class="bars">${D.map(dm => { const s = byDom[dm.id] || 0, a = acc[dm.id] ? Math.round(acc[dm.id][0] / acc[dm.id][1] * 100) : null; return `<div class="hbar" style="${dc(dm)}"><span>D${dm.n} ${esc(dm.short)}</span><div class="meter"><i style="width:${s / max * 100}%"></i></div><b>${fmtDur(s)}</b><span class="band ${band(a)}">${a == null ? "—" : a + "%"}</span></div>`; }).join("")}</div>
         <div class="grid-2" style="margin-top:30px"><div class="card"><h3>Mock exams</h3>${d.mocks.length ? d.mocks.map(m => { const v = Math.round(m.correct / m.total * 100); return `<div class="kv"><span>${fmtD(m.created_at)} · ${m.total} q · ${fmtDur(m.seconds)}</span><span class="band ${band(v)}">${v}%</span></div>`; }).join("") : "<p>None yet.</p>"}</div>
+        <div class="card" style="grid-column:1/-1"><h3>Sign-ins and devices (last 100)</h3>${d.access.length ? `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>When</th><th>Event</th><th>IP</th><th>Location</th><th>Device</th><th>Screen · language · time zone</th></tr></thead><tbody>${d.access.map(x => `<tr><td style="white-space:nowrap">${new Date(x.at).toLocaleString("en-GB", { day: "numeric", month: "short", year: "2-digit", hour: "2-digit", minute: "2-digit" })}</td><td>${esc(x.event)}</td><td style="font-family:var(--mono);font-size:12px">${esc(x.ip || "—")}</td><td>${esc([x.city, x.region, x.country].filter(Boolean).join(", ") || "—")}${x.latitude != null ? ` <a href="https://www.openstreetmap.org/?mlat=${x.latitude}&mlon=${x.longitude}#map=${x.geo_source === "gps" ? 16 : 11}/${x.latitude}/${x.longitude}" target="_blank" rel="noopener">map</a> <small>${x.geo_source === "gps" ? `GPS ±${x.gps_accuracy_m || "?"} m` : "from IP"}</small>` : ""}</td><td>${esc([x.device_model, x.device_type].filter(Boolean).join(" · "))}<div style="font-size:12px;color:var(--muted)">${esc([x.os, x.browser].filter(Boolean).join(" · "))}</div></td><td style="font-size:12.5px">${esc([x.screen, x.language, x.timezone].filter(Boolean).join(" · "))}</td></tr>`).join("")}</tbody></table></div>` : "<p>No sign-ins recorded yet.</p>"}</div>
         <div class="card"><h3>Library</h3>${d.resources.length ? d.resources.map(r => `<div class="kv"><span>${esc(r.title)}</span><b>${esc(r.kind)}</b></div>`).join("") : "<p>Empty.</p>"}</div></div>`;
     } catch (e) { el.innerHTML = `<div class="warnbox">${esc(A.errMsg(e))}</div>`; }
   }

@@ -29,7 +29,7 @@
       e.preventDefault(); const b = $("#lGo"); busy(b, true, "Signing in…"); $("#lMsg").innerHTML = "";
       try {
         await db.signIn($("#lId").value, $("#lPw").value);
-        await A.afterLogin(); try { sessionStorage.removeItem("cissp.mode"); } catch (x) {} location.hash = A.isAdmin() ? "#/choose" : "#/"; A.route();
+        await A.afterLogin(); A.logAccess("sign_in"); try { sessionStorage.removeItem("cissp.mode"); } catch (x) {} location.hash = A.isAdmin() ? "#/choose" : "#/"; A.route();
       } catch (err) {
         const m = A.errMsg(err);
         if (/not confirmed/i.test(m)) {
@@ -236,16 +236,17 @@
         <li><strong>Study activity</strong>: sections marked as read, quiz and mock answers, flashcard progress, error-log notes, and active study time per topic and day.</li>
         <li><strong>Your library</strong>: links and files you choose to upload.</li>
         <li><strong>Security records</strong>: an audit trail of account events (sign-ups, sign-ins, profile changes, data exports, deletions, admin actions).</li>
+        <li><strong>Sign-in and device records</strong>: at each sign-in and once a day per device: your IP address, approximate location derived from it (city, region, country), browser, operating system, device type and, where your browser reports it, device model, plus screen size, language and time zone. Kept for 180 days. Precise GPS location is added only if you switch it on, and only after your browser asks your permission. Websites cannot read your device’s MAC address, so we never collect it.</li>
       </ul>
       <h3>Why, and on what basis</h3><ul>
         <li>To run the service, build your plan and show your progress: your <strong>consent</strong> (DPDP s.6; GDPR Art. 6(1)(a)) and performing the service you asked for (GDPR Art. 6(1)(b)).</li>
         <li>Study-time analytics: consent, which you can switch off below at any time.</li>
-        <li>Security and accountability (audit trail): legitimate interest in protecting the service (GDPR Art. 6(1)(f)); a legitimate use under DPDP.</li>
+        <li>Security and accountability (audit trail, sign-in and device records): legitimate interest in protecting accounts and detecting misuse (GDPR Art. 6(1)(f)); a legitimate use under DPDP. Precise GPS location: your consent, which you can withdraw at any time.</li>
       </ul>
       <p>We don’t sell data, show ads, use your data to train AI models, or make automated decisions with legal effect. Your administrator can see learner progress and the audit trail to support learners and keep the service secure.</p>
       <h3>Who processes it for us</h3><ul>
         <li><strong>Supabase</strong> (database, authentication, file storage), hosted in the region chosen at set-up. Data is encrypted in transit (TLS) and at rest.</li>
-        <li><strong>Netlify</strong> (website hosting).</li>
+        <li><strong>Netlify</strong> (website hosting, and turning your IP address into an approximate location; no other location service is used).</li>
         <li><strong>Google Fonts</strong> (typefaces): your browser fetches fonts, which reveals your IP address to Google.</li>
         <li><strong>YouTube</strong>, only if you press play on a video in your library (privacy-enhanced mode).</li>
       </ul><p>These providers may process data outside your country under their contractual safeguards (e.g. standard contractual clauses).</p>
@@ -294,7 +295,8 @@
   async function viewPrivacy() {
     const signed = cloud ? !!db.user : true;
     let reqs = [];
-    if (cloud && db.user) { try { reqs = await db.myRequests(); } catch (e) {} }
+    let access = [];
+    if (cloud && db.user) { try { [reqs, access] = await Promise.all([db.myRequests(), db.myAccess()]); } catch (e) {} }
     const p = A.profile || {};
     const rights = signed && A.profile ? `
       <h2 class="h-section">Your data, your controls</h2>
@@ -302,9 +304,12 @@
         <div class="card"><h3>Download my data</h3><p>Everything we hold about you, as a JSON file.</p><button class="btn small" id="pvExport">Download</button></div>
         <div class="card"><h3>Correct my data</h3><p>Edit your details directly, or ask us to fix anything you can’t edit.</p><a class="btn small" href="#/profile">Edit profile</a></div>
         <div class="card"><h3>Study analytics</h3><p>Record active study time per topic for your Insights.</p><label class="switch"><input type="checkbox" id="pvAnalytics" ${p.consent_analytics !== false ? "checked" : ""}><span></span>${p.consent_analytics !== false ? "On" : "Off"}</label></div>
+        <div class="card"><h3>Precise location (GPS)</h3><p>Off by default. If you switch it on, your browser will ask permission and your precise location is added to your sign-in records. Approximate location from your IP address is always recorded.</p><label class="switch"><input type="checkbox" id="pvGps" ${p.share_precise_location ? "checked" : ""}><span></span>${p.share_precise_location ? "On" : "Off"}</label></div>
         <div class="card danger"><h3>Delete my account</h3><p>Erases your account, plan, progress and files now. This can’t be undone.</p><button class="btn small" id="pvDelete">Delete everything</button></div>
       </div>
-      ${cloud ? `<div class="card" style="margin-top:16px"><h3>Raise a request</h3><p>For corrections you can’t make yourself, restriction, nomination, a grievance or any question about your data.</p>
+      ${cloud ? `<div class="card" style="margin-top:16px"><h3>Your recent sign-ins and devices</h3><p>We keep these for 180 days to protect your account. Don’t recognise one? Change your password and raise a request below.</p>
+        ${access.length ? `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>When</th><th>Where (approx.)</th><th>Device</th><th>IP</th></tr></thead><tbody>${access.map(x => `<tr><td style="white-space:nowrap">${new Date(x.at).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}${x.event === "sign_in" ? ` <span class="tag plain">sign-in</span>` : ""}</td><td>${esc([x.city, x.region, x.country].filter(Boolean).join(", ") || "—")}${x.geo_source === "gps" ? " · GPS" : ""}</td><td>${esc([x.device_model, x.device_type, x.os, x.browser].filter(Boolean).join(" · "))}</td><td style="font-family:var(--mono);font-size:12px">${esc(x.ip || "—")}</td></tr>`).join("")}</tbody></table></div>` : `<p class="hint">No records yet.</p>`}</div>
+      <div class="card" style="margin-top:16px"><h3>Raise a request</h3><p>For corrections you can’t make yourself, restriction, nomination, a grievance or any question about your data.</p>
         <div class="form-row"><label>Type<select id="rqKind"><option value="rectify">Correction</option><option value="access">Access / copy</option><option value="restrict">Restrict processing</option><option value="erase">Erasure</option><option value="withdraw_consent">Withdraw consent</option><option value="grievance">Grievance</option><option value="other">Other / nomination</option></select></label>
         <label style="flex:1">Details<textarea id="rqText" maxlength="2000" placeholder="Tell us what you need"></textarea></label><button class="btn small primary" id="rqGo">Send</button></div>
         ${reqs.length ? `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Sent</th><th>Type</th><th>Status</th><th>Response</th></tr></thead><tbody>${reqs.map(r => `<tr><td>${fmtDY(r.created_at)}</td><td>${esc(r.kind)}</td><td><span class="tag plain">${esc(r.status)}</span></td><td>${esc(r.resolution || "")}</td></tr>`).join("")}</tbody></table></div>` : ""}</div>
@@ -328,6 +333,15 @@
     });
     const an = $("#pvAnalytics"); if (an) an.addEventListener("change", async () => {
       try { A.profile = await db.updateProfile({ consent_analytics: an.checked }); db.logEvent(an.checked ? "user.analytics_on" : "user.analytics_off", {}); A.rerender(); } catch (e) { A.toast(A.errMsg(e)); }
+    });
+    const gps = $("#pvGps"); if (gps) gps.addEventListener("change", async () => {
+      try {
+        if (gps.checked) { const pos = await A.preciseLocation(); if (!pos) { gps.checked = false; return A.toast("Location permission was not given, so this stays off."); } }
+        A.profile = await db.updateProfile({ share_precise_location: gps.checked });
+        db.logEvent(gps.checked ? "user.gps_on" : "user.gps_off", {});
+        if (gps.checked) await A.logAccess("visit", true);
+        A.rerender();
+      } catch (e) { A.toast(A.errMsg(e)); }
     });
     const del = $("#pvDelete"); if (del) del.addEventListener("click", async () => {
       const typed = prompt("This permanently deletes your account and all your study data.\n\nType DELETE to confirm.");

@@ -1079,6 +1079,53 @@
   $("#scrim").addEventListener("click", closeToc);
 
   /* ---------------- start ---------------- */
+  /* ---------------- access logging (sign-in + once a day per device) ---------------- */
+  App.deviceInfo = async () => {
+    const ua = navigator.userAgent || "";
+    const m = (re) => { const x = ua.match(re); return x ? x[1] : null; };
+    let browser = "Other";
+    if (/Edg\//.test(ua)) browser = "Edge " + m(/Edg\/(\d+)/);
+    else if (/OPR\//.test(ua)) browser = "Opera " + m(/OPR\/(\d+)/);
+    else if (/SamsungBrowser\//.test(ua)) browser = "Samsung Internet " + m(/SamsungBrowser\/(\d+)/);
+    else if (/Firefox\//.test(ua)) browser = "Firefox " + m(/Firefox\/(\d+)/);
+    else if (/CriOS\//.test(ua)) browser = "Chrome " + m(/CriOS\/(\d+)/);
+    else if (/Chrome\//.test(ua)) browser = "Chrome " + m(/Chrome\/(\d+)/);
+    else if (/Safari\//.test(ua) && /Version\//.test(ua)) browser = "Safari " + m(/Version\/(\d+(?:\.\d+)?)/);
+    const iPadDesktopUA = /Macintosh/.test(ua) && navigator.maxTouchPoints > 1;
+    let os = "Other";
+    if (/Windows NT 10/.test(ua)) os = "Windows 10/11"; else if (/Windows NT/.test(ua)) os = "Windows";
+    else if (/iPhone OS/.test(ua)) os = "iOS " + (m(/iPhone OS (\d+(?:_\d+)?)/) || "").replace("_", ".");
+    else if (/iPad/.test(ua) || iPadDesktopUA) os = "iPadOS";
+    else if (/Android/.test(ua)) os = "Android " + (m(/Android (\d+(?:\.\d+)?)/) || "");
+    else if (/CrOS/.test(ua)) os = "ChromeOS"; else if (/Mac OS X/.test(ua)) os = "macOS"; else if (/Linux/.test(ua)) os = "Linux";
+    const type = /iPad|Tablet/.test(ua) || iPadDesktopUA || (/Android/.test(ua) && !/Mobile/.test(ua)) ? "tablet" : /Mobi|iPhone|Android/.test(ua) ? "mobile" : "desktop";
+    let model = /iPhone/.test(ua) ? "iPhone" : (/iPad/.test(ua) || iPadDesktopUA) ? "iPad" : null;
+    if (!model && /Android/.test(ua)) { const am = ua.match(/Android [\d.]+; ([^;)]+)/); if (am && am[1] !== "K") model = am[1].trim(); }
+    try {
+      if (navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) {
+        const h = await navigator.userAgentData.getHighEntropyValues(["model", "platform", "platformVersion"]);
+        if (h.model) model = h.model;
+        if (h.platform === "Windows" && h.platformVersion) os = parseInt(h.platformVersion, 10) >= 13 ? "Windows 11" : "Windows 10";
+        if (h.platform === "macOS" && h.platformVersion) os = "macOS " + h.platformVersion.split(".").slice(0, 2).join(".");
+      }
+    } catch (e) {}
+    return { browser, os, device_type: type, device_model: model, screen: `${screen.width}×${screen.height} @${Math.round((devicePixelRatio || 1) * 10) / 10}x`,
+      language: navigator.language || null, timezone: (Intl.DateTimeFormat().resolvedOptions() || {}).timeZone || null };
+  };
+  App.preciseLocation = () => new Promise((res) => {
+    if (!navigator.geolocation) return res(null);
+    navigator.geolocation.getCurrentPosition(p => res({ lat: p.coords.latitude, lon: p.coords.longitude, acc: p.coords.accuracy }), () => res(null), { timeout: 10000, maximumAge: 600000, enableHighAccuracy: false });
+  });
+  App.logAccess = async (event, force) => {
+    if (db.mode !== "cloud" || !db.user) return;
+    const key = "cissp.visit:" + db.user.id, day = ymd(today());
+    let last = null; try { last = localStorage.getItem(key); } catch (e) {}
+    if (event !== "sign_in" && !force && last === day) return;
+    try { localStorage.setItem(key, day); } catch (e) {}
+    const [info, geo] = await Promise.all([App.deviceInfo(), fetch("/api/whereami", { cache: "no-store" }).then(r => r.ok ? r.json() : null).catch(() => null)]);
+    const gps = App.profile && App.profile.share_precise_location ? await App.preciseLocation() : null;
+    await db.logAccess(Object.assign({ event, geo: geo || {}, gps }, info));
+  };
   App.loadPlans = async () => { try { const pl = await db.plans(); if (pl && pl.length) App.plans = pl; } catch (e) {} };
   App.afterLogin = async function () {
     const uidv = db.mode === "cloud" ? db.user.id : "local";
@@ -1104,6 +1151,7 @@
     App.personal = null;
     if (notes && App.isPrivileged()) { try { App.personal = JSON.parse(notes); } catch (e) {} }
     db.touch().catch(() => {});
+    setTimeout(() => App.logAccess("visit"), 1500);
   };
 
   App.start = async function () {

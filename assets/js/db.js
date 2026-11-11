@@ -166,6 +166,14 @@
       must(await sb.rpc("delete_my_account"));
       await sb.auth.signOut();
     },
+    async logAccess(payload) {
+      if (!cloud || !user) return;
+      try { await sb.functions.invoke("log-access", { body: payload }); } catch (e) {}
+    },
+    async myAccess() {
+      if (!cloud) return [];
+      return must(await sb.from("access_log").select("at,event,ip,city,region,country,geo_source,browser,os,device_type,device_model,screen").eq("user_id", uid()).order("at", { ascending: false }).limit(20));
+    },
     async logEvent(action, detail) { if (!cloud || !user) return; try { await sb.rpc("log_event", { p_action: action, p_detail: detail || {} }); } catch (e) {} },
     async privateContent(key) {
       if (!cloud) return null;
@@ -189,16 +197,18 @@
       },
       requests: async () => must(await sb.from("dsr_requests").select("*").order("created_at", { ascending: false })),
       updateRequest: async (id, patch) => must(await sb.from("dsr_requests").update(patch).eq("id", id)),
+      access: async (since) => must(await sb.from("access_log").select("user_id,at,event,country,city,device_type,browser,os").gte("at", since).order("at", { ascending: false }).limit(5000)),
       updatePlan: async (id, patch) => must(await sb.from("plans").update(patch).eq("id", id)),
       updateProfile: async (id, patch) => must(await sb.from("profiles").update(patch).eq("id", id)),
       userDetail: async (id) => {
-        const [time, attempts, mocks, resources] = await Promise.all([
+        const [time, attempts, mocks, resources, access] = await Promise.all([
           sb.from("time_log").select("day,area,domain,topic,seconds").eq("user_id", id).limit(5000),
           sb.from("attempts").select("domain,topic,correct,mode,created_at").eq("user_id", id).limit(5000),
           sb.from("mocks").select("total,correct,seconds,created_at").eq("user_id", id),
-          sb.from("resources").select("title,kind,url,storage_path,domain,created_at").eq("user_id", id)
+          sb.from("resources").select("title,kind,url,storage_path,domain,created_at").eq("user_id", id),
+          sb.from("access_log").select("*").eq("user_id", id).order("at", { ascending: false }).limit(100)
         ]);
-        return { time: must(time), attempts: must(attempts), mocks: must(mocks), resources: must(resources) };
+        return { time: must(time), attempts: must(attempts), mocks: must(mocks), resources: must(resources), access: must(access) };
       },
       deleteUser: async (id, reason) => {
         const files = must(await sb.storage.from("learner-files").list(id, { limit: 1000 }));
