@@ -1094,7 +1094,7 @@
 
   async function bindResources() {
     if (!App.isPrivileged()) return;
-    let body = null; try { body = await db.privateContent("ai_tutor_prompt"); } catch (e) {}
+    let body = null; try { body = App.plainDashes(await db.privateContent("ai_tutor_prompt")); } catch (e) {}
     if (!body) return;
     const el = $("#privateBlock"); if (!el) return;
     el.innerHTML = `<h2 class="h-section">An AI tutor prompt <span class="tag plain">Private</span></h2>
@@ -1272,7 +1272,9 @@
     const gps = App.profile && App.profile.share_precise_location ? await App.preciseLocation() : null;
     await db.logAccess(Object.assign({ event, geo: geo || {}, gps }, info));
   };
-  App.loadPlans = async () => { try { const pl = await db.plans(); if (pl && pl.length) App.plans = pl; } catch (e) {} };
+  // stored text may still contain long dashes; show plain hyphens everywhere
+  App.plainDashes = (t) => typeof t === "string" ? t.replace(/ [—–] /g, " - ").replace(/[—–]/g, "-") : t;
+  App.loadPlans = async () => { try { const pl = await db.plans(); if (pl && pl.length) App.plans = pl.map(p => Object.assign({}, p, { tagline: App.plainDashes(p.tagline), perks: (p.perks || []).map(App.plainDashes) })); } catch (e) {} };
   App.afterLogin = async function () {
     const uidv = db.mode === "cloud" ? db.user.id : "local";
     stateKey = "cissp.v1:" + uidv;
@@ -1295,7 +1297,7 @@
     App.timeRows = null;
     App.attempts = attempts; App.mocks = mocks;
     App.personal = null;
-    if (notes && App.isPrivileged()) { try { App.personal = JSON.parse(notes); } catch (e) {} }
+    if (notes && App.isPrivileged()) { try { App.personal = JSON.parse(App.plainDashes(notes)); } catch (e) {} }
     db.touch().catch(() => {});
     setTimeout(() => App.logAccess("visit"), 1500);
   };
