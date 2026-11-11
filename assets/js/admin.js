@@ -103,7 +103,7 @@
       <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Learner</th><th>Plan</th>${th("seconds_7d", "7 days")}${th("total_seconds", "Total time")}${th("sections_read", "Read")}<th>Accuracy</th>${th("best_mock", "Best mock")}${th("target_date", "Exam")}${th("last_seen_at", "Last seen")}</tr></thead><tbody>
       ${rows.map(u => { const a = u.attempts ? Math.round(u.correct / u.attempts * 100) : null; return `<tr class="rowlink" data-href="#/admin/learners/${u.id}">
         <td><b>${esc(name(u))}</b>${u.role === "admin" ? ` <span class="tag plain">admin</span>` : ""}${!u.verified ? ` <span class="tag weak">unverified</span>` : ""}<div style="font-size:12px;color:var(--muted)">${esc(u.username || "")} · ${esc(u.email)}</div></td>
-        <td><span class="plan-chip plan-${esc(u.plan || "silver")}">${esc(A.planById(u.plan).name)}</span>${u.plan_expires_at && new Date(u.plan_expires_at) < new Date() ? `<div style="font-size:11px;color:var(--bad)">expired</div>` : ""}</td>
+        <td><span class="plan-chip plan-${esc(u.plan || "silver")}">${esc(A.planById(u.plan).name)}</span>${u.plan_expires_at && new Date(u.plan_expires_at) < new Date() ? `<div style="font-size:12px;color:var(--bad)">expired</div>` : ""}</td>
         <td>${fmtDur(u.seconds_7d)}</td><td>${fmtDur(u.total_seconds)}</td><td>${u.sections_read}/54</td><td><span class="band ${band(a)}">${a == null ? "-" : a + "%"}</span></td>
         <td>${u.best_mock == null ? "-" : `<span class="band ${band(u.best_mock)}">${u.best_mock}%</span>`}</td><td>${u.target_date ? fmtD(u.target_date) : "-"}</td><td>${u.last_seen_at ? fmtD(u.last_seen_at) : "never"}</td></tr>`; }).join("")}
       </tbody></table></div></div>`;

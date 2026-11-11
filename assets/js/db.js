@@ -167,7 +167,7 @@
       if (r.storage_path) await sb.storage.from("learner-files").remove([r.storage_path]);
       must(await sb.from("resources").delete().eq("id", r.id));
     },
-    async fileUrl(path) { return must(await sb.storage.from("learner-files").createSignedUrl(path, 300)).signedUrl; },
+    async fileUrl(path, secs = 300) { return must(await sb.storage.from("learner-files").createSignedUrl(path, secs)).signedUrl; },
 
     /* ---------- privacy rights ---------- */
     async request(kind, details) {

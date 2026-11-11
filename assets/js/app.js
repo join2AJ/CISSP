@@ -566,6 +566,9 @@
           <h2>${esc(cont.title)}</h2>
           <p>D${cont.d.n} ${esc(cont.d.title)} · ${cp.r} of ${cp.t} sections read</p>
           <span class="meter"><i style="width:${cp.pct}%"></i></span>
+          ${(() => { const d = cont.d, cur = (S.last && S.last.d === d.id && S.last.s) || (nx && nx.d === d ? nx.s.id : null), at = Math.max(0, d.sections.findIndex(x => x.id === cur));
+            const up = d.sections.slice(at + 1).filter(x => !S.read[d.id + ":" + x.id]).slice(0, 3);
+            return up.length ? `<div class="dc-next"><span class="dc-next-k">Then</span>${up.map(x => `<span class="dc-next-i"><b>${d.n}.${d.sections.indexOf(x) + 1}</b> ${esc(x.title)}</span>`).join("")}</div>` : ""; })()}
           <span class="btn primary">${last ? "Continue reading" : "Start reading"} →</span></a>`
           : `<a class="card dash-continue" href="#/mock"><span class="kicker">Every chapter read</span><h2>Time to test yourself</h2><p>Take a timed mock and see where you stand.</p><span class="btn primary">Start a mock →</span></a>`}
         <div class="card dash-today">
@@ -1107,7 +1110,12 @@
         </div>
       </div>
       <details class="pdf-view"><summary>Read the ISC2 guide here</summary><iframe src="resources/ISC2-Ultimate-Guide-to-the-CISSP.pdf#view=FitH" title="The Ultimate Guide to the CISSP (ISC2)" loading="lazy"></iframe></details>
-      <div class="card own-copy"><h3>Your own copy of the Sybex books</h3><p>The Official Study Guide and Practice Tests are paid books, so they can’t be shared on this site. If you own a copy, upload it to <a href="#/library">My library</a>. Files there are private to your account and open on any device you sign in on.</p></div>
+      <section class="mybooks" id="myBooks" aria-label="Your own PDFs">
+        <div class="kicker">Your shelf · private</div><h2 class="h-section" style="margin:4px 0 4px">Your own books and PDFs</h2>
+        <p class="sub" style="margin:0">PDFs you own, such as your copy of the Sybex Official Study Guide, read right here beside the ISC2 guide. They are stored in your private space: only your account can open them.</p>
+        <div class="mybooks-list" id="myBooksList"><p class="hint">${db.mode === "cloud" ? "Loading your shelf…" : "Sign in to keep your own PDFs here."}</p></div>
+        ${db.mode === "cloud" ? `<label class="mybooks-add"><input type="file" id="myBookFile" accept="application/pdf,.pdf" hidden><span class="btn small primary">+ Add a PDF you own</span><small>Up to 20 MB each. Upload only files you have the right to use.</small></label>` : ""}
+      </section>
       ${P.resources.map(g => `<h2 class="h-section">${esc(g.group)}</h2>${g.items.map(r => `<div class="res"><div class="res-ico">${r.ico}</div><div><h4><a href="${esc(r.u)}" target="_blank" rel="noopener">${esc(r.t)} ↗</a></h4><p>${esc(r.d)}</p><div class="tags">${r.tags.map(t => `<span class="tag plain">${esc(t)}</span>`).join("")}</div></div></div>`).join("")}`).join("")}
       <div id="privateBlock"></div>
     </div>`;
@@ -1338,7 +1346,38 @@
     $$("[data-ereason]").forEach(s => s.addEventListener("change", () => { S.errors[+s.dataset.ereason].reason = s.value; save(); }));
   }
 
+  async function loadMyBooks() {
+    const box = $("#myBooksList"); if (!box || db.mode !== "cloud") return;
+    let list = []; try { list = (await db.resources()).filter(r => r.kind === "file" && /\.pdf$/i.test(r.storage_path || "")); } catch (e) { box.innerHTML = `<p class="hint">${esc(App.errMsg ? App.errMsg(e) : "Couldn’t load your shelf.")}</p>`; return; }
+    if (!list.length) { box.innerHTML = `<div class="mybooks-empty"><b>Your shelf is empty.</b> Add the PDFs you own, for example the three parts of the Official Study Guide, and they will appear here.</div>`; return; }
+    box.innerHTML = list.map(r => `<div class="mybook" data-path="${esc(r.storage_path)}">
+        <div class="pdf-cover small"><small>PDF</small><b>${esc(r.title)}</b></div>
+        <div class="mybook-body"><h4>${esc(r.title)}</h4><p class="hint" style="margin:2px 0 10px">Added ${fmtDY(r.created_at)}</p>
+          <div class="btn-row"><button class="btn small primary" data-read>Read here</button><button class="btn small" data-open>Open in a new tab</button></div></div>
+        <div class="mybook-view" hidden></div></div>`).join("");
+    $$(".mybook", box).forEach(el => {
+      const path = el.dataset.path, view = el.querySelector(".mybook-view");
+      el.querySelector("[data-open]").addEventListener("click", async () => { const w = window.open("", "_blank"); try { const u = await db.fileUrl(path, 3600); if (w) w.location = u; else location.href = u; } catch (e) { if (w) w.close(); toast(App.errMsg(e)); } });
+      el.querySelector("[data-read]").addEventListener("click", async (e) => {
+        if (!view.hidden) { view.hidden = true; view.innerHTML = ""; e.target.textContent = "Read here"; return; }
+        if (matchMedia("(pointer: coarse)").matches) { el.querySelector("[data-open]").click(); return; }   // phones show PDFs in their own viewer
+        try { const u = await db.fileUrl(path, 3600); view.innerHTML = `<iframe src="${esc(u)}#view=FitH" title="${esc(el.querySelector("h4").textContent)}"></iframe>`; view.hidden = false; e.target.textContent = "Close the reader"; view.scrollIntoView({ block: "start", behavior: "smooth" }); db.logEvent("user.book_opened", {}); }
+        catch (err) { toast(App.errMsg(err)); }
+      });
+    });
+  }
   async function bindResources() {
+    loadMyBooks();
+    const f = $("#myBookFile"); if (f) f.addEventListener("change", async () => {
+      const file = f.files[0]; if (!file) return;
+      if (!/\.pdf$/i.test(file.name)) { toast("Choose a PDF file"); f.value = ""; return; }
+      if (file.size > 20 * 1024 * 1024) { toast("That file is over 20 MB"); f.value = ""; return; }
+      const title = file.name.replace(/\.pdf$/i, "").replace(/\s*\(Z-Library\)/i, "").replace(/_+/g, " ").slice(0, 120);
+      const lbl = $(".mybooks-add .btn"); lbl.textContent = "Uploading…";
+      try { await db.addResource({ title, kind: "file", domain: null, note: "Added from the Resources shelf" }, file); toast("Added to your shelf"); await loadMyBooks(); }
+      catch (e) { toast(App.errMsg(e)); }
+      lbl.textContent = "+ Add a PDF you own"; f.value = "";
+    });
     if (!App.isPrivileged()) return;
     let body = null; try { body = App.plainDashes(await db.privateContent("ai_tutor_prompt")); } catch (e) {}
     if (!body) return;
