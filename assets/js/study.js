@@ -12,7 +12,7 @@
   function viewQuiz() {
     Q = null;
     const acc = A.quizAccuracy();
-    const order = A.pathOrder();
+    const order = D;
     return `<div class="page-narrow">
       <div class="kicker">Quiz</div>
       <h1 class="h-display">Ask, answer, <em>understand</em></h1>
@@ -23,7 +23,7 @@
       </div>
       <h2 class="h-section">By domain</h2>
       <div class="dom-grid">${order.map(d => { const a = A.quizAccuracy(d.id), n = A.questions.filter(q => q.d === d.id).length;
-        return `<a class="dom-tile" href="#/quiz/run/domain/${d.id}" style="${dc(d)}"><span class="toc-dot" style="background:var(--${d.id})"></span><b>D${d.n} ${esc(d.short)}</b><small>${n} questions · ${a == null ? "not tried" : a + "%"}</small><span class="band ${band(a)}">${a == null ? "-" : a + "%"}</span></a>`; }).join("")}</div>
+        return `<a class="dom-tile" href="#/quiz/run/domain/${d.id}" style="${dc(d)}"><span class="toc-dot" style="background:var(--${d.id})"></span><b>D${d.n} ${esc(d.short)} <span class="tag ${A.prio(d)}">${A.prioLabel[A.prio(d)]}</span></b><small>${n} questions · ${a == null ? "not tried" : a + "%"}</small><span class="band ${band(a)}">${a == null ? "-" : a + "%"}</span></a>`; }).join("")}</div>
       <h2 class="h-section">By topic</h2>
       <p class="sub">Pick a single section to drill. Topics with no questions yet are hidden.</p>
       ${order.map(d => `<details class="topic-group" style="${dc(d)}"><summary><span class="toc-dot" style="background:var(--${d.id})"></span>D${d.n} ${esc(d.title)}</summary>
@@ -277,8 +277,8 @@
         <button class="card focus deck" data-deck="hard"><span class="kicker">Tricky</span><h3>${A.cards.concat(A.termCards).filter(c => CS[c.id] && CS[c.id].box === 1 && CS[c.id].reviews > 0).length} cards I keep missing</h3><p>Everything still in the first box.</p></button>
       </div>
       <h2 class="h-section">Decks by domain</h2>
-      <div class="dom-grid">${A.pathOrder().map(d => { const all = A.cards.filter(c => c.d === d.id), due = A.dueCards(d.id).length, m = all.filter(c => CS[c.id] && CS[c.id].box >= 4).length, nt = A.termCards.filter(c => c.d === d.id).length;
-        return `<button class="dom-tile deck" data-deck="${d.id}" style="${dc(d)}"><span class="toc-dot" style="background:var(--${d.id})"></span><b>D${d.n} ${esc(d.short)}</b><small>${all.length} cards · ${due} due · ${m} mastered</small><span class="meter"><i style="width:${all.length ? Math.round(m / all.length * 100) : 0}%"></i></span></button>
+      <div class="dom-grid">${D.map(d => { const all = A.cards.filter(c => c.d === d.id), due = A.dueCards(d.id).length, m = all.filter(c => CS[c.id] && CS[c.id].box >= 4).length, nt = A.termCards.filter(c => c.d === d.id).length;
+        return `<button class="dom-tile deck" data-deck="${d.id}" style="${dc(d)}"><span class="toc-dot" style="background:var(--${d.id})"></span><b>D${d.n} ${esc(d.short)} <span class="tag ${A.prio(d)}">${A.prioLabel[A.prio(d)]}</span></b><small>${all.length} cards · ${due} due · ${m} mastered</small><span class="meter"><i style="width:${all.length ? Math.round(m / all.length * 100) : 0}%"></i></span></button>
         ${nt ? `<button class="dom-tile deck terms" data-deck="t-${d.id}" style="${dc(d)}"><span class="toc-dot" style="background:var(--${d.id})"></span><b>D${d.n} terms</b><small>${nt} glossary terms · ${dueIn(A.termCards.filter(c => c.d === d.id)).length} due</small></button>` : ""}`; }).join("")}</div>
     </div>`;
   }

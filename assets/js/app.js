@@ -382,16 +382,16 @@
   /* ---------------- TOC & menus ---------------- */
   function renderToc(r) {
     const all = allProgress();
-    const order = App.pathOrder();
+    const order = D;
     let h = `<div class="mob-nav"><a href="#/" class="${r.page === "home" ? "active" : ""}">Home</a>${App.isAdmin() ? `<a href="#/admin">Admin</a>` : ""}</div>`;
     const inGroup = (pages) => pages.includes(r.page);
     const onChapters = r.page === "domain" || r.page === "read";
-    h += `<details class="toc-group" ${onChapters || window.innerWidth > 1000 ? "open" : ""}><summary class="toc-head">Chapters <small>weakest first · ${all.pct}% read</small></summary><ol class="toc-list">`;
+    h += `<details class="toc-group" ${onChapters || window.innerWidth > 1000 ? "open" : ""}><summary class="toc-head">Chapters <small>${all.pct}% read</small></summary><ol class="toc-list">`;
     order.forEach(d => {
       const p = domProgress(d);
       const active = r.page === "domain" && r.a === d.id;
       h += `<li><a href="#/domain/${d.id}" class="${active ? "active" : ""}" style="${dc(d)}">
-        <span class="toc-dot" style="background:var(--${d.id})"></span><span>D${d.n} ${esc(d.short)}</span><span class="toc-pct">${p.pct}%</span></a>`;
+        <span class="toc-dot" style="background:var(--${d.id})"></span><span>D${d.n} ${esc(d.short)}</span><span class="toc-prio ${prio(d)}" title="Your priority: ${prioLabel[prio(d)]}">${prioLabel[prio(d)]}</span><span class="toc-pct">${p.pct}%</span></a>`;
       if (active) h += `<ol class="toc-sub">` + d.sections.map((s, i) => `<li><a href="#/domain/${d.id}/${s.id}" data-sec="${s.id}" class="${S.read[d.id + ":" + s.id] ? "read" : ""}">${d.n}.${i + 1} ${esc(s.title)}</a></li>`).join("") + `</ol>`;
       h += `</li>`;
     });
@@ -606,8 +606,8 @@
       </details>
 
       <h2 class="h-section">Your chapters</h2>
-      <p class="sub">In your order: focus domains first, strengths last. Change this in <a href="#/profile">your profile</a>.</p>
-      <div class="shelf">${App.pathOrder().map(bookCard).join("")}</div>
+      <p class="sub">Domains 1 to 8. The tag on each shows its priority for you: <b>Focus</b>, <b>Build</b> or <b>Strength</b>. Change it in <a href="#/plan">Plan settings</a>.</p>
+      <div class="shelf">${D.map(bookCard).join("")}</div>
     </div>`;
   }
 
@@ -615,8 +615,8 @@
     return `<div class="page">
       <div class="kicker">Contents</div>
       <h1 class="h-display">The eight <em>chapters</em></h1>
-      <p class="lede">Each chapter opens with a short essay, then walks through every objective of its domain. Callouts mark what the exam tests, the manager’s view, memory hooks, common traps and what changed between 2024 and 2026. Shown in your personal order.</p>
-      <div class="shelf" style="margin-top:34px">${App.pathOrder().map(bookCard).join("")}</div>
+      <p class="lede">Each chapter opens with a short essay, then walks through every objective of its domain. Callouts mark what the exam tests, the manager’s view, memory hooks, common traps and what changed between 2024 and 2026. Listed 1 to 8, each tagged with its priority for you (Focus, Build or Strength).</p>
+      <div class="shelf" style="margin-top:34px">${D.map(bookCard).join("")}</div>
     </div>`;
   }
 

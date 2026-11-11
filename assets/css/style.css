@@ -1586,3 +1586,10 @@ body.site .toc { display: none; }
   .rd-part .meter { grid-column: 1 / -1; grid-row: 2; }
 }
 .ms { align-content: start; }
+
+/* priority tag in the chapter list */
+.toc-prio { margin-left: auto; font: 600 12px var(--sans); letter-spacing: .02em; text-transform: uppercase; padding: 1px 7px; border-radius: 99px; background: var(--paper-2); color: var(--muted); }
+.toc-prio.weak { color: var(--bad); background: color-mix(in srgb, var(--bad) 10%, transparent); }
+.toc-prio.strong { color: var(--good); background: color-mix(in srgb, var(--good) 10%, transparent); }
+.toc-prio + .toc-pct { margin-left: 8px; }
+.dom-tile b .tag { margin-left: 6px; vertical-align: 2px; }
