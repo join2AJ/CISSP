@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>The CISSP Reader</title>
-  <meta name="description" content="A personal, book-like field manual for the CISSP exam: eight domain chapters, a dated study plan to February 2027, practice questions and a progress tracker.">
+  <meta name="description" content="A book-like CISSP study companion: eight domain chapters, a personal study plan, quizzes, flashcards, mock exams and progress insights.">
   <meta name="theme-color" content="#f7f3ea">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect x='6' y='6' width='52' height='52' rx='14' fill='%231f3b2d'/><path d='M22 33l7 7 14-16' stroke='%23e9dfc6' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -28,16 +28,17 @@
     </button>
     <a class="brand" href="#/">
       <span class="brand-mark" aria-hidden="true">C</span>
-      <span class="brand-text"><b>The CISSP Reader</b><small>a field manual · Feb 2027</small></span>
+      <span class="brand-text"><b>The CISSP Reader</b><small>read slowly · pass once</small></span>
     </a>
     <nav class="mainnav" aria-label="Primary">
       <a href="#/" data-nav="home">Home</a>
       <a href="#/read" data-nav="read">Chapters</a>
+      <a href="#/quiz" data-nav="quiz">Quiz</a>
+      <a href="#/flashcards" data-nav="flashcards">Flashcards</a>
+      <a href="#/mock" data-nav="mock">Mock</a>
       <a href="#/plan" data-nav="plan">Plan</a>
-      <a href="#/practice" data-nav="practice">Practice</a>
-      <a href="#/tracker" data-nav="tracker">Tracker</a>
-      <a href="#/latest" data-nav="latest">What's new</a>
-      <a href="#/resources" data-nav="resources">Resources</a>
+      <a href="#/insights" data-nav="insights">Insights</a>
+      <a href="#/admin" data-nav="admin" id="navAdmin" hidden>Admin</a>
     </nav>
     <div class="top-actions">
       <button class="search-btn" id="searchOpen" aria-label="Search">
@@ -47,7 +48,9 @@
       <button class="icon-btn" id="settingsOpen" aria-label="Reading settings" aria-expanded="false">
         <span class="aa">Aa</span>
       </button>
+      <button class="user-btn" id="userBtn" aria-label="Account menu" hidden><span id="userIni">•</span></button>
     </div>
+    <div class="user-menu" id="userMenu" hidden></div>
   </header>
 
   <div class="settings-pop" id="settings" hidden>
@@ -95,9 +98,16 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js" integrity="sha384-GFr3yTh5lJznCbZfpTtXnwboFsxqtTQoeTZCRHhE0579KrRmlCzen5AA8ohaB5ug" crossorigin="anonymous"></script>
+  <script src="assets/js/config.js"></script>
   <script src="assets/js/content-1.js"></script>
   <script src="assets/js/content-2.js"></script>
   <script src="assets/js/pages.js"></script>
+  <script src="assets/js/bank.js"></script>
+  <script src="assets/js/db.js"></script>
   <script src="assets/js/app.js"></script>
+  <script src="assets/js/study.js"></script>
+  <script src="assets/js/account.js"></script>
+  <script src="assets/js/admin.js"></script>
 </body>
 </html>

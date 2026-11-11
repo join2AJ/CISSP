@@ -178,7 +178,5 @@ window.PAGES = {
       { ico: "⌘", t: "NIST Computer Security Resource Center", u: "https://csrc.nist.gov/", d: "Primary source for CSF 2.0, SP 800-37, 800-53, 800-61, 800-63, 800-88, 800-207 and FIPS 203–205.", tags: ["Free", "Reference"] },
       { ico: "⚑", t: "OWASP Top 10", u: "https://owasp.org/www-project-top-ten/", d: "Web application risks for Domain 8.", tags: ["Free", "Reference"] }
     ]}
-  ],
-
-  aiPrompt: "You are my CISSP tutor. I am a security manager with a strong governance and audit background, weaker in networking, cryptography and software development. I am studying against the ISC2 CISSP Exam Outline effective 15 April 2024.\n\nTopic: [TOPIC]\n\n1. Explain it in plain language in under 200 words, with one real-world analogy.\n2. Show how the exam frames it from a manager’s point of view.\n3. Give me 3 scenario questions in CISSP style (BEST / FIRST / MOST), one at a time. Wait for my answer before revealing the explanation.\n4. For each wrong answer I give, name the reason (knowledge gap, misread, missed qualifier, too technical) so I can log it."
+  ]
 };

@@ -1,40 +1,58 @@
 # The CISSP Reader
 
-A personal, book-like study site for the ISC2 CISSP exam, written against the
+A book-like CISSP study companion for any learner, written against the
 **CISSP Exam Outline effective 15 April 2024** (in force until 14 April 2027).
-Target sit: 9–12 February 2027; last possible date 18 February 2027.
 
 ## What's inside
 
-- **Eight long-form chapters**, one per domain. Each has an opening essay, every
-  outline objective explained, callouts (*Exam lens*, *Think like a manager*,
-  *Memory hook*, *Common trap*, *Latest 2024–2026*), a *Memorise* card,
-  Sybex chapter references and CISSP-style questions with explanations.
-- **Study plan**: the 13-week calendar with tick-off tasks and three
-  self-checking checkpoints (23 Dec, 20 Jan, 5 Feb).
-- **Practice**: all questions, filterable by domain; misses go to the error log in one click.
-- **Tracker**: domain scores with colour bands (85%+ green, 65–84% orange,
-  below 65% red), weighted readiness, mock exams, and an error log with
-  reason analysis. Export/import JSON to move between devices.
-- **What's new 2024–2026**, **Exam tactics**, and **Resources** (including the
-  ISC2 *Ultimate Guide to the CISSP* PDF in `resources/`).
-- Reading comfort: paper, sepia and night themes; text size; serif or sans;
-  reading progress bar; search (press `/` or `Ctrl/⌘ K`).
-
-Progress is stored in the browser's `localStorage` on each device.
+- **Accounts** (Supabase Auth): sign up with email verification, sign in with
+  email *or* username, password reset. Admins can also create learners.
+- **Onboarding**: name, experience, target and latest exam dates, weekly hours,
+  and a self-assessment per domain. The answers order the learner's path,
+  generate their study plan and set focus domains.
+- **Eight long-form chapters** with callouts, Memorise cards and per-topic quizzes.
+- **Quiz** by domain, by topic, mixed (exam-weighted) or "my weak areas";
+  **Flashcards** with spaced repetition; timed **Mock exams**.
+- **Insights**: active study time per day, domain and topic, streaks, accuracy, mock trend.
+- **My library**: upload documents (private storage) or save links and YouTube videos.
+- **Privacy & trust centre**: GDPR / DPDP notice, consent records, data export,
+  correction requests, analytics opt-out and self-service account deletion;
+  ISO 27001:2022 control mapping and an ISO 31000 risk register.
+- **Admin console**: learner analytics, leaderboards, hardest topics, per-learner
+  drill-down, append-only audit trail with CSV export, privacy-request queue,
+  role changes, erasure, and learner creation.
+- Without database settings the site runs in **device-only mode** (no accounts,
+  data kept in the browser).
 
 ## Structure
 
 ```
-index.html              page shell
-assets/css/style.css    all styles
-assets/js/content-1.js  Domains 1–4
-assets/js/content-2.js  Domains 5–8
-assets/js/pages.js      plan, tactics, what's new, resources
-assets/js/app.js        router, rendering, progress, search, tracker
-resources/              reference PDFs
-netlify.toml            Netlify config (static, no build)
+index.html                     page shell
+assets/css/style.css           styles
+assets/js/config.js            Supabase URL + publishable key (public by design)
+assets/js/content-1/2.js       chapter content, Domains 1–8
+assets/js/bank.js              extra questions, flashcards, encouragement
+assets/js/pages.js             tactics, what's new, resources
+assets/js/db.js                data layer (Supabase or device-only)
+assets/js/app.js               core: router, plan generator, time tracking, reading views
+assets/js/study.js             quiz, flashcards, mock, insights, library
+assets/js/account.js           sign-in, onboarding, profile, privacy centre
+assets/js/admin.js             admin console
+supabase/migrations/           database schema, RLS policies, functions
+supabase/functions/            admin-create-user edge function
 ```
+
+## Database set-up (Supabase free tier)
+
+1. Create a free Supabase project.
+2. Run `supabase/migrations/0001_cissp_reader.sql` in the SQL editor.
+3. Set the admin email:
+   `update app_settings set value = 'admin@example.com' where key = 'admin_email';`
+4. Deploy `supabase/functions/admin-create-user`.
+5. Authentication → URL configuration: set the Site URL to the Netlify URL.
+6. Put the project URL and publishable key in `assets/js/config.js`.
+7. For more than a few sign-ups an hour, add a free SMTP provider under
+   Authentication → Emails (Supabase's built-in mailer is rate-limited).
 
 ## Run locally
 

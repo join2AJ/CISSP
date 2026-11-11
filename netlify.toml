@@ -1,6 +1,8 @@
 [build]
   publish = "."
-  command = ""
+  # Keep unlicensed copies of commercial books off the public site, and don't publish
+  # server-side sources. This only affects the deployed copy, not the repository.
+  command = "rm -f resources/ISC2\\ CISSP\\ Certified*.pdf && rm -rf supabase"
 
 [[headers]]
   for = "/*"
@@ -8,12 +10,14 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
     X-Frame-Options = "DENY"
-    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=()"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://i.ytimg.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-src https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
 
 [[headers]]
   for = "/assets/*"
   [headers.values]
-    Cache-Control = "public, max-age=3600"
+    Cache-Control = "public, max-age=600, must-revalidate"
 
 [[headers]]
   for = "/resources/*.pdf"
