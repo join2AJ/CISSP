@@ -111,6 +111,24 @@
     B.questions.forEach(q => { idx[q.d] = (idx[q.d] || 0) + 1; out.push({ id: `${q.d}-b${idx[q.d]}`, d: q.d, t: q.t, q: q.q, o: q.o, a: q.a, w: q.w }); });
     return out;
   })();
+  /* Shuffle answer options so the right answer isn't always in the same place.
+     With a seed (e.g. the question id) the order is stable across visits. */
+  App.shuffleQ = (q, seed) => {
+    let s = 0;
+    if (seed != null) for (const ch of String(seed)) s = (s * 31 + ch.charCodeAt(0)) >>> 0;
+    const rnd = seed == null ? Math.random : () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+    const idx = q.o.map((_, i) => i);
+    for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
+    return Object.assign({}, q, { o: idx.map(i => q.o[i]), a: idx.indexOf(q.a) });
+  };
+  /* The section after a given one, skipping ahead to the next domain at the end of a chapter. */
+  App.nextSection = (did, sid) => {
+    const d = byId[did]; if (!d) return null;
+    const i = d.sections.findIndex(s => s.id === sid);
+    if (i >= 0 && i < d.sections.length - 1) return { d, s: d.sections[i + 1], i: i + 1 };
+    const nd = D[D.indexOf(d) + 1];
+    return nd ? { d: nd, s: nd.sections[0], i: 0 } : null;
+  };
   App.cards = (() => { const out = []; Object.entries(B.flashcards).forEach(([d, list]) => list.forEach((c, i) => out.push({ id: `${d}-f${i}`, d, front: c[0], back: c[1] }))); return out; })();
 
   App.quizAccuracy = (dom) => {
@@ -459,7 +477,8 @@
         ${s.exam ? `<div class="note tests"><p>${esc(s.exam)}</p></div>` : ""}
         <div class="sec-actions">
           <button class="understood ${on ? "on" : ""}" data-read="${k}" aria-pressed="${on}"><span class="box"></span><span>${on ? "Understood. Marked as read." : "I understand this section. Mark as read."}</span></button>
-          <a class="btn small ghost" href="#/quiz/run/topic/${d.id}.${s.id}">Quiz this topic →</a>
+          <a class="btn small" href="#/quiz/run/topic/${d.id}.${s.id}">Quiz this topic (${App.questions.filter(x => x.d === d.id && x.t === s.id).length})</a>
+          ${d.sections[i + 1] ? `<a class="btn small ghost sec-next" href="#/domain/${d.id}/${d.sections[i + 1].id}">Next: ${d.n}.${i + 2} ${esc(d.sections[i + 1].title)} ↓</a>` : `<a class="btn small ghost sec-next" href="#/domain/${d.id}/memorise">Next: Memorise &amp; practice ↓</a>`}
         </div>
       </section>`;
     }).join("");
@@ -502,7 +521,9 @@
     </article>`;
   }
 
-  function questionCard(d, q, i) {
+  const chapterView = (d, q, i) => { const v = App.shuffleQ({ o: q.options, a: q.answer }, d.id + "-c" + i); return Object.assign({}, q, { options: v.o, answer: v.a }); };
+  function questionCard(d, q0, i) {
+    const q = chapterView(d, q0, i);
     const k = d.id + ":" + i, ans = S.quiz[k], done = ans != null, L = "ABCD";
     return `<div class="q" data-q="${k}" style="${dc(d)}">
       <div class="q-top"><span class="dot"></span>Question ${i + 1}${done ? (ans === q.answer ? ` · <span style="color:var(--good)">correct</span>` : ` · <span style="color:var(--bad)">missed</span>`) : ""}</div>
@@ -521,17 +542,32 @@
     save();
   };
 
+  // tasks the site can confirm from your activity
+  function autoDone(t) {
+    const dn = (m) => D.find(d => d.n === +m);
+    let m;
+    if ((m = t.match(/^Read all D(\d) sections/))) return domProgress(dn(m[1])).pct === 100;
+    if ((m = t.match(/^Take a 10-question D(\d) quiz/))) return App.attempts.filter(a => a.domain === dn(m[1]).id && a.mode !== "chapter").length >= 10;
+    if ((m = t.match(/^Review the D(\d) flashcards/))) return !!App.cardsReviewed && App.cardsReviewed(dn(m[1]).id) >= 5;
+    if ((m = t.match(/^Two topic quizzes on your weakest D(\d)/))) { const per = {}; App.attempts.filter(a => a.domain === dn(m[1]).id && a.mode === "quiz" && a.topic).forEach(a => { per[a.topic] = (per[a.topic] || 0) + 1; }); return Object.values(per).filter(n => n >= 3).length >= 2; }
+    if (/^Take a cold diagnostic quiz/.test(t)) return App.attempts.length >= 10;
+    if (/^Mock exam 1/.test(t)) return App.mocks.length >= 1;
+    if (/^Mock exam 2/.test(t)) return App.mocks.length >= 2;
+    if (/^Clear all due flashcards/.test(t)) return !!App.dueCards && App.dueCards().length === 0 && App.cards.length > 0;
+    return false;
+  }
   function viewPlan() {
     const now = today(), pl = App.plan(), ph = App.currentPhase();
     const phases = pl.phases.map(p => {
       const st = parseD(p.start), en = parseD(p.end);
       const state = now > en ? "done" : (now >= st && now <= en) || p === ph ? "now" : "";
-      const done = p.tasks.filter((t, i) => S.tasks[p.id + ":" + i]).length;
+      const done = p.tasks.filter((t, i) => S.tasks[p.id + ":" + i] || autoDone(t)).length;
       return `<div class="phase ${state}" style="--pc:var(--${p.domain})"><div class="phase-card">
         <div class="phase-top"><span class="phase-date">${fmtD(p.start)} – ${fmtDY(p.end)}</span><span class="kicker" style="--kc:var(--${p.domain})">${esc(p.iter)}</span>${state === "now" ? `<span class="now-pill">You are here</span>` : ""}<span class="phase-date" style="margin-left:auto">${done}/${p.tasks.length}</span>
         <h3>${esc(p.title)}</h3></div>
         <p>${esc(p.text)}</p><p class="exit"><b>Exit criterion:</b> ${esc(p.exit)}</p>
-        <ul class="tasks">${p.tasks.map((t, i) => { const k = p.id + ":" + i; return `<li><label><input type="checkbox" data-task="${k}" ${S.tasks[k] ? "checked" : ""}><span>${esc(t)}</span></label></li>`; }).join("")}</ul>
+        <ul class="tasks">${p.tasks.map((t, i) => { const k = p.id + ":" + i, auto = autoDone(t);
+          return `<li><label class="${auto ? "auto" : ""}"><input type="checkbox" data-task="${k}" ${S.tasks[k] || auto ? "checked" : ""} ${auto ? "disabled" : ""}><span>${esc(t)}${auto ? ` <small class="auto-tag">done automatically</small>` : ""}</span></label></li>`; }).join("")}</ul>
       </div></div>`;
     }).join("");
     const cps = pl.checkpoints.map(c => {
@@ -806,7 +842,7 @@
       if (opt && !opt.disabled) {
         const ch = +opt.dataset.opt;
         S.quiz[qel.dataset.q] = ch; save();
-        const row = { mode: "chapter", qid: `${did}-c${qi}`, domain: did, topic: (B.chapterTopics[did] || [])[+qi] || null, correct: ch === q.answer, chosen: ch };
+        const row = { mode: "chapter", qid: `${did}-c${qi}`, domain: did, topic: (B.chapterTopics[did] || [])[+qi] || null, correct: ch === chapterView(dd, q, +qi).answer, chosen: ch };
         App.attempts.push(row); db.recordAttempts([row]).catch(() => {});
         qel.outerHTML = questionCard(dd, q, +qi); bindQuizExtras();
       }

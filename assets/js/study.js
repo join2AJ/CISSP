@@ -39,25 +39,27 @@
       const miss = {}; A.attempts.forEach(a => { if (!a.correct) miss[a.qid] = (miss[a.qid] || 0) + 1; });
       const focus = D.filter(d => A.prio(d) !== "strong").map(d => d.id);
       pool = pool.slice().sort((a, b) => ((miss[b.id] || 0) * 3 + (focus.includes(b.d) ? 2 : 0) + Math.random()) - ((miss[a.id] || 0) * 3 + (focus.includes(a.d) ? 2 : 0) + Math.random()));
-      return pool.slice(0, n);
+      return pool.slice(0, n).map(q => A.shuffleQ(q));
     } else if (kind === "mixed") return weighted(n);
-    return shuffle(pool).slice(0, n);
+    else if (kind === "retry") return (Q && Q.retry ? Q.retry : []).map(q => A.shuffleQ(q));
+    return shuffle(pool).slice(0, n).map(q => A.shuffleQ(q));
   }
   function weighted(n) {
     const out = [], used = new Set();
     const per = D.map(d => ({ d, k: Math.max(1, Math.round(n * d.weight / 100)) }));
     per.forEach(({ d, k }) => shuffle(A.questions.filter(q => q.d === d.id)).slice(0, k).forEach(q => { out.push(q); used.add(q.id); }));
     shuffle(A.questions.filter(q => !used.has(q.id))).slice(0, Math.max(0, n - out.length)).forEach(q => out.push(q));
-    return shuffle(out).slice(0, n);
+    return shuffle(out).slice(0, n).map(q => A.shuffleQ(q));
   }
 
   function startQuiz(r) {
     const kind = r.b, arg = location.hash.split("/").slice(4).join("/");
-    const items = buildSet(kind, decodeURIComponent(arg || ""));
+    const items = buildSet(kind, decodeURIComponent(arg || ""), kind === "topic" ? 20 : 10);
     let label = "Mixed quiz";
     if (kind === "domain" && byId[arg]) label = `D${byId[arg].n} ${byId[arg].title}`;
     if (kind === "topic") { const [d, t] = arg.split("."); const s = byId[d] && byId[d].sections.find(x => x.id === t); label = s ? s.title : "Topic quiz"; }
     if (kind === "weak") label = "My weak areas";
+    if (kind === "retry") label = "Retry: questions you missed";
     Q = { kind, arg, label, items, i: 0, answers: [], done: false, key: location.hash };
   }
 
@@ -69,6 +71,7 @@
     const pct = Math.round(Q.i / Q.items.length * 100);
     return `<div class="page-narrow runner" style="${dc(d)}">
       <div class="run-top"><a href="#/quiz" class="btn small ghost">← Quizzes</a><span class="run-label">${esc(Q.label)}</span><span class="run-count">${Q.i + 1} / ${Q.items.length}</span></div>
+      <div class="run-score">${scoreSoFar()}</div>
       <div class="run-bar"><i style="width:${pct}%"></i></div>
       <div class="q big">
         <div class="q-top"><span class="dot"></span>D${d.n} ${esc(d.short)}${q.t ? " · " + esc((d.sections.find(s => s.id === q.t) || {}).title || "") : ""}</div>
@@ -76,9 +79,40 @@
         <div class="q-opts">${q.o.map((o, j) => { let c = ""; if (ans != null) { if (j === q.a) c = "correct"; else if (j === ans) c = "wrong"; }
           return `<button class="opt ${c}" data-pick="${j}" ${ans != null ? "disabled" : ""}><span class="l">${L[j]}</span><span>${esc(o)}</span></button>`; }).join("")}</div>
         ${ans != null ? `<div class="why"><b style="color:${ans === q.a ? "var(--good)" : "var(--bad)"}">${ans === q.a ? pick(["Correct.", "Exactly right.", "Yes. Well reasoned."]) : "Not this time. The answer is " + L[q.a] + "."}</b>${esc(q.w)}
-          <div class="actions"><button class="btn small primary" id="next">${Q.i + 1 < Q.items.length ? "Next question →" : "See results →"}</button>${ans === q.a ? "" : `<button class="btn small" id="logMiss">+ Error log</button>`}<a class="btn small ghost" href="#/domain/${d.id}${q.t ? "/" + q.t : ""}">Read the section</a></div></div>` : `<p class="hint">Press 1–4 or A–D to answer.</p>`}
+          <div class="actions">${nextButtons()}${ans === q.a ? "" : `<button class="btn small" id="logMiss">+ Error log</button>`}<a class="btn small ghost" href="#/domain/${d.id}${q.t ? "/" + q.t : ""}">Read the section</a></div></div>` : `<p class="hint">Press 1–4 or A–D to answer.</p>`}
       </div>
     </div>`;
+  }
+
+  function scoreSoFar() {
+    const done = Q.answers.filter(a => a != null).length; if (!done) return "";
+    const right = Q.items.filter((q, i) => Q.answers[i] === q.a).length;
+    return `${right} of ${done} correct so far`;
+  }
+  // what comes after this quiz: the next topic (for topic quizzes) or the next domain
+  function nextAfter() {
+    if (!Q) return null;
+    if (Q.kind === "topic") {
+      const [d, t] = Q.arg.split("."); const n = A.nextSection(d, t);
+      return n ? { href: `#/quiz/run/topic/${n.d.id}.${n.s.id}`, label: `Next topic: ${n.d.n}.${n.i + 1} ${n.s.title}`, read: `#/domain/${n.d.id}/${n.s.id}`, readLabel: `Read ${n.d.n}.${n.i + 1} ${n.s.title}` } : null;
+    }
+    if (Q.kind === "domain" && byId[Q.arg]) {
+      const nd = D[D.indexOf(byId[Q.arg]) + 1];
+      return nd ? { href: `#/quiz/run/domain/${nd.id}`, label: `Next domain quiz: D${nd.n} ${nd.short}`, read: `#/domain/${nd.id}`, readLabel: `Read D${nd.n} ${nd.short}` } : null;
+    }
+    return null;
+  }
+  function nextButtons() {
+    if (Q.i + 1 < Q.items.length) return `<button class="btn small primary" id="next">Next question →</button>`;
+    const n = nextAfter();
+    return n ? `<button class="btn small primary" id="goNext" data-href="${n.href}">${esc(n.label)} →</button><button class="btn small" id="next">See my results</button>`
+             : `<button class="btn small primary" id="next">See my results →</button>`;
+  }
+  function finishQuiz() {
+    if (Q.done) return;
+    Q.done = true;
+    Q.retry = Q.items.filter((q, i) => Q.answers[i] !== q.a);
+    db.logEvent("user.quiz_completed", { label: Q.label, n: Q.items.length });
   }
 
   function summary(items, answers, label, mode, extra) {
@@ -97,7 +131,13 @@
       <div class="bars">${Object.entries(per).map(([id, [r, t]]) => { const v = Math.round(r / t * 100); return `<div class="hbar" style="${dc(byId[id])}"><span>D${byId[id].n} ${esc(byId[id].short)}</span><div class="meter"><i style="width:${v}%"></i></div><b>${r}/${t}</b></div>`; }).join("")}</div>
       ${misses.length ? `<h2 class="h-section">Review your misses</h2><div class="quiz">${misses.map(({ q, a }) => `<div class="q" style="${dc(byId[q.d])}"><div class="q-top"><span class="dot"></span>D${byId[q.d].n}</div><p class="q-stem">${esc(q.q)}</p>
         <p class="miss-line"><span class="wrongtxt">${a == null ? "Not answered" : "You chose " + L[a] + ": " + esc(q.o[a])}</span><br><span class="righttxt">Answer ${L[q.a]}: ${esc(q.o[q.a])}</span></p><div class="why">${esc(q.w)}<div class="actions"><button class="btn small" data-logq="${q.id}">+ Error log</button></div></div></div>`).join("")}</div>` : ""}
-      <div class="btn-row"><a class="btn primary" href="${mode === "mock" ? "#/mock" : "#/quiz"}">${mode === "mock" ? "Another mock" : "Another quiz"}</a><a class="btn" href="#/insights">See my insights</a></div>
+      <div class="btn-row">${(() => {
+        if (mode === "mock") return `<a class="btn primary" href="#/mock">Another mock</a><a class="btn" href="#/insights">See my insights</a>`;
+        const n = nextAfter();
+        return (n ? `<a class="btn primary" href="${n.href}">${esc(n.label)} →</a><a class="btn" href="${n.read}">${esc(n.readLabel)}</a>` : "")
+          + (misses.length ? `<button class="btn ${n ? "" : "primary"}" id="retryMisses">Retry the ${misses.length} I missed</button>` : "")
+          + `<a class="btn ghost" href="#/quiz">All quizzes</a>`;
+      })()}</div>
     </div>`;
   }
 
@@ -112,7 +152,9 @@
       A.rerender();
     };
     $$("[data-pick]").forEach(b => b.addEventListener("click", () => answer(+b.dataset.pick)));
-    const nx = $("#next"); if (nx) { nx.focus(); nx.addEventListener("click", () => { if (Q.i + 1 < Q.items.length) Q.i++; else { Q.done = true; db.logEvent("user.quiz_completed", { label: Q.label, n: Q.items.length }); } A.rerender(); scrollTo(0, 0); }); }
+    const nx = $("#next"); if (nx) { nx.addEventListener("click", () => { if (Q.i + 1 < Q.items.length) Q.i++; else finishQuiz(); A.rerender(); scrollTo(0, 0); }); }
+    const gn = $("#goNext"); if (gn) gn.addEventListener("click", () => { finishQuiz(); location.hash = gn.dataset.href; });
+    (gn || nx) && (gn || nx).focus();
     const lm = $("#logMiss"); if (lm) lm.addEventListener("click", () => { const q = Q.items[Q.i]; A.logMiss(q.d, q.q); lm.textContent = "✓ Logged"; lm.disabled = true; });
     keyHandler = (e) => {
       if (/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) return;
@@ -121,6 +163,9 @@
     };
   }
   function bindSummary(items) {
+    const rt = $("#retryMisses"); if (rt) rt.addEventListener("click", () => {
+      const retry = Q.retry; Q = { retry }; location.hash = "#/quiz/run/retry/" + Date.now();
+    });
     $$("[data-logq]").forEach(b => b.addEventListener("click", () => { const q = items.find(x => x.id === b.dataset.logq); A.logMiss(q.d, q.q); b.textContent = "✓ Logged"; b.disabled = true; }));
   }
   let keyHandler = null;
@@ -195,18 +240,20 @@
   const INTERVAL = [0, 1, 3, 7, 16, 35];
   let CS = {}; // card state
   A.loadCards = async () => { try { CS = await db.cards(); } catch (e) { CS = {}; } };
+  A.cardsReviewed = (dom) => A.cards.filter(c => c.d === dom && CS[c.id] && CS[c.id].reviews > 0).length;
   A.dueCards = (dom) => A.cards.filter(c => (!dom || c.d === dom) && (!CS[c.id] || CS[c.id].due <= ymd(today())));
   let F = null, autoDone = null;
   addEventListener("hashchange", () => { autoDone = null; });
 
   function viewFlash(r) {
+    if (F && F.key !== location.hash) F = null;
     const dom = r.a && byId[r.a] ? r.a : null;
     if (F && F.key === location.hash && F.i < F.deck.length) return flashRunner();
     if (F && F.key === location.hash && F.i >= F.deck.length) {
       const k = F.known, t = F.deck.length; F = null;
       return `<div class="page-narrow"><div class="kicker">Session complete</div><h1 class="h-display">${k} of ${t} <em>remembered</em></h1>
         <p class="lede">${k === t ? "A clean sweep. Those cards will come back later, spaced further apart." : "Cards you’re still learning will come back sooner. That’s how memory sticks."}</p>
-        <div class="btn-row"><a class="btn primary" href="#/flashcards">Back to decks</a><a class="btn" href="#/quiz/run/weak">Test it with a quiz</a></div></div>`;
+        <div class="btn-row">${(() => { const cur = (location.hash.split("/")[2] || ""); const nd = byId[cur] ? D[D.indexOf(byId[cur]) + 1] : null; return nd ? `<a class="btn primary" href="#/flashcards/${nd.id}">Next deck: D${nd.n} ${esc(nd.short)} →</a><a class="btn" href="#/flashcards">All decks</a>` : `<a class="btn primary" href="#/flashcards">Back to decks</a>`; })()}<a class="btn" href="#/quiz/run/weak">Test it with a quiz</a></div></div>`;
     }
     const mastered = A.cards.filter(c => CS[c.id] && CS[c.id].box >= 4).length;
     return `<div class="page-narrow">

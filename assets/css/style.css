@@ -1195,3 +1195,11 @@ body.site .toc { display: none; }
   .faq summary { font-size: 18px; }
   .brand-text b { font-size: 16px; }
 }
+
+.run-score { text-align: center; font-size: 13px; color: var(--muted); margin: -6px 0 10px; min-height: 18px; }
+.sec-next { margin-left: auto; }
+@media (max-width: 640px) { .sec-next { margin-left: 0; } }
+
+.tasks label.auto { cursor: default; }
+.tasks label.auto span { text-decoration: none !important; color: var(--ink-2) !important; }
+.auto-tag { font-size: 11px; color: var(--good); font-weight: 600; margin-left: 6px; }
