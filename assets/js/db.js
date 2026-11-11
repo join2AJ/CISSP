@@ -14,6 +14,12 @@
   const must = ({ data, error }) => { if (error) throw error; return data; };
   const uid = () => user && user.id;
 
+  // small offline queue for answers and flashcard reviews
+  const Q = {
+    key: k => "cissp.queue." + k,
+    push(k, rows) { try { const cur = JSON.parse(localStorage.getItem(Q.key(k)) || "[]"); localStorage.setItem(Q.key(k), JSON.stringify(cur.concat(rows).slice(-2000))); } catch (e) {} },
+    take(k) { try { const cur = JSON.parse(localStorage.getItem(Q.key(k)) || "[]"); localStorage.removeItem(Q.key(k)); return cur; } catch (e) { return []; } }
+  };
   const db = {
     mode: cloud ? "cloud" : "local",
     get user() { return user; },
@@ -99,7 +105,9 @@
     async recordAttempts(rows) {
       if (!rows.length) return;
       if (!cloud) { L.set("attempts", L.get("attempts", []).concat(rows.map(r => Object.assign({ created_at: new Date().toISOString() }, r)))); return; }
-      must(await sb.from("attempts").insert(rows.map(r => Object.assign({ user_id: uid() }, r))));
+      const out = rows.map(r => Object.assign({ user_id: uid(), created_at: new Date().toISOString() }, r));
+      try { must(await sb.from("attempts").insert(out)); }
+      catch (e) { Q.push("attempts", out); throw e; }   // kept on this device and sent when the connection is back
     },
     async myAttempts() {
       if (!cloud) return L.get("attempts", []);
@@ -120,7 +128,20 @@
     },
     async saveCard(c) {
       if (!cloud) { const all = L.get("cards", {}); all[c.card_id] = c; L.set("cards", all); return; }
-      must(await sb.from("cards").upsert(Object.assign({ user_id: uid() }, c)));
+      const row = Object.assign({ user_id: uid() }, c);
+      try { must(await sb.from("cards").upsert(row)); }
+      catch (e) { Q.push("cards", [row]); throw e; }
+    },
+    /* send anything saved while offline; safe to call any time */
+    async flushQueue() {
+      if (!cloud || !db.user || navigator.onLine === false) return 0;
+      let sent = 0;
+      for (const k of ["attempts", "cards"]) {
+        const rows = Q.take(k).filter(r => r.user_id === uid()); if (!rows.length) continue;
+        const { error } = k === "attempts" ? await sb.from("attempts").insert(rows) : await sb.from("cards").upsert(rows);
+        if (error) Q.push(k, rows); else sent += rows.length;
+      }
+      return sent;
     },
 
     /* ---------- personal library ---------- */

@@ -22,7 +22,7 @@
   const daysTo = s => Math.round((parseD(s) - today()) / 864e5);
   const fmtD = s => parseD(s).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
   const fmtDY = s => parseD(s).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
-  const fmtDur = s => { s = Math.round(s || 0); if (s < 60) return s + "s"; const h = Math.floor(s / 3600), m = Math.round((s % 3600) / 60); return h ? `${h}h ${pad(m)}m` : `${m}m`; };
+  const fmtDur = s => { s = Math.round(s || 0); if (s === 0) return "0 min"; if (s < 60) return s + "s"; const h = Math.floor(s / 3600), m = Math.round((s % 3600) / 60); return h ? `${h}h ${pad(m)}m` : `${m}m`; };
   const roman = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII"];
   const prioLabel = { weak: "Focus", medium: "Build", strong: "Strength" };
   const words = d => d.sections.reduce((n, s) => n + strip(s.body).split(" ").length, strip(d.intro).split(" ").length);
@@ -347,7 +347,7 @@
     // wide tables scroll sideways, so keyboard users must be able to focus them
     (root || view).querySelectorAll(".tbl-wrap").forEach(w => { if (!w.hasAttribute("tabindex")) { w.tabIndex = 0; w.setAttribute("role", "region"); w.setAttribute("aria-label", "Scrollable table"); } });
     (root || view).querySelectorAll(".prose table, .tbl.stackable").forEach(t => {
-      if (t.dataset.stacked) return; t.dataset.stacked = "1"; t.classList.add("stack");
+      if (t.dataset.stacked) return; t.dataset.stacked = "1"; t.classList.add("stk");
       const heads = [...t.querySelectorAll("thead th")].map(th => th.textContent.trim());
       t.querySelectorAll("tbody tr").forEach(tr => [...tr.children].forEach((td, i) => {
         if (heads[i]) td.setAttribute("data-label", heads[i]);
@@ -391,14 +391,14 @@
       const p = domProgress(d);
       const active = r.page === "domain" && r.a === d.id;
       h += `<li><a href="#/domain/${d.id}" class="${active ? "active" : ""}" style="${dc(d)}">
-        <span class="toc-dot" style="background:var(--${d.id})"></span><span>D${d.n} ${esc(d.short)}</span><span class="toc-prio ${prio(d)}" title="Your priority: ${prioLabel[prio(d)]}">${prioLabel[prio(d)]}</span><span class="toc-pct">${p.pct}%</span></a>`;
+        <span class="toc-dot" style="background:var(--${d.id})"></span><span class="toc-name">D${d.n} ${esc(d.short)}<small><span class="toc-prio ${prio(d)}">${prioLabel[prio(d)]}</span> · ${p.pct}% read</small></span></a>`;
       if (active) h += `<ol class="toc-sub">` + d.sections.map((s, i) => `<li><a href="#/domain/${d.id}/${s.id}" data-sec="${s.id}" class="${S.read[d.id + ":" + s.id] ? "read" : ""}">${d.n}.${i + 1} ${esc(s.title)}</a></li>`).join("") + `</ol>`;
       h += `</li>`;
     });
     const L = (k, ico, t) => `<li><a href="#/${k}" class="${r.page === k ? "active" : ""}"><span class="toc-num">${ico}</span>${t}</a></li>`;
     const G = (title, pages, body) => `<details class="toc-group" ${inGroup(pages) || window.innerWidth > 1000 ? "open" : ""}><summary class="toc-head">${title}</summary><ol class="toc-list">${body}</ol></details>`;
     h += `</ol></details>`
-      + G("Learn more", ["glossary", "latest", "resources"], L("glossary", "Aa", "Glossary A-Z") + L("latest", "✦", "What’s new, 2024-2026") + L("resources", "§", "Resources"))
+      + G("Learn more", ["glossary", "revision", "latest", "resources"], L("glossary", "Aa", "Glossary A-Z") + L("revision", "☰", "Revision sheets") + L("latest", "✦", "What’s new, 2024-2026") + L("resources", "§", "Resources"))
       + G("Practise", ["quiz", "flashcards", "mock", "tactics"], L("quiz", "?", "Quiz by domain or topic") + L("flashcards", "❐", "Flashcards") + L("mock", "◷", "Mock exam") + L("tactics", "◎", "Exam tactics"))
       + G("Progress", ["plan", "insights", "tracker", "notes", "library", "privacy"], L("plan", "▤", "My study plan") + L("insights", "◔", "Insights & time spent") + L("tracker", "▦", "Scores & error log") + L("notes", "✎", "My notes") + L("library", "❏", "My library") + L("privacy", "⚿", "Privacy & trust"));
     h += `
@@ -702,7 +702,8 @@
       </div>
     </article>`;
   }
-  const secMins = s => Math.max(1, Math.round(String(s.body).replace(/<[^>]+>/g, " ").split(/\s+/).filter(Boolean).length / 200));
+  // prose at ~200 words a minute, plus time to study each table and diagram
+  const secMins = s => { const b = String(s.body); return Math.max(2, Math.round(b.replace(/<[^>]+>/g, " ").split(/\s+/).filter(Boolean).length / 200 + (b.match(/<table/g) || []).length * 1.5 + (b.match(/data-anim=/g) || []).length)); };
   /* retrieval practice: one question at the end of each page, preferring ones not yet answered correctly */
   function quickCheck(d, s) {
     const pool = App.questions.filter(q => q.d === d.id && q.t === s.id); if (!pool.length) return "";
@@ -758,6 +759,34 @@
       }, 600);
     });
     ta.addEventListener("keydown", e => e.stopPropagation());  // arrow keys move the cursor, not the page
+  }
+
+  /* revision sheets: the exam focus of every section, the memorise list and the formulas, one domain per sheet */
+  let revDom = "all";
+  function viewRevision() {
+    const doms = revDom === "all" ? D : D.filter(d => d.id === revDom);
+    const formulas = d => d.sections.flatMap(s => [...String(s.body).matchAll(/<div class="formula">([\s\S]*?)<\/div>/g)].map(m => m[1]));
+    return `<div class="page-narrow rev">
+      <div class="kicker no-print">Revision sheets</div>
+      <h1 class="h-display">The last-week <em>sheets</em></h1>
+      <p class="lede no-print">One page per domain: what the exam tests in every section, what to memorise, and the formulas. Read one a day in the final week, or print them.</p>
+      <div class="filters no-print"><button class="chip ${revDom === "all" ? "on" : ""}" data-rv="all">All eight</button>${D.map(d => `<button class="chip ${revDom === d.id ? "on" : ""}" data-rv="${d.id}" style="${dc(d)}"><i></i>D${d.n}</button>`).join("")}
+        <button class="btn small" id="revPrint" style="margin-left:auto">Print or save as PDF</button></div>
+      ${doms.map(d => { const fx = formulas(d), p = prio(d);
+        return `<section class="rev-sheet" style="${dc(d)}">
+          <header class="rev-head"><span class="kicker" style="--kc:var(--dc)">Domain ${pad(d.n)} · ${d.weight}% of the exam</span><h2>${esc(d.title)}</h2><span class="tag ${p}">${prioLabel[p]}</span></header>
+          <div class="rev-cols">
+            <div><h3>What the exam tests</h3><ol class="rev-list">${d.sections.map((s, i) => s.exam ? `<li><a href="#/domain/${d.id}/${s.id}"><b>${d.n}.${i + 1} ${esc(s.title)}</b></a><span>${esc(s.exam)}</span></li>` : "").join("")}</ol></div>
+            <div><h3>Memorise</h3><ul class="rev-mem">${d.memorise.map(m => `<li>${esc(m)}</li>`).join("")}</ul>
+              ${fx.length ? `<h3>Formulas</h3>${fx.map(f => `<div class="formula">${f}</div>`).join("")}` : ""}
+              <p class="rev-more no-print"><a href="#/flashcards/${d.id}">Flashcards</a> · <a href="#/quiz/run/domain/${d.id}">Domain quiz</a> · <a href="#/glossary/${d.id}">Glossary</a></p></div>
+          </div>
+        </section>`; }).join("")}
+    </div>`;
+  }
+  function bindRevision() {
+    $$("[data-rv]").forEach(b => b.addEventListener("click", () => { revDom = b.dataset.rv; App.rerender(); }));
+    $("#revPrint").addEventListener("click", () => { db.logEvent("user.revision_print", { domain: revDom }); print(); });
   }
 
   /* my notes: every note and saved page, grouped by chapter, exportable */
@@ -1333,6 +1362,7 @@
     bindSchedule();
     if (r.a === "schedule") { const el = $("#schedule"); if (el) requestAnimationFrame(() => el.scrollIntoView({ block: "start" })); }
   } });
+  App.register("revision", { render: viewRevision, bind: bindRevision, title: "Revision sheets", nav: "revision", area: "read" });
   App.register("notes", { render: viewNotes, bind: bindNotes, title: "My notes", nav: "notes", area: "library" });
   App.register("tracker", { render: viewTracker, bind: bindTracker, title: "Tracker", nav: "insights", area: "insights" });
   App.register("landing", { render: viewLanding, bind: () => { if (window.Anim) window.Anim.mountAll(view); }, title: "CISSP study, made calm", public: true, site: true, nav: "landing" });
@@ -1456,7 +1486,7 @@
   addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installEvt = e; const b = $("#installBlock"); if (b) b.hidden = false; });
   const ib = $("#installApp"); if (ib) ib.addEventListener("click", async () => { if (!installEvt) return; installEvt.prompt(); const r = await installEvt.userChoice; installEvt = null; $("#installBlock").hidden = true; if (r.outcome === "accepted") db.logEvent("user.app_installed", {}); });
   addEventListener("offline", () => toast("You’re offline. Chapters you’ve opened still work; progress saves on this device."));
-  addEventListener("online", () => { toast("Back online"); if (db.mode === "cloud" && db.user) save(); });
+  addEventListener("online", async () => { if (db.mode === "cloud" && db.user) { save(); const n = await db.flushQueue().catch(() => 0); toast(n ? `Back online. ${n} saved answers sent.` : "Back online"); } else toast("Back online"); });
   const killBadge = () => document.querySelectorAll('#nl-badge-frame, iframe[title="Powered by Netlify"]').forEach(x => x.remove());
   new MutationObserver(killBadge).observe(document.body, { childList: true }); killBadge();
   $("#tocToggle").addEventListener("click", () => { toc.classList.add("open"); $("#scrim").classList.add("on"); });
@@ -1517,6 +1547,7 @@
     const uidv = db.mode === "cloud" ? db.user.id : "local";
     stateKey = "cissp.v1:" + uidv;
     const cloud = db.mode === "cloud";
+    if (cloud) await db.flushQueue().catch(() => 0);  // answers saved while offline go first, so the totals below include them
     // load everything at once: one network round-trip of waiting instead of seven
     const [profile, cloudState, attempts, mocks, notes] = await Promise.all([
       db.getProfile(),

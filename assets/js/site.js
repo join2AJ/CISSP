@@ -4,7 +4,7 @@
   const A = window.App, { D, P, $, $$, esc, dc, db } = A;
   const BRAND = "StudyCISSP";
 
-  const shield = `<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 2.5l7.5 3v6.2c0 4.6-3.2 8.3-7.5 9.8-4.3-1.5-7.5-5.2-7.5-9.8V5.5z" fill="currentColor" opacity=".18"/><path d="M12 2.5l7.5 3v6.2c0 4.6-3.2 8.3-7.5 9.8-4.3-1.5-7.5-5.2-7.5-9.8V5.5z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8.5 12l2.4 2.4 4.6-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const shield = `<svg viewBox="0 0 64 64" width="34" height="34" aria-hidden="true"><defs><linearGradient id="lgf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2a7556"/><stop offset="1" stop-color="#1a4d38"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#lgf)"/><path d="M32 9.5l17.5 6.6v13.2c0 11-7.4 19.6-17.5 24.2C21.9 48.9 14.5 40.3 14.5 29.3V16.1z" fill="none" stroke="#f7f3ea" stroke-width="3.4" stroke-linejoin="round"/><path d="M21.5 25.6c3.8-1.2 7.6-.7 10.5 1.5 2.9-2.2 6.7-2.7 10.5-1.5v13.2c-3.8-1.2-7.6-.7-10.5 1.5-2.9-2.2-6.7-2.7-10.5-1.5z" fill="#f7f3ea" fill-opacity=".16" stroke="#f7f3ea" stroke-width="2.6" stroke-linejoin="round"/><path d="M32 27.1v13.2" stroke="#f7f3ea" stroke-width="2.6" stroke-linecap="round"/><circle cx="32" cy="19.2" r="2.1" fill="#e3b95a"/></svg>`;
   A.shield = shield;
 
   A.siteFooter = () => `<footer class="site-foot">
