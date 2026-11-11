@@ -4,10 +4,10 @@
 
 :root {
   --fs: 19px;
-  --serif: "Literata", "Iowan Old Style", Georgia, serif;
-  --display: "DM Serif Display", "Literata", Georgia, serif;
-  --sans: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --serif: "Newsreader", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --display: "Fraunces", "Newsreader", Georgia, serif;
+  --sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
   --body-face: var(--serif);
 
   --measure: 40rem;
@@ -28,8 +28,8 @@
   --muted: #6f685b;
   --rule: #ddd4c1;
   --rule-2: #e9e2d2;
-  --accent: #1747c9;
-  --accent-ink: #ffffff;
+  --accent: #1f5c43;
+  --accent-ink: #f7f3ea;
   --hl: #f3e2a6;
   --shadow: 0 1px 2px rgba(40,30,10,.06), 0 8px 30px -12px rgba(40,30,10,.18);
   --good: #2c7a4b; --warn: #b06d10; --bad: #b23a3a;
@@ -60,8 +60,8 @@
   --muted: #958e80;
   --rule: #2e353b;
   --rule-2: #252b30;
-  --accent: #8fb0ff;
-  --accent-ink: #10162a;
+  --accent: #8cc7a6;
+  --accent-ink: #10231a;
   --hl: #4a4224;
   --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 30px -12px rgba(0,0,0,.6);
   --good: #7cc495; --warn: #e2a85a; --bad: #ec8b84;
@@ -1077,14 +1077,10 @@ body.bare .landing ~ * { display: none; }
 /* ==========================================================
    StudyCISSP identity, site chrome and public pages
    ========================================================== */
-.brand-mark { background: linear-gradient(140deg, #2a5cf0, #1236a8); color: #fff; font-style: normal; box-shadow: 0 4px 12px -4px rgba(23,71,201,.6); }
-:root[data-theme="night"] .brand-mark { background: linear-gradient(140deg, #4c7bff, #2448c4); color: #fff; }
-.brand-text b { font-family: var(--sans); font-weight: 700; font-size: 18px; letter-spacing: -.02em; }
+.brand-mark { background: var(--accent); color: var(--accent-ink); }
+
+.brand-text b { font-family: var(--display); font-weight: 600; font-size: 17px; letter-spacing: -.01em; }
 .brand-text b span { color: var(--accent); }
-.h-display { letter-spacing: -.01em; }
-.h-section { font-weight: 400; }
-.kicker { letter-spacing: .12em; }
-.btn.primary { box-shadow: 0 6px 16px -8px color-mix(in srgb, var(--accent) 80%, transparent); }
 .btn { font-family: var(--sans); }
 
 /* display settings button + panel */
@@ -1140,11 +1136,11 @@ body.site .toc { display: none; }
 .how-s h4 { font-family: var(--display); font-weight: 400; font-size: 19px; margin: 12px 0 4px; }
 .how-s p { margin: 0; font-size: 14.5px; color: var(--ink-2); }
 .cta-band { display: flex; justify-content: space-between; align-items: center; gap: 24px; flex-wrap: wrap; margin: 70px 0 10px; padding: 30px 32px; border-radius: 22px;
-  background: linear-gradient(130deg, #0f2a78, #1747c9 60%, #2f6bff); color: #fff; box-shadow: 0 20px 40px -24px rgba(23,71,201,.8); }
+  background: linear-gradient(130deg, #163f2e, #1f5c43 60%, #2c7a57); color: #f7f3ea; box-shadow: 0 20px 40px -24px rgba(20,60,40,.7); }
 .cta-band h2 { font-family: var(--display); font-weight: 400; font-size: 32px; margin: 0 0 6px; }
 .cta-band p { margin: 0; opacity: .88; }
 .cta-band .btn { border-color: rgba(255,255,255,.35); background: rgba(255,255,255,.12); color: #fff; }
-.cta-band .btn.primary { background: #fff; color: #1236a8; border-color: #fff; }
+.cta-band .btn.primary { background: #f7f3ea; color: #1f5c43; border-color: #f7f3ea; }
 .compare th, .compare td.cmp { text-align: center; }
 .compare th:first-child { text-align: left; }
 .compare .yes { color: var(--good); font-weight: 700; font-size: 16px; } .compare .no { color: var(--muted); }
