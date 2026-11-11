@@ -468,7 +468,7 @@ window.DOMAINS.push({
       <div class="note memory"><p>Top down: <strong>All People Seem To Need Data Processing</strong>. Bottom up: <strong>Please Do Not Throw Sausage Pizza Away</strong>. Draw the table above on a blank sheet every few days until it is automatic.</p></div>
       <div class="note exam"><p>ARP sits at layer 2 (it maps IP to MAC). ICMP sits at layer 3. A switch with routing ability is a layer 3 switch. If the question mentions MAC addresses, think layer 2; IP addresses, layer 3; ports, layer 4.</p></div>`,
       exam: "Placing protocols, devices and attacks at the right layer." },
-    { id: "tcpip", title: "IP addresses, classes, TCP, UDP and ports",
+    { id: "tcpip", title: "IP addresses: IPv4 classes and IPv6",
       body: `<h3>IPv4 addresses and classes</h3>
       <p><strong>IPv4</strong> addresses are 32 bits, written as four decimal numbers from 0 to 255 (for example <code>192.168.1.10</code>). Each address has a <strong>network</strong> part and a <strong>host</strong> part; the subnet mask says where one ends and the other begins.</p>
       <p>The original internet split addresses into <strong>classes</strong> by their first number. In 1993 <strong>CIDR</strong> (Classless Inter-Domain Routing) replaced fixed classes with prefixes such as <code>/24</code>, so networks can be any size. You still need the classes: the exam and everyday conversation use them, and the private ranges follow them.</p>
@@ -498,7 +498,10 @@ window.DOMAINS.push({
       </tbody></table></div>
       <p>Many networks run <strong>dual stack</strong> (IPv4 and IPv6 together). Security tools and firewall rules must cover both, or IPv6 becomes an unmonitored side door. Tunnelling techniques that carry IPv6 inside IPv4 (6to4, Teredo) can also bypass controls.</p>
       <div class="note exam"><p>Expect to recognise a class or private range from an address, spot loopback and APIPA, and know that NAT conserves addresses and hides internal hosts. Deep subnetting arithmetic is rarely tested.</p></div>
-      <h3>TCP and UDP</h3>
+`,
+      exam: "Recognising an address class or private range, loopback and APIPA, NAT, and the main IPv6 address types." },
+    { id: "ports", title: "TCP, UDP and the ports that matter",
+      body: `<h3>TCP and UDP</h3>
       <p><strong>TCP</strong> is connection-oriented and reliable: the three-way handshake (SYN, SYN-ACK, ACK), sequence numbers, acknowledgements and retransmission. <strong>UDP</strong> is connectionless, with no handshake or guarantee, used where speed matters (DNS queries, VoIP, streaming, QUIC).</p>
       <div class="anim" data-anim="handshake"></div>
       <h3>Ports that matter</h3>

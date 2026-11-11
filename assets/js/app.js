@@ -274,13 +274,6 @@
     const feat = App.FEATURE[r.page];
     if (feat && db.user !== undefined && App.profile && !App.can(feat)) def = Object.assign({}, def, { render: () => lockedView(feat), bind: bindLocked, area: "other" });
 
-    // same chapter: just scroll
-    if (r.page === "domain" && rendered === "domain:" + r.a && byId[r.a]) {
-      const el = document.getElementById(r.b || "");
-      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); else window.scrollTo({ top: 0, behavior: "smooth" });
-      S.last = { d: r.a, s: r.b || null }; save(); closeToc();
-      return;
-    }
     rendered = r.page === "domain" ? "domain:" + r.a : r.page + ":" + (r.a || "");
     if (observer) { observer.disconnect(); observer = null; }
     closeToc(); closeMenu();
@@ -465,24 +458,31 @@
     </div>`;
   }
 
+  /* Chapters read like a book: an opening page, one page per subsection, and a Memorise & practice page. */
+  const qCount = (d, s) => App.questions.filter(x => x.d === d.id && x.t === s.id).length;
+  function chapterBar(d, cur) {
+    const p = domProgress(d);
+    return `<div class="ch-bar">
+        <a class="ch-bar-title" href="#/domain/${d.id}"><span class="kicker" style="--kc:var(--dc)">Domain ${pad(d.n)} · ${d.weight}%</span><b>${esc(d.title)}</b></a>
+        <div class="ch-bar-prog" title="Sections understood"><span class="meter"><i style="width:${p.pct}%"></i></span><span id="chPct">${p.pct}%</span></div>
+      </div>
+      <nav class="steps" aria-label="Pages in this chapter">
+        <a href="#/domain/${d.id}" class="${!cur ? "on" : ""}" title="Introduction">Intro</a>
+        ${d.sections.map((s, i) => `<a href="#/domain/${d.id}/${s.id}" class="${cur === s.id ? "on" : ""} ${S.read[d.id + ":" + s.id] ? "done" : ""}" title="${d.n}.${i + 1} ${esc(s.title)}">${d.n}.${i + 1}</a>`).join("")}
+        <a href="#/domain/${d.id}/memorise" class="${cur === "memorise" ? "on" : ""}" title="Memorise &amp; practice">★</a>
+      </nav>`;
+  }
   function viewDomain(r) {
     const d = byId[r.a]; if (!d) return viewChapters();
-    const idx = D.indexOf(d), prev = D[idx - 1], next = D[idx + 1];
+    if (r.b === "memorise") return viewMemorise(d);
+    const si = r.b ? d.sections.findIndex(s => s.id === r.b) : -1;
+    if (si >= 0) return viewSection(d, si);
+    return viewChapterIntro(d);
+  }
+  function viewChapterIntro(d) {
     const p = domProgress(d), pr = prio(d);
-    const secs = d.sections.map((s, i) => {
-      const k = d.id + ":" + s.id, on = !!S.read[k];
-      return `<section class="sec" id="${s.id}" data-sec="${s.id}">
-        <div class="sec-head"><span class="sec-num">${d.n}.${i + 1}</span><h2>${esc(s.title)}</h2></div>
-        ${s.body}
-        ${s.exam ? `<div class="note tests"><p>${esc(s.exam)}</p></div>` : ""}
-        <div class="sec-actions">
-          <button class="understood ${on ? "on" : ""}" data-read="${k}" aria-pressed="${on}"><span class="box"></span><span>${on ? "Understood. Marked as read." : "I understand this section. Mark as read."}</span></button>
-          <a class="btn small" href="#/quiz/run/topic/${d.id}.${s.id}">Quiz this topic (${App.questions.filter(x => x.d === d.id && x.t === s.id).length})</a>
-          ${d.sections[i + 1] ? `<a class="btn small ghost sec-next" href="#/domain/${d.id}/${d.sections[i + 1].id}">Next: ${d.n}.${i + 2} ${esc(d.sections[i + 1].title)} ↓</a>` : `<a class="btn small ghost sec-next" href="#/domain/${d.id}/memorise">Next: Memorise &amp; practice ↓</a>`}
-        </div>
-      </section>`;
-    }).join("");
-    const qs = d.questions.map((q, i) => questionCard(d, q, i)).join("");
+    const firstUnread = d.sections.find(s => !S.read[d.id + ":" + s.id]);
+    const start = firstUnread || d.sections[0], si = d.sections.indexOf(start);
     const enc = pr === "weak" ? "This is one of your focus domains. Go slowly; understanding beats coverage." : pr === "strong" ? "One of your strengths. Read for ISC2’s wording, then prove it with a quiz." : "You have some exposure here. Fill the gaps, then test yourself by topic.";
     return `<article class="chapter" style="${dc(d)}">
       <header class="ch-head">
@@ -495,27 +495,61 @@
           <span><span class="meter"><i style="width:${p.pct}%"></i></span> <span id="chPct">${p.pct}%</span></span>
         </div>
         <p class="encourage">${esc(enc)}</p>
+        <div class="btn-row"><a class="btn primary" href="#/domain/${d.id}/${start.id}">${firstUnread && p.r ? "Continue at" : "Start reading"} ${d.n}.${si + 1} ${esc(start.title)} →</a>${p.pct === 100 ? `<a class="btn" href="#/domain/${d.id}/memorise">★ Memorise &amp; practice</a>` : ""}</div>
       </header>
-      <nav class="contents-box" aria-label="In this chapter"><h3>In this chapter</h3><ol>
-        ${d.sections.map((s, i) => `<li><a href="#/domain/${d.id}/${s.id}" class="${S.read[d.id + ":" + s.id] ? "read" : ""}"><span class="n">${d.n}.${i + 1}</span>${esc(s.title)}</a></li>`).join("")}
-        <li><a href="#/domain/${d.id}/memorise"><span class="n">★</span>Memorise &amp; practice</a></li>
-      </ol></nav>
-      <div class="prose" style="margin-top:44px">
+      <div class="prose">
         <p class="intro">${esc(d.intro)}</p>
         ${App.personal && App.personal[d.id] ? `<div class="note personal"><p>${esc(App.personal[d.id])}</p></div>` : ""}
         ${(window.HISTORY || {})[d.id] ? `<div class="note history"><p>${esc(window.HISTORY[d.id])}</p></div>` : ""}
-        ${secs}
       </div>
-      <div class="ch-end" id="memorise">
+      <nav class="contents-box" aria-label="In this chapter" style="margin-top:28px"><h3>In this chapter</h3><ol>
+        ${d.sections.map((s, i) => `<li><a href="#/domain/${d.id}/${s.id}" class="${S.read[d.id + ":" + s.id] ? "read" : ""}"><span class="n">${d.n}.${i + 1}</span>${esc(s.title)}</a></li>`).join("")}
+        <li><a href="#/domain/${d.id}/memorise"><span class="n">★</span>Memorise &amp; practice</a></li>
+      </ol></nav>
+    </article>`;
+  }
+  function viewSection(d, i) {
+    const s = d.sections[i], k = d.id + ":" + s.id, on = !!S.read[k];
+    const prevS = d.sections[i - 1], nextS = d.sections[i + 1];
+    const nextHref = nextS ? `#/domain/${d.id}/${nextS.id}` : `#/domain/${d.id}/memorise`;
+    const nextName = nextS ? `${d.n}.${i + 2} ${nextS.title}` : "Memorise & practice";
+    const prevHref = prevS ? `#/domain/${d.id}/${prevS.id}` : `#/domain/${d.id}`;
+    const prevName = prevS ? `${d.n}.${i} ${prevS.title}` : "Introduction";
+    return `<article class="chapter sec-page" style="${dc(d)}">
+      ${chapterBar(d, s.id)}
+      <div class="prose">
+        <section class="sec" data-sec="${s.id}">
+          <div class="sec-head"><span class="sec-num">${d.n}.${i + 1}</span><h2>${esc(s.title)}</h2></div>
+          ${s.body}
+          ${s.exam ? `<div class="note tests"><p>${esc(s.exam)}</p></div>` : ""}
+        </section>
+      </div>
+      <div class="sec-finish">
+        <a class="btn primary big-next" id="readNext" href="${nextHref}" data-read-key="${k}">${on ? "Next" : "Got it — next"}: ${esc(nextName)} →</a>
+        <div class="sec-finish-row">
+          <a class="btn small" href="#/quiz/run/topic/${d.id}.${s.id}">Quiz this topic (${qCount(d, s)})</a>
+          <button class="understood small ${on ? "on" : ""}" data-read="${k}" aria-pressed="${on}"><span class="box"></span><span>${on ? "Understood" : "Mark as understood"}</span></button>
+        </div>
+        <div class="sec-pager"><a href="${prevHref}">← ${esc(prevName)}</a><a href="${nextHref}" class="skip">Skip to ${esc(nextName)} →</a></div>
+        <p class="hint" style="text-align:center">Tip: use the ← and → keys to turn pages.</p>
+      </div>
+    </article>`;
+  }
+  function viewMemorise(d) {
+    const idx = D.indexOf(d), next = D[idx + 1], last = d.sections[d.sections.length - 1];
+    const qs = d.questions.map((q, i) => questionCard(d, q, i)).join("");
+    return `<article class="chapter sec-page" style="${dc(d)}">
+      ${chapterBar(d, "memorise")}
+      <div class="ch-end" style="margin-top:28px">
         <div class="memorise"><div class="kicker" style="--kc:var(--dc)">Before you move on</div><h3>Memorise</h3><ul>${d.memorise.map(m => `<li>${esc(m)}</li>`).join("")}</ul></div>
-        <div class="btn-row"><a class="btn" href="#/glossary/${d.id}">D${d.n} glossary</a><a class="btn" href="#/flashcards/${d.id}">Flashcards for D${d.n}</a><a class="btn" href="#/quiz/run/domain/${d.id}">Full D${d.n} quiz</a></div>
+        <div class="btn-row"><a class="btn" href="#/flashcards/${d.id}">Flashcards for D${d.n}</a><a class="btn" href="#/quiz/run/domain/${d.id}">Full D${d.n} quiz</a><a class="btn" href="#/glossary/${d.id}">D${d.n} glossary</a></div>
         <p class="chapters-src"><b>Read alongside:</b> Sybex Official Study Guide — ${esc(d.sybex)}. Chapter numbers follow the 9th/10th editions; match by title if yours differ.</p>
-        <h2 class="h-section" style="margin-top:56px">Check yourself</h2>
+        <h2 class="h-section" style="margin-top:44px">Check yourself</h2>
         <p class="sub">CISSP-style questions. Answer, then read the reasoning. Misses can go straight into your error log.</p>
         <div class="quiz">${qs}</div>
-        <div class="pager">
-          ${prev ? `<a href="#/domain/${prev.id}" style="--pdc:var(--${prev.id})"><small>← Previous</small><b>D${prev.n} ${esc(prev.short)}</b></a>` : `<span></span>`}
-          ${next ? `<a class="next" href="#/domain/${next.id}" style="--pdc:var(--${next.id})"><small>Next →</small><b>D${next.n} ${esc(next.short)}</b></a>` : `<a class="next" href="#/quiz"><small>Next →</small><b>Quiz yourself</b></a>`}
+        <div class="sec-finish">
+          ${next ? `<a class="btn primary big-next" href="#/domain/${next.id}">Next chapter: D${next.n} ${esc(next.title)} →</a>` : `<a class="btn primary big-next" href="#/mock">You’ve finished every chapter. Take a mock exam →</a>`}
+          <div class="sec-pager"><a href="#/domain/${d.id}/${last.id}">← ${d.n}.${d.sections.length} ${esc(last.title)}</a><a href="#/read" class="skip">All chapters</a></div>
         </div>
       </div>
     </article>`;
@@ -819,21 +853,40 @@
     $$("[data-task]").forEach(c => c.addEventListener("change", () => { if (c.checked) S.tasks[c.dataset.task] = 1; else delete S.tasks[c.dataset.task]; save(); }));
   }
 
+  function markRead(k, on) {
+    if (on) S.read[k] = S.read[k] || Date.now(); else delete S.read[k];
+    save();
+    const [did] = k.split(":"); const p = domProgress(byId[did]);
+    const pc = $("#chPct"); if (pc) { pc.textContent = p.pct + "%"; pc.previousElementSibling.firstElementChild.style.width = p.pct + "%"; }
+    if (on) { db.logEvent("user.section_read", { s: k }); if (p.pct === 100) toast(`Chapter ${roman[byId[did].n]} complete. Brilliant work ✓`); }
+    return p;
+  }
+  let pageKeys = null;
+  document.addEventListener("keydown", e => {
+    if (!pageKeys || /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (!/^#\/domain\//.test(location.hash)) return;
+    if (e.key === "ArrowRight" && pageKeys.next) { location.hash = pageKeys.next; }
+    if (e.key === "ArrowLeft" && pageKeys.prev) { location.hash = pageKeys.prev; }
+  });
   function bindDomain(r) {
     const d = byId[r.a]; if (!d) return;
+    currentSec = r.b && r.b !== "memorise" ? r.b : null; markCurrent();
+    App.setTrack({ area: "read", domain: d.id, topic: currentSec || (r.b === "memorise" ? "memorise" : "intro") });
+    // page turning with the arrow keys
+    const ids = [null].concat(d.sections.map(s => s.id), ["memorise"]);
+    const at = Math.max(0, ids.indexOf(r.b || null));
+    const href = (id) => id ? `#/domain/${d.id}/${id}` : `#/domain/${d.id}`;
+    pageKeys = { prev: at > 0 ? href(ids[at - 1]) : null, next: at < ids.length - 1 ? href(ids[at + 1]) : null };
+    // "Got it — next": mark as understood and turn the page
+    const rn = $("#readNext"); if (rn) rn.addEventListener("click", () => { if (!S.read[rn.dataset.readKey]) markRead(rn.dataset.readKey, true); });
     $$("[data-read]").forEach(b => b.addEventListener("click", () => {
-      const k = b.dataset.read;
-      if (S.read[k]) delete S.read[k]; else S.read[k] = Date.now();
-      save();
-      const on = !!S.read[k];
+      const k = b.dataset.read, on = !S.read[k];
+      markRead(k, on);
       b.classList.toggle("on", on); b.setAttribute("aria-pressed", on);
-      b.lastElementChild.textContent = on ? "Understood. Marked as read." : "I understand this section. Mark as read.";
-      const [did, sid] = k.split(":");
-      $$(`.contents-box a[href="#/domain/${did}/${sid}"]`).forEach(a => a.classList.toggle("read", on));
-      const p = domProgress(byId[did]);
-      const pc = $("#chPct"); if (pc) { pc.textContent = p.pct + "%"; pc.previousElementSibling.firstElementChild.style.width = p.pct + "%"; }
+      b.lastElementChild.textContent = on ? "Understood" : "Mark as understood";
+      const step = $(`.steps a[href="#/domain/${d.id}/${k.split(":")[1]}"]`); if (step) step.classList.toggle("done", on);
       renderToc(parse()); markCurrent();
-      if (on) { db.logEvent("user.section_read", { s: k }); toast(p.pct === 100 ? `Chapter ${roman[byId[did].n]} complete. Brilliant work ✓` : pick(["Marked as read. Keep going.", "One more down.", "Nice. Understanding compounds.", "Marked as read."])); }
+      if (on) toast(pick(["Marked as read. Keep going.", "One more down.", "Nice. Understanding compounds."]));
     }));
     $$(".q").forEach(qel => qel.addEventListener("click", e => {
       const opt = e.target.closest("[data-opt]");
@@ -849,11 +902,10 @@
     }));
     bindQuizExtras();
     if (window.Anim) window.Anim.mountAll(view);
-    observer = new IntersectionObserver(entries => {
-      entries.forEach(en => { if (en.isIntersecting) { currentSec = en.target.dataset.sec; markCurrent(); App.setTrack({ area: "read", domain: d.id, topic: currentSec }); } });
-    }, { rootMargin: "-20% 0px -70% 0px" });
-    $$(".sec").forEach(s => observer.observe(s));
+    // keep the current step visible in the step bar on small screens
+    const onStep = $(".steps a.on"); if (onStep && onStep.scrollIntoView) onStep.scrollIntoView({ block: "nearest", inline: "center" });
   }
+  addEventListener("hashchange", () => { if (!/^#\/domain\//.test(location.hash)) pageKeys = null; });
   function bindQuizExtras() {
     $$("[data-log]").forEach(b => { if (b._b) return; b._b = 1; b.addEventListener("click", () => {
       const [did, ci] = b.dataset.log.split(":"); const q = byId[did].questions[+ci.slice(1)];

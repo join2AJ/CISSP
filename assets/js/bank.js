@@ -90,7 +90,7 @@ window.BANK = {
     { d: "d4", t: "osi", q: "At which OSI layer do switches make forwarding decisions using MAC addresses?",
       o: ["Layer 1", "Layer 2", "Layer 3", "Layer 4"], a: 1,
       w: "MAC addresses and frames belong to the data link layer." },
-    { d: "d4", t: "tcpip", q: "Which port and protocol should replace Telnet for remote administration?",
+    { d: "d4", t: "ports", q: "Which port and protocol should replace Telnet for remote administration?",
       o: ["TCP 23, Telnet over TLS", "TCP 22, SSH", "UDP 161, SNMP", "TCP 3389, RDP"], a: 1,
       w: "SSH on TCP 22 provides encrypted remote shell access." },
     { d: "d4", t: "devices", q: "Which firewall type breaks the connection, inspects application content and is generally the slowest?",

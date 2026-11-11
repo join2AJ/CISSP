@@ -1203,3 +1203,38 @@ body.site .toc { display: none; }
 .tasks label.auto { cursor: default; }
 .tasks label.auto span { text-decoration: none !important; color: var(--ink-2) !important; }
 .auto-tag { font-size: 11px; color: var(--good); font-weight: 600; margin-left: 6px; }
+
+/* ---------- chapter pages: one subsection per page ---------- */
+.sec-page { padding-top: 22px; }
+.ch-bar { max-width: var(--measure); margin: 0 auto; display: flex; align-items: center; gap: 16px; }
+.ch-bar-title { text-decoration: none; display: grid; gap: 2px; flex: 1; min-width: 0; }
+.ch-bar-title b { font-family: var(--display); font-weight: 500; font-size: 20px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ch-bar-title:hover b { color: var(--dc); }
+.ch-bar-prog { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.ch-bar-prog .meter { width: 90px; flex: none; }
+.steps { max-width: var(--measure); margin: 14px auto 0; display: flex; gap: 6px; overflow-x: auto; padding: 4px 2px 10px; scrollbar-width: thin; border-bottom: 1px solid var(--rule-2); }
+.steps a { flex: none; min-width: 44px; height: 34px; padding: 0 10px; display: inline-grid; place-items: center; border-radius: 9px; border: 1px solid var(--rule); background: var(--card);
+  text-decoration: none; font-family: var(--mono); font-size: 12.5px; color: var(--ink-2); transition: all .15s var(--ease); position: relative; }
+.steps a:hover { border-color: var(--dc); color: var(--ink); }
+.steps a.done { background: color-mix(in srgb, var(--good) 10%, var(--card)); border-color: color-mix(in srgb, var(--good) 35%, var(--rule)); }
+.steps a.done::after { content: "✓"; position: absolute; top: -6px; right: -4px; width: 15px; height: 15px; border-radius: 50%; background: var(--good); color: var(--paper); font-size: 9px; display: grid; place-items: center; font-family: var(--sans); }
+.steps a.on { background: var(--dc); border-color: var(--dc); color: var(--paper); font-weight: 600; }
+.sec-page .prose { margin-top: 8px; }
+.sec-page .sec { padding-top: 0; }
+.sec-page .sec-head { margin-top: 26px; }
+.sec-finish { max-width: var(--measure); margin: 34px auto 0; padding: 22px; border-radius: 18px; background: var(--card); border: 1px solid var(--rule-2); box-shadow: var(--shadow); display: grid; gap: 14px; }
+.big-next { justify-content: center; height: auto; min-height: 52px; padding: 12px 20px; font-size: 16px; text-align: center; line-height: 1.35; }
+.sec-finish-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; align-items: center; }
+.understood.small { width: auto; margin: 0; padding: 7px 12px; font-size: 13.5px; }
+.understood.small .box { width: 18px; height: 18px; border-radius: 5px; }
+.sec-pager { display: flex; justify-content: space-between; gap: 12px; font-size: 13.5px; padding-top: 12px; border-top: 1px solid var(--rule-2); }
+.sec-pager a { text-decoration: none; color: var(--muted); max-width: 48%; }
+.sec-pager a:hover { color: var(--dc); }
+.sec-pager .skip { text-align: right; }
+.ch-head .btn-row { margin-top: 22px; }
+@media (max-width: 640px) {
+  .ch-bar-title b { font-size: 17px; }
+  .ch-bar-prog .meter { width: 54px; }
+  .sec-finish { padding: 16px; }
+  .big-next { font-size: 15px; }
+}
