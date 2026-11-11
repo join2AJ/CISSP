@@ -42,7 +42,7 @@
         <div><div class="anim" data-anim="models"></div></div>
       </section>
       <h2 class="h-section">How it works</h2>
-      <div class="how">${[["Create your free account", "Pick a plan. Every plan is free for its first year."], ["Verify your email", "One click from your inbox keeps your account safe."], ["Answer three questions", "Your exam date, your hours and what you already know."], ["Follow your path", "Read, practise and track your progress, one session at a time."]].map(([t, d], i) => `<div class="how-s"><b>${i + 1}</b><h4>${t}</h4><p>${d}</p></div>`).join("")}</div>
+      <div class="how">${[["Create your free account", "Pick a plan. Finish the course in 90 days and it stays free."], ["Verify your email", "One click from your inbox keeps your account safe."], ["Answer three questions", "Your exam date, your hours and what you already know."], ["Follow your path", "Read, practise and track your progress, one session at a time."]].map(([t, d], i) => `<div class="how-s"><b>${i + 1}</b><h4>${t}</h4><p>${d}</p></div>`).join("")}</div>
       ${cta()}
     </div>`;
   }
@@ -51,17 +51,17 @@
   function viewPricing() {
     const plans = A.plans.filter(p => p.active !== false), M = P.modules || {};
     return `<div class="site-page">
-      <section class="site-hero center">${pageHead("Pricing", "Small price. <em>Big reason to finish.</em>", "One honest yearly price, less than a cup of chai a day. Finish the 90-day challenge and you get it back.")}</section>
+      <section class="site-hero center">${pageHead("Pricing", "Finish in 90 days. <em>Pay nothing.</em>", `A complete CISSP course worth ${A.challengeOffer().value || "thousands"}+ elsewhere. Finish it in 90 days and it’s free. If you don’t, it’s ${A.challengeOffer().prices || "a small yearly price"} a year.`)}</section>
       ${A.planCards({ signup: !(db.mode === "cloud" && db.user) })}
       ${A.challengeBlock()}
       <h2 class="h-section">Compare plans</h2>
       <div class="tbl-wrap"><table class="tbl compare"><thead><tr><th>What’s included</th>${plans.map(p => `<th class="plan-${p.id}"><span class="plan-chip plan-${p.id}">${esc(p.name)}</span></th>`).join("")}</tr></thead><tbody>
         ${Object.entries(M).map(([k, l]) => `<tr><td>${esc(l)}</td>${plans.map(p => `<td class="cmp">${(p.modules || []).includes(k) ? `<span class="yes">✓</span>` : `<span class="no">-</span>`}</td>`).join("")}</tr>`).join("")}
-        <tr><td>Free period</td>${plans.map(p => `<td class="cmp">${p.free_months} months</td>`).join("")}</tr>
-        <tr><td>Price</td>${plans.map(p => `<td class="cmp">${+p.price > 0 ? A.money(+p.price, p.currency) + " / year" : "Free"}</td>`).join("")}</tr>
-        <tr><td>90-day challenge reward</td>${plans.map(p => `<td class="cmp">${+p.price > 0 ? (+p.free_months ? "Next year free" : A.money(+p.price, p.currency) + " back") : "-"}</td>`).join("")}</tr>
+        <tr><td>Value if bought elsewhere</td>${plans.map(p => `<td class="cmp">${+p.value ? A.money(+p.value, p.currency) + "+" : "-"}</td>`).join("")}</tr>
+        <tr><td>Finish in 90 days</td>${plans.map(p => `<td class="cmp"><b>Free</b></td>`).join("")}</tr>
+        <tr><td>Otherwise, per year</td>${plans.map(p => `<td class="cmp">${+p.price > 0 ? A.money(+p.price, p.currency) : "Free"}</td>`).join("")}</tr>
       </tbody></table></div>
-      <p class="sub" style="margin-top:14px">No card needed to start. We’ll tell you well before any free period ends.</p>
+      <p class="sub" style="margin-top:14px">No card needed to start. Your dashboard shows the days left and how close you are to finishing free.</p>
       ${cta()}
     </div>`;
   }
@@ -92,7 +92,7 @@
   /* ---------- FAQ ---------- */
   const FAQ = [
     ["Is this affiliated with ISC2?", "No. StudyCISSP is independent study material. CISSP is a registered mark of ISC2, Inc., and you book and sit the exam directly with ISC2 and Pearson VUE."],
-    ["Is it really free?", "Yes. Every plan is free for its first year. If a price applies after that, it’s shown on the Pricing page and we’ll tell you well in advance. No card is needed to start."],
+    ["Is it really free?", "Yes, if you finish. Every plan is free for 90 days. Complete the four challenge goals in that time and it stays free. If you don’t, the yearly price on the Pricing page applies. No card is needed to start."],
     ["Do I still need the official book?", "We recommend pairing StudyCISSP with the ISC2 Official Study Guide and Official Practice Tests. Each chapter tells you which book chapters to read alongside it."],
     ["Which exam outline does it follow?", "The CISSP Exam Outline effective 15 April 2024, which applies to exams sat before 15 April 2027. We’ll update for the new outline."],
     ["I don’t have five years’ experience yet. Can I still use it?", "Yes. You can sit the exam and, if you pass, become an Associate of ISC2 while you build up the experience."],
@@ -142,7 +142,7 @@
     ["Your content", "You keep ownership of anything you upload. You give us permission to store and display it to you (and to administrators for support) so the service works."],
     ["Our content", "Chapters, questions, animations and other material are protected by copyright and are for your personal study only. CISSP® and ISC2® are marks of ISC2, Inc.; StudyCISSP is not affiliated with ISC2."],
     ["No guarantee of results", "We work hard to keep content accurate and current, but we can’t guarantee you will pass the exam. Always confirm exam rules, fees and policies with ISC2."],
-    ["Plans and free periods", "Each plan is free for the period shown when you sign up. Any price after that is shown on the Pricing page; we’ll give notice before anything changes for you."],
+    ["Plans and the 90-day challenge", "Each plan is free for 90 days from sign-up. If you complete the four challenge goals shown on your dashboard within that time, it stays free. Otherwise the yearly price shown on the Pricing page applies to continue; we’ll give notice before anything is charged."],
     ["Availability", "We aim to keep the service available but it may be interrupted for maintenance or reasons outside our control."],
     ["Ending your account", "You can delete your account at any time from Privacy & trust. We may suspend accounts that break these terms."],
     ["Changes", "We may update these terms. We’ll show the date of the latest version here and tell you about important changes."]

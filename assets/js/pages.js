@@ -194,13 +194,13 @@ window.PAGES = {
 
   /* defaults; the live values come from the database and are editable by the admin */
   plans: [
-    { id: "silver", name: "Silver", tagline: "Read, understand, plan.", price: 457, currency: "INR", free_months: 12, sort: 1, active: true,
+    { id: "silver", name: "Silver", tagline: "Read, understand, plan.", price: 457, value: 11693, currency: "INR", free_months: 3, sort: 1, active: true,
       modules: ["chapters", "glossary", "plan", "flashcards"],
       perks: ["All eight chapters with animations", "A-Z glossary", "Personal study plan from your exam date", "Chapter questions with explanations", "Spaced-repetition flashcards"] },
-    { id: "gold", name: "Gold", tagline: "Practise until it sticks.", price: 657, currency: "INR", free_months: 12, sort: 2, active: true,
+    { id: "gold", name: "Gold", tagline: "Practise until it sticks.", price: 657, value: 13693, currency: "INR", free_months: 3, sort: 2, active: true,
       modules: ["chapters", "glossary", "plan", "flashcards", "quiz", "mock", "insights"],
       perks: ["Everything in Silver", "Quizzes by domain, topic and weak area", "Timed mock exams", "Insights: time spent, streaks, accuracy"] },
-    { id: "diamond", name: "Diamond", tagline: "Everything, plus your own library.", price: 957, currency: "INR", free_months: 12, sort: 3, active: true,
+    { id: "diamond", name: "Diamond", tagline: "Everything, plus your own library.", price: 957, value: 16693, currency: "INR", free_months: 3, sort: 3, active: true,
       modules: ["chapters", "glossary", "plan", "flashcards", "quiz", "mock", "insights", "library"],
       perks: ["Everything in Gold", "Personal library: upload notes, PDFs and videos", "Priority help from the administrator", "First access to new content"] }
   ],

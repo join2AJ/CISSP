@@ -1731,3 +1731,10 @@ sub, sup { font-size: max(12px, .72em); }
 .chal-goal.ok { border-color: color-mix(in srgb, var(--good) 45%, var(--rule-2)); }
 .chal-goal.ok .meter i { background: var(--good); }
 @media (max-width: 760px) { .chal-goals { grid-template-columns: 1fr 1fr; } }
+
+/* pricing: value elsewhere, free when you finish, price otherwise */
+.plan-value { margin: 4px 0 8px; font-size: 13.5px; color: var(--ink-2); }
+.plan-value b { color: var(--ink); }
+.plan .plan-price span { display: block; margin: 4px 0 0; font-size: 14px; font-weight: 600; color: var(--accent); }
+.plan-else { margin: 10px 0 14px; padding: 8px 10px; border-radius: 10px; font-size: 13.5px; color: var(--ink-2); background: var(--paper-2); }
+.plan-else b { color: var(--ink); }

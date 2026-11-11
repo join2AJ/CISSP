@@ -21,7 +21,7 @@
       </form>${offline()}
       <div id="lMsg"></div>
       <div class="auth-links"><a href="#/forgot">Forgot password?</a><a href="#/signup">Create an account</a></div>
-    </div><div class="auth-side"><b>New here?</b> Every plan is free for its first year. <a href="#/pricing">Compare plans</a></div>`);
+    </div><div class="auth-side"><b>New here?</b> Finish the course in 90 days and it’s free. <a href="#/pricing">Compare plans</a></div>`);
   }
   function bindLogin() {
     const f = $("#loginForm"); if (!f) return;
@@ -54,8 +54,8 @@
         <label>Username <small id="uHint" class="hint"></small><input id="sUser" maxlength="32" autocomplete="username" pattern="[a-z0-9_.\\-]{3,32}" required placeholder="lowercase letters, digits, . _ -"></label>
         <label>Email<input id="sEmail" type="email" autocomplete="email" required></label>
         <label>Password <small class="hint">at least 10 characters</small><input id="sPw" type="password" minlength="10" autocomplete="new-password" required></label>
-        <fieldset class="plan-pick"><legend>Your plan <small class="hint">free for the first year</small></legend>
-          ${A.plans.filter(p => p.active !== false).map(p => `<label class="pp pp-${p.id}"><input type="radio" name="sPlan" value="${p.id}" ${p.id === pre ? "checked" : ""}><span><b>${esc(p.name)}</b><small>${esc(p.tagline || "")} · free ${p.free_months} months</small></span></label>`).join("")}
+        <fieldset class="plan-pick"><legend>Your plan <small class="hint">free when you finish in 90 days</small></legend>
+          ${A.plans.filter(p => p.active !== false).map(p => `<label class="pp pp-${p.id}"><input type="radio" name="sPlan" value="${p.id}" ${p.id === pre ? "checked" : ""}><span><b>${esc(p.name)}</b><small>${esc(p.tagline || "")}${+p.price ? ` · otherwise ${A.money(+p.price, p.currency)} a year` : ""}</small></span></label>`).join("")}
         </fieldset>
         <label class="check"><input type="checkbox" id="sAge" required><span>I am 18 or older.</span></label>
         <label class="check"><input type="checkbox" id="sConsent" required><span>I have read the <a href="#/privacy" target="_blank">privacy notice</a> and consent to my account, study plan and study activity being processed to run this service. I can withdraw consent or delete my account at any time.</span></label>
