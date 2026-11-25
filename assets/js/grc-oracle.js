@@ -19,7 +19,7 @@ window.GRC_ORACLE = {
 <li>Finish the card check. Oracle places a small temporary hold and releases it.</li>
 <li>Stay on the free tier. Don't upgrade to Pay As You Go unless step 2 tells you to.</li>
 </ol>
-<div class="note tests"><p><b>Safety net.</b> In the console search for <b>Budgets</b> → <b>Create budget</b>, amount <b>₹1</b>, alert at 100% to your email. If anything ever started to cost money, you would hear about it at once.</p></div>` },
+<div class="setup-tip"><p><b>Safety net.</b> In the console search for <b>Budgets</b> → <b>Create budget</b>, amount <b>₹1</b>, alert at 100% to your email. If anything ever started to cost money, you would hear about it at once.</p></div>` },
     { id: "vm", t: "Create the free machine", body: `
 <p>Console menu → <b>Compute</b> → <b>Instances</b> → <b>Create instance</b>, then:</p>
 <table><thead><tr><th>Setting</th><th>Choose</th></tr></thead><tbody>
@@ -31,7 +31,7 @@ window.GRC_ORACLE = {
 <tr><td>Boot volume</td><td>Leave the default (about 47 GB; up to 200 GB is free)</td></tr>
 </tbody></table>
 <p>Click <b>Create</b>. After a minute or two the state turns green (<b>Running</b>). Copy the <b>Public IP address</b>, for example <code>140.238.1.2</code>.</p>
-<div class="note tests"><p><b>"Out of capacity"?</b> Ampere machines are popular. Try another <i>Availability domain</i> on the same page, or try later in the day. If it keeps failing, upgrading the account to Pay As You Go usually fixes it and Always Free resources stay free. Keep the ₹1 budget alert on.</p></div>` },
+<div class="setup-tip"><p><b>"Out of capacity"?</b> Ampere machines are popular. Try another <i>Availability domain</i> on the same page, or try later in the day. If it keeps failing, upgrading the account to Pay As You Go usually fixes it and Always Free resources stay free. Keep the ₹1 budget alert on.</p></div>` },
     { id: "login", t: "Log in to the machine", body: `
 <p>On your computer, open a terminal in the folder where you saved the key. Replace <code>KEY_FILE</code> with the key's file name and <code>PUBLIC_IP</code> with your address.</p>
 <pre data-copy>chmod 600 KEY_FILE</pre>
@@ -91,7 +91,7 @@ window.GRC_ORACLE = {
 <p>Restart with both files:</p>
 <pre data-copy>docker compose -f docker-compose.yml -f docker-compose.public.yml up -d</pre>
 <p>After a minute open <code>https://ciso.140-238-1-2.sslip.io</code> (with your numbers). No certificate warning this time. From now on add <code>-f docker-compose.yml -f docker-compose.public.yml</code> after <code>docker compose</code> in every command.</p>
-<div class="note tests"><p>Anyone can reach the sign-in page now. Use a strong admin password and don't create accounts you don't need.</p></div>` },
+<div class="setup-tip"><p>Anyone can reach the sign-in page now. Use a strong admin password and don't create accounts you don't need.</p></div>` },
     { id: "daily", t: "Everyday commands", body: `
 <p>Run these on the server, inside the <code>ciso-assistant-community</code> folder.</p>
 <table><thead><tr><th>What</th><th>Command</th></tr></thead><tbody>

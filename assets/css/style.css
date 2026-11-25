@@ -1955,3 +1955,4 @@ body.grc-mode .brand-text .bb { color: #8a6414; }
 .setup-step table { width: 100%; border-collapse: collapse; font-size: 14.5px; } .setup-step td, .setup-step th { border-top: 1px solid var(--rule-2); padding: 8px 6px; vertical-align: top; text-align: left; }
 .setup-step code { word-break: break-word; }
 .rr-link { display: inline-block; margin-top: 8px; font-size: 14px; font-weight: 600; color: var(--accent); }
+.setup-tip { margin: 14px 0; padding: 12px 14px; border-radius: 10px; border-left: 4px solid var(--gold-ink); background: var(--paper-2); font-family: var(--sans); font-size: 15px; line-height: 1.55; } .setup-tip p { margin: 0; }
