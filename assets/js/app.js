@@ -535,8 +535,8 @@
       ${L("#/grc/library", "❏", "All 46 documents", r.a === "library" && !r.b)}</ol></details>`;
     h += `<details class="toc-group" ${open(["controls", "map", "calendar"]) ? "open" : ""}><summary class="toc-head">Controls</summary><ol class="toc-list">
       ${L("#/grc/controls", "◇", "Control workbench", r.a === "controls")}${L("#/grc/map/iso", "⊞", "Framework map", r.a === "map")}${L("#/grc/calendar", "▦", "Evidence calendar", r.a === "calendar")}</ol></details>`;
-    h += `<details class="toc-group" ${open(["labs", "guide", "glossary", "pbc", "reading", "setup"]) ? "open" : ""}><summary class="toc-head">Practise</summary><ol class="toc-list">
-      ${L("#/grc/labs", "◎", "Hands-on labs", r.a === "labs")}${L("#/grc/setup", "⚙", "Run CISO Assistant", r.a === "setup")}${L("#/grc/pbc", "☑", "PBC list", r.a === "pbc")}${L("#/grc/guide", "▤", "Field guide", r.a === "guide")}${L("#/grc/reading", "❡", "Reading room", r.a === "reading")}${L("#/grc/glossary", "Aa", "GRC glossary", r.a === "glossary")}</ol></details>`;
+    h += `<details class="toc-group" ${open(["labs", "guide", "glossary", "pbc", "reading", "setup", "visuals"]) ? "open" : ""}><summary class="toc-head">Practise</summary><ol class="toc-list">
+      ${L("#/grc/labs", "◎", "Hands-on labs", r.a === "labs")}${L("#/grc/setup", "⚙", "Run CISO Assistant", r.a === "setup")}${L("#/grc/pbc", "☑", "PBC list", r.a === "pbc")}${L("#/grc/guide", "▤", "Field guide", r.a === "guide")}${L("#/grc/reading", "❡", "Reading room", r.a === "reading")}${L("#/grc/visuals", "◇", "Diagrams", r.a === "visuals")}${L("#/grc/glossary", "Aa", "GRC glossary", r.a === "glossary")}</ol></details>`;
     h += `<div class="toc-card"><b>${Math.round(done / all * 100)}%</b>of the GRC course · ${done} of ${all} lessons<div class="meter" style="margin-top:10px"><i style="width:${Math.round(done / all * 100)}%;background:#b8892a"></i></div></div>`;
     toc.innerHTML = h;
   }
@@ -1765,7 +1765,7 @@
   /* second branch: Learn GRC (a full course) and the GRC Manager field guide, private to the owner's account */
   let grcLoading = null;
   App.loadGrc = () => loadGrc();
-  const loadGrc = () => window.GRC_COURSE && window.GRC_COURSE.length >= 10 && window.GRC_CONTROLS && window.ISO_2022 ? Promise.resolve() : (grcLoading = grcLoading || Promise.all(["grc-course-1", "grc-course-2", "grc-iso", "grc-controls-1", "grc-controls-2", "grc-oracle"].map(f => new Promise((ok, no) => {
+  const loadGrc = () => window.GRC_COURSE && window.GRC_COURSE.length >= 10 && window.GRC_CONTROLS && window.ISO_2022 ? Promise.resolve() : (grcLoading = grcLoading || Promise.all(["grc-course-1", "grc-course-2", "grc-iso", "grc-controls-1", "grc-controls-2", "grc-oracle", "grc-visuals"].map(f => new Promise((ok, no) => {
     const sc = document.createElement("script"); sc.src = `assets/js/${f}.js?v=${(document.querySelector('script[src*="app.js"]').src.split("v=")[1] || "dev")}`; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc);
   }))));
   let libLoading = null;
@@ -1822,16 +1822,45 @@
   }
   const pbcRows = () => { const P = window.GRC_PBC; return [P.cols.concat(["Due date", "Status", "Auditor comments"])].concat(P.rows.map(r => r.map(String).concat(["", "Not started", ""]))); };
   let grcGq = "";
+  let grcGview = "az";
   function grcGlossary(focus) {
-    const list = (window.ABBR_EXTRA || []).filter(x => x[3] !== "cissp").sort((a, b) => a[0].localeCompare(b[0], "en", { sensitivity: "base" }));
+    const topicOf = {}; Object.entries(window.GRC_ABBR_TOPIC || {}).forEach(([t, ks]) => ks.forEach(k => { topicOf[k] = t; }));
+    const seen = new Set();
+    const ab = (window.ABBR_EXTRA || []).filter(x => x[3] !== "cissp" && !seen.has(x[0]) && seen.add(x[0])).map(x => ({ k: x[0], full: x[1], mean: x[2], topic: topicOf[x[0]] || "Other", abbr: true }));
+    const terms = (window.GRC_TERMS || []).map(x => ({ k: x[0], full: "", mean: x[1], topic: x[2], abbr: false }));
+    const all = ab.concat(terms).sort((a, b) => a.k.localeCompare(b.k, "en", { sensitivity: "base" }));
     const f = focus ? decodeURIComponent(focus) : "";
-    const rows = list.filter(x => !grcGq || x.join(" ").toLowerCase().includes(grcGq.toLowerCase()));
+    const q = grcGq.toLowerCase(), rows = all.filter(x => !q || [x.k, x.full, x.mean, x.topic].join(" ").toLowerCase().includes(q));
+    const row = x => `<div class="grc-gl-row ${x.k === f ? "focus" : ""} ${x.abbr ? "" : "concept"}" id="gg-${esc(x.k.replace(/\s+/g, "-"))}"><dt><b>${esc(x.k)}</b>${x.full ? `<span>${esc(x.full)}</span>` : ""}</dt><dd>${esc(x.mean)}${grcGview === "az" ? `<small class="gl-topic">${esc(x.topic)}</small>` : ""}</dd></div>`;
+    let body;
+    if (!rows.length) body = `<p class="sub">No match.</p>`;
+    else if (grcGview === "topic") {
+      const topics = [...new Set(rows.map(x => x.topic))].sort((a, b) => (a === "Other") - (b === "Other") || a.localeCompare(b));
+      body = `<nav class="gl-jump" aria-label="Topics">${topics.map(t => `<a href="#/grc/glossary" data-jump="gt-${t.replace(/\W+/g, "-")}">${esc(t)} <small>${rows.filter(x => x.topic === t).length}</small></a>`).join("")}</nav>` +
+        topics.map(t => `<h2 class="h-section gl-head" id="gt-${t.replace(/\W+/g, "-")}">${esc(t)}</h2><dl class="grc-gl">${rows.filter(x => x.topic === t).map(row).join("")}</dl>`).join("");
+    } else {
+      const letters = [...new Set(rows.map(x => x.k[0].toUpperCase()))];
+      body = `<nav class="gl-jump az" aria-label="Letters">${letters.map(l => `<a href="#/grc/glossary" data-jump="gl-${l}">${l}</a>`).join("")}</nav>` +
+        letters.map(l => `<h2 class="gl-letter" id="gl-${l}">${l}</h2><dl class="grc-gl">${rows.filter(x => x.k[0].toUpperCase() === l).map(row).join("")}</dl>`).join("");
+    }
     return `<div class="page-narrow grc-gloss">
       <a class="kicker" href="#/grc">← Learn GRC</a>
       <h1 class="h-display">GRC <em>glossary</em></h1>
-      <p class="lede">Every short form used in the GRC course, library and labs, with its full form and what it means. Tap any underlined short form on a page to see it in place. CISSP terms are in the <a href="#/glossary">CISSP glossary</a>.</p>
-      <input class="grc-libq" id="grcGq" type="search" placeholder="Search, e.g. SoA or breach" value="${esc(grcGq)}" aria-label="Search the GRC glossary">
-      <dl class="grc-gl">${rows.map(x => `<div class="grc-gl-row ${x[0] === f ? "focus" : ""}" id="gg-${esc(x[0])}"><dt><b>${esc(x[0])}</b><span>${esc(x[1])}</span></dt><dd>${esc(x[2])}</dd></div>`).join("") || `<p class="sub">No match.</p>`}</dl>
+      <p class="lede">${ab.length} short forms and ${terms.length} key ideas from the GRC course, library and labs. Tap any underlined short form on a page to see it in place. Pictures of how they fit together are on the <a href="#/grc/visuals">Diagrams</a> page; CISSP terms are in the <a href="#/glossary">CISSP glossary</a>.</p>
+      <div class="gl-tools"><input class="grc-libq" id="grcGq" type="search" placeholder="Search, e.g. SoA, RFP or residual" value="${esc(grcGq)}" aria-label="Search the GRC glossary">
+        <div class="seg-tabs" role="group" aria-label="Sort"><button class="${grcGview === "az" ? "on" : ""}" aria-pressed="${grcGview === "az"}" data-glview="az">A to Z</button><button class="${grcGview === "topic" ? "on" : ""}" aria-pressed="${grcGview === "topic"}" data-glview="topic">By standard or topic</button></div></div>
+      ${body}
+    </div>`;
+  }
+  function grcVisuals(sec) {
+    const V = window.GRC_VISUALS || [];
+    return `<div class="page grc-visuals">
+      <a class="kicker" href="#/grc">← Learn GRC</a>
+      <h1 class="h-display">GRC in <em>diagrams</em></h1>
+      <p class="lede">Where the GRC Manager sits, how a vendor goes from request to exit, how sensitive each department's data is, where data flows and who may read, write or execute, and one risk scored before and after controls.</p>
+      <nav class="chips vz-chips" aria-label="Diagrams">${V.map(v => `<a class="chip" href="#/grc/visuals" data-jump="vz-${v.id}">${esc(v.t)}</a>`).join("")}</nav>
+      ${V.map(v => `<section class="vz-sec" id="vz-${v.id}"><h2 class="h-section">${esc(v.t)}</h2><p class="sub">${esc(v.lede)}</p>${v.html}</section>`).join("")}
+      <p class="hint">Organisation names, roles and numbers are illustrative. Terms are explained in the <a href="#/grc/glossary">GRC glossary</a>.</p>
     </div>`;
   }
   function grcLabs() {
@@ -1875,6 +1904,7 @@
     if (r.a === "insights") return App.viewGrcInsights();
     if (r.a === "notes") return grcNotes();
     if (r.a === "setup") return grcSetup();
+    if (r.a === "visuals") return grcVisuals(r.b);
     if (r.a === "log") return grcLog();
     if (r.a === "shelf") return App.viewLibrary(true);
     if (r.a === "reading") { try { await loadLib(); } catch (e) {} return grcReading(r.b); }
@@ -2125,6 +2155,12 @@
         ta.addEventListener("keydown", e => e.stopPropagation());
       }
     }
+    $$("[data-glview]").forEach(b => b.addEventListener("click", () => { grcGview = b.dataset.glview; App.rerender(); }));
+    $$(".vz-mat").forEach(fig => { const L = +fig.dataset.l, I = +fig.dataset.i, g = fig.querySelector(".vz-grid"); let h = "";
+      for (let l = 5; l >= 1; l--) { h += `<span class="vz-yl">${l}</span>`; for (let i = 1; i <= 5; i++) { const s = l * i, c = s >= 15 ? "c4" : s >= 10 ? "c3" : s >= 5 ? "c2" : "c1"; h += `<span class="vz-cell ${c} ${l === L && i === I ? "hit" : ""}">${l === L && i === I ? s : ""}</span>`; } }
+      h += `<span></span>` + [1, 2, 3, 4, 5].map(i => `<span class="vz-xl">${i}</span>`).join(""); g.innerHTML = h; g.setAttribute("role", "img"); g.setAttribute("aria-label", `5 by 5 risk matrix, risk plotted at likelihood ${L}, impact ${I}, score ${L * I}`); });
+    $$(".vz-sec").forEach(sec => { const t = sec.querySelector("h2").textContent; sec.querySelectorAll(".tbl-wrap").forEach((w, i) => w.setAttribute("aria-label", `${t}: table ${i + 1}`)); });
+    if (r.a === "visuals" && r.b) { const el = document.getElementById("vz-" + r.b); if (el) requestAnimationFrame(() => el.scrollIntoView({ block: "start" })); }
     $$("[data-logdone]").forEach(b => b.addEventListener("click", () => { S.grcAnsSeen = S.grcAnsSeen || {}; S.grcAnsSeen[b.dataset.logdone] = 1; save(); App.rerender(); }));
     const ne = $("#grcNotesExport"); if (ne) ne.addEventListener("click", () => {
       let out = "LearNtime - my GRC notes\n" + new Date().toLocaleDateString("en-GB") + "\n";
