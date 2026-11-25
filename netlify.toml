@@ -3,7 +3,7 @@
   # Keep unlicensed copies of commercial books off the public site, and don't publish
   # server-side sources. This only affects the deployed copy, not the repository.
   # Each deploy stamps script/style links with the commit, so browsers always load fresh files.
-  command = "rm -f resources/ISC2\\ CISSP\\ Certified*.pdf && rm -rf supabase && sed -i \"s/?v=dev/?v=${COMMIT_REF:-$(date +%s)}/g\" index.html && sed -i \"s/__BUILD__/${COMMIT_REF:-$(date +%s)}/\" sw.js"
+  command = "rm -f resources/ISC2\\ CISSP\\ Certified*.pdf && rm -rf supabase grc && sed -i \"s/?v=dev/?v=${COMMIT_REF:-$(date +%s)}/g\" index.html grc.html && sed -i \"s/__BUILD__/${COMMIT_REF:-$(date +%s)}/\" sw.js"
 
 # Forward database calls through this site so they work even where supabase.co is blocked.
 [[redirects]]

@@ -33,8 +33,9 @@ self.addEventListener("fetch", (e) => {
   if (req.method !== "GET" || skip(u)) return;
   if (req.mode === "navigate") {
     e.respondWith((async () => {
-      try { const res = await fetch(req); const c = await caches.open(CACHE); c.put("/", res.clone()); return res; }
-      catch (err) { return (await caches.match("/")) || Response.error(); }
+      const key = u.pathname === "/" || u.pathname === "/index.html" ? "/" : u.pathname;   // each page keeps its own copy
+      try { const res = await fetch(req); if (res.ok) { const c = await caches.open(CACHE); c.put(key, res.clone()); } return res; }
+      catch (err) { return (await caches.match(key)) || (await caches.match("/")) || Response.error(); }
     })());
     return;
   }

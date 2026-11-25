@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+/* StudyCISSP look: warm paper, green accent, book headings */
+body { background: #f7f3ea; font-family: "Inter", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+h1, h2 { font-family: "Fraunces", Georgia, serif; letter-spacing: -.01em; }
+h1 { font-weight: 600 !important; }
+h2 { font-weight: 600 !important; }
+button { transition: background-color .15s, color .15s; }
+nav::-webkit-scrollbar, .overflow-x-auto::-webkit-scrollbar { height: 6px; }
+nav::-webkit-scrollbar-thumb, .overflow-x-auto::-webkit-scrollbar-thumb { background: #d9d0bc; border-radius: 99px; }
+header.bg-slate-900 { background: linear-gradient(160deg, #1f5c43, #163f2f); }
+header .text-slate-400 { color: #e3b95a; letter-spacing: .12em; }
+nav.sticky { background: rgba(251, 248, 241, .94); backdrop-filter: blur(8px); }

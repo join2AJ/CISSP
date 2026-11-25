@@ -429,6 +429,7 @@
     $$(".pub-mobile-actions").forEach(x => { x.innerHTML = signedIn ? `<a href="#/" class="btn small primary">Open dashboard</a>` : `<a href="#/login" class="btn small">Sign in</a><a href="#/signup/gold" class="btn small primary">Get started</a>`; });
     const pn = $("#pubnav"); if (pn) pn.classList.remove("open");
     const adm = $("#navAdmin"); if (adm) adm.hidden = !App.isAdmin();
+    const grc = $("#navGrc"); if (grc) grc.hidden = !App.isPrivileged();
     $$(".mainnav a").forEach(a => a.classList.toggle("locked", !!App.profile && !App.can(App.FEATURE[a.dataset.nav === "read" ? "read" : a.dataset.nav])));
     const signed = db.mode === "local" || !!db.user;
     $("#userBtn").hidden = !signed || (!!def.bare && !(App.profile && App.profile.onboarded)) || (db.mode === "cloud" && !db.user);
@@ -441,7 +442,7 @@
   function renderToc(r) {
     const all = allProgress();
     const order = D;
-    let h = `<div class="mob-nav"><a href="#/" class="${r.page === "home" ? "active" : ""}">Home</a>${App.isAdmin() ? `<a href="#/admin">Admin</a>` : ""}</div>`;
+    let h = `<div class="mob-nav"><a href="#/" class="${r.page === "home" ? "active" : ""}">Home</a>${App.isPrivileged() ? `<a href="#/grc" class="${r.page === "grc" ? "active" : ""}">GRC guide</a>` : ""}${App.isAdmin() ? `<a href="#/admin">Admin</a>` : ""}</div>`;
     const inGroup = (pages) => pages.includes(r.page);
     const onChapters = r.page === "domain" || r.page === "read";
     h += `<details class="toc-group" ${onChapters || window.innerWidth > 1000 ? "open" : ""}><summary class="toc-head">Chapters <small>${all.pct}% read</small></summary><ol class="toc-list">`;
@@ -1465,6 +1466,17 @@
     bindSchedule();
     if (r.a === "schedule") { const el = $("#schedule"); if (el) requestAnimationFrame(() => el.scrollIntoView({ block: "start" })); }
   } });
+  /* second branch: the GRC Manager field guide, private to the owner's account */
+  function viewGrc() {
+    if (!App.isPrivileged()) return `<div class="page-narrow"><div class="kicker">Private</div><h1 class="h-display">Not available</h1><p class="lede">This section is only for the site owner.</p><a class="btn" href="#/">Back to your study desk</a></div>`;
+    return `<div class="grc-wrap">
+      <div class="grc-bar"><div><span class="kicker">Second branch · private to you</span><h1>GRC Manager <em>field guide</em></h1>
+        <p class="sub" style="margin:2px 0 0">The role, a skill ladder, 50-term glossary, daily situations, a 20-day plan, your first 90 days and 18 templates. Your checklist is saved on this device.</p></div>
+        <a class="btn small" href="grc.html" target="_blank" rel="noopener">Open full screen ↗</a></div>
+      <iframe class="grc-frame" src="grc.html" title="GRC Manager field guide"></iframe>
+    </div>`;
+  }
+  App.register("grc", { render: viewGrc, title: "GRC field guide", nav: "grc", area: "other" });
   App.register("revision", { render: viewRevision, bind: bindRevision, title: "Revision sheets", nav: "revision", area: "read" });
   App.register("notes", { render: viewNotes, bind: bindNotes, title: "My notes", nav: "notes", area: "library" });
   App.register("tracker", { render: viewTracker, bind: bindTracker, title: "Tracker", nav: "insights", area: "insights" });
