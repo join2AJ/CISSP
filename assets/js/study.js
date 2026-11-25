@@ -383,10 +383,8 @@
 
   /* ======================= INSIGHTS ======================= */
   let range = 30;
-  const branchTabs = (g) => `<div class="seg-tabs ins-branch" role="group" aria-label="Which course"><button class="${g ? "" : "on"}" data-branch="cissp" aria-pressed="${!g}">CISSP</button><button class="${g ? "on" : ""}" data-branch="grc" aria-pressed="${g}">GRC</button></div>`;
   const isGrcRow = r => /^grc/.test(r.domain || "");
   async function viewInsights() {
-    if (A.isPrivileged() && A.branch() === "grc") return viewGrcInsights();
     const rows = (await A.loadTime()).filter(r => !isGrcRow(r));
     const since = range ? ymd(addDays(today(), -(range - 1))) : "0000";
     const R = rows.filter(r => r.day >= since);
@@ -416,7 +414,7 @@
       ["First mock", "Finish a mock exam", A.mocks.length >= 1], ["Pass mark", "Score 75% or more in a mock", bestMock >= 75]];
     if (A.streak() > (S0.bestStreak || 0)) { S0.bestStreak = A.streak(); A.save(); }
     return `<div class="page-narrow">
-      <div class="kicker">Insights · CISSP</div>${A.isPrivileged() ? branchTabs(false) : ""}
+      <div class="kicker">Insights · CISSP</div>${A.branchTabs("cissp", "#/insights", "#/grc/insights")}
       <h1 class="h-display">Where your <em>time goes</em></h1>
       <p class="lede">Active study time only: the clock pauses when you switch tabs or stop interacting for 90 seconds.</p>
       <h2 class="h-section">Milestones <small class="sub">${MS.filter(m => m[2]).length} of ${MS.length}</small></h2>
@@ -443,14 +441,16 @@
     </div>`;
   }
   async function viewGrcInsights() {
-    try { await A.loadGrc(); } catch (e) {}
+    const T0 = await A.grcTime(), est = T0.est;
     const C = window.GRC_COURSE || [], S0 = A.state(), done = S0.grc || {}, ans = S0.grcAns || {}, tests = S0.grcTests || {};
-    const rows = (await A.loadTime()).filter(isGrcRow);
+    const rows = T0.rows;
     const since = range ? ymd(addDays(today(), -(range - 1))) : "0000";
     const R = rows.filter(r => r.day >= since), total = R.reduce((n, r) => n + r.seconds, 0);
     const byMod = {}, byLesson = {}, byDay = {};
     R.forEach(r => { const m = r.domain.slice(4); if (m) byMod[m] = (byMod[m] || 0) + r.seconds; if (m && r.topic) byLesson[m + ":" + r.topic] = (byLesson[m + ":" + r.topic] || 0) + r.seconds; byDay[r.day] = (byDay[r.day] || 0) + r.seconds; });
     const days = range || 30, series = Array.from({ length: days }, (_, i) => { const d = ymd(addDays(today(), i - days + 1)); return [d, byDay[d] || 0]; });
+    Object.entries(est.byMod).forEach(([m, s]) => { byMod[m] = (byMod[m] || 0) + s; });
+    Object.entries(est.byLesson).forEach(([k, s]) => { byLesson[k] = (byLesson[k] || 0) + s; });
     const maxDay = Math.max(60, ...series.map(s => s[1])), maxMod = Math.max(1, ...Object.values(byMod));
     const allL = C.reduce((n, m) => n + m.lessons.length, 0), lessonsDone = C.reduce((n, m) => n + m.lessons.filter(l => done[m.id + ":" + l.id]).length, 0);
     const modsDone = C.filter(m => m.lessons.every(l => done[m.id + ":" + l.id])).length;
@@ -461,40 +461,46 @@
       ["First control tested", "Rate one control's design and operation", tested >= 1], ["Ten controls", "Rate ten controls", tested >= 10], ["Plan started", "Tick 5 items in the field guide's 20-day plan", planDone >= 5], ["A week strong", "Study 7 days in a row", A.streak() >= 7 || (S0.bestStreak || 0) >= 7]];
     const topL = Object.entries(byLesson).sort((a, b) => b[1] - a[1]).slice(0, 8);
     return `<div class="page-narrow">
-      <div class="kicker">Insights · GRC</div>${branchTabs(true)}
+      <div class="kicker">Insights · GRC</div>${A.branchTabs("grc", "#/insights", "#/grc/insights")}
       <h1 class="h-display">Your GRC <em>progress</em></h1>
       <p class="lede">Time on the GRC course, library and controls, and how you’re doing on the lesson questions. Active time only: the clock pauses when you switch tabs or stop for 90 seconds.</p>
       <h2 class="h-section">Milestones <small class="sub">${MS.filter(m => m[2]).length} of ${MS.length}</small></h2>
       <div class="ms-grid">${MS.map(([t, d, ok]) => `<div class="ms ${ok ? "on" : ""}"><span class="ms-ico" aria-hidden="true">${ok ? "✓" : "○"}</span><b>${t}</b><small>${d}</small></div>`).join("")}</div>
       <div class="filters">${[[7, "7 days"], [30, "30 days"], [90, "90 days"], [0, "All time"]].map(([v, l]) => `<button class="chip ${range === v ? "on" : ""}" data-range="${v}">${l}</button>`).join("")}</div>
       <section class="facts" style="border-top:1px solid var(--rule)">
-        <div class="fact"><b>${fmtDur(total)}</b><span>on GRC</span></div>
+        <div class="fact"><b>${fmtDur(total + est.total)}</b><span>on GRC${range ? ` (last ${range} days, plus earlier)` : ""}</span></div>
         <div class="fact"><b>${lessonsDone}<small class="unit"> / ${allL}</small></b><span>lessons done</span></div>
         <div class="fact"><b>${aN ? Math.round(aOk / aN * 100) + "%" : "-"}</b><span>right first time (${aN})</span></div>
         <div class="fact"><b>${tested}</b><span>controls tested</span></div>
       </section>
+      ${est.n ? `<p class="hint">Includes about ${fmtDur(est.total)} for ${est.n} lesson${est.n > 1 ? "s" : ""} you finished before time tracking started, estimated as twice each lesson’s reading time to allow for the questions and re-reading. From now on the time is measured.</p>` : ""}
       <h2 class="h-section">Daily GRC time</h2>
       <div class="daychart">${series.map(([d, s]) => `<div class="dc-col" title="${fmtD(d)}: ${fmtDur(s)}"><i style="height:${Math.round(s / maxDay * 100)}%"></i></div>`).join("")}</div>
       <div class="dc-axis"><span>${fmtD(series[0][0])}</span><span>today</span></div>
       <h2 class="h-section">By module</h2>
       <div class="bars">${C.map(m => { const s = byMod[m.id] || 0, d = m.lessons.filter(l => done[m.id + ":" + l.id]).length; return `<div class="hbar"><span><a href="#/grc/${m.id}">${m.n}. ${esc(m.short || m.title)}</a></span><div class="meter"><i style="width:${s / maxMod * 100}%"></i></div><b>${fmtDur(s)}</b><span class="band ${d === m.lessons.length ? "green" : d ? "orange" : ""}">${d}/${m.lessons.length}</span></div>`; }).join("")}</div>
-      <p class="legend">Bar = time spent. Badge = lessons done.</p>
+      <p class="legend">Bar = time spent (measured plus the estimate for earlier lessons). Badge = lessons done.</p>
       <div class="card" style="margin-top:32px"><h3>Most-read lessons</h3>${topL.length ? topL.map(([k, v]) => { const [mi, li] = k.split(":"), m = C.find(x => x.id === mi), l = m && m.lessons.find(x => x.id === li); return `<div class="kv"><a href="#/grc/${mi}/${li}">${esc(l ? l.title : li)}</a><b>${fmtDur(v)}</b></div>`; }).join("") : `<p>Read a few lessons and they’ll show here.</p>`}</div>
     </div>`;
   }
-  function bindInsights() {
-    $$("[data-branch]").forEach(b => b.addEventListener("click", () => { A.setBranch(b.dataset.branch); A.rerender(); })); $$("[data-range]").forEach(b => b.addEventListener("click", () => { range = +b.dataset.range; A.rerender(); })); }
+  A.viewGrcInsights = viewGrcInsights;
+  A.bindInsights = () => bindInsights();
+  function bindInsights() { $$("[data-range]").forEach(b => b.addEventListener("click", () => { range = +b.dataset.range; A.rerender(); })); }
 
   /* ======================= LIBRARY ======================= */
   const ytId = (u) => { const m = String(u).match(/(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/|live\/)|youtu\.be\/)([\w-]{11})/); return m ? m[1] : null; };
   let libFilter = "all";
-  async function viewLibrary() {
+  const isGrcRes = r => /^grc/.test(r.domain || "");
+  async function viewLibrary(grc) {
+    grc = grc === true;
     let list = [];
     try { list = await db.resources(); } catch (e) { A.toast(A.errMsg(e)); }
+    list = list.filter(r => grc ? isGrcRes(r) : !isGrcRes(r));
     A._lib = list;
+    if (grc) return viewShelf(list);
     const shown = list.filter(r => libFilter === "all" || r.domain === libFilter || (libFilter === "none" && !r.domain));
     return `<div class="page-narrow">
-      <div class="kicker">My library</div>
+      <div class="kicker">My library</div>${A.branchTabs("cissp", "#/library", "#/grc/shelf")}
       <h1 class="h-display">Your own <em>shelf</em></h1>
       <p class="lede">Keep the notes, documents and videos that help you, tagged by domain. Private to you${db.mode === "cloud" ? " (admins can see it for support)" : ""}.</p>
       <div class="card" style="margin-top:26px">
@@ -522,7 +528,41 @@
       }).join("") : `<p class="sub">Nothing here yet. Add the video that finally made subnetting click.</p>`}</div>
     </div>`;
   }
-  function bindLibrary() {
+  let shelfFilter = "all";
+  function viewShelf(list) {
+    const C = window.GRC_COURSE || [], name = d => { const m = C.find(x => "grc-" + x.id === d); return m ? `${m.n}. ${m.short || m.title}` : "General"; };
+    const shown = list.filter(r => shelfFilter === "all" || r.domain === shelfFilter);
+    return `<div class="page-narrow">
+      <div class="kicker">My shelf · GRC</div>${A.branchTabs("grc", "#/library", "#/grc/shelf")}
+      <h1 class="h-display">Your GRC <em>shelf</em></h1>
+      <p class="lede">Keep the policies, templates, articles and videos that help you with GRC, tagged by module. Private to you${db.mode === "cloud" ? " (admins can see it for support)" : ""}. Our own documents are in the <a href="#/grc/library">GRC library</a>.</p>
+      <div class="card" style="margin-top:26px">
+        <h3>Add a resource</h3>
+        <div class="form-row">
+          <label style="flex:2;min-width:220px">Title<input id="rTitle" maxlength="200" placeholder="e.g. A good SOC 2 readiness checklist"></label>
+          <label>Module<select id="rDom"><option value="grc">General</option>${C.map(m => `<option value="grc-${m.id}">${m.n}. ${esc(m.short || m.title)}</option>`).join("")}</select></label>
+        </div>
+        <div class="seg-tabs" role="tablist"><button class="on" data-rk="link">Link or YouTube</button><button data-rk="file" ${db.mode === "cloud" ? "" : "disabled title='Needs the online database'"}>Upload a file</button></div>
+        <div class="form-row" id="rLinkRow"><label style="flex:1">URL<input id="rUrl" type="url" placeholder="https://…"></label></div>
+        <div class="form-row" id="rFileRow" hidden><label style="flex:1">File (PDF, Word, PowerPoint, Excel, images, text · max 20 MB)<input id="rFile" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.png,.jpg,.jpeg,.webp,.txt,.md"></label></div>
+        <div class="form-row"><label style="flex:1">Note (optional)<textarea id="rNote" maxlength="1000" placeholder="Why it helps, which part to read…"></textarea></label></div>
+        <button class="btn primary small" id="rAdd">Add to my shelf</button>
+        <p class="hint">Only upload material you have the right to share. Don’t upload real client evidence or personal data.</p>
+      </div>
+      <div class="filters" style="margin-top:30px"><button class="chip ${shelfFilter === "all" ? "on" : ""}" data-sf="all">All (${list.length})</button>${["grc"].concat(C.map(m => "grc-" + m.id)).filter(d => list.some(r => r.domain === d)).map(d => `<button class="chip ${shelfFilter === d ? "on" : ""}" data-sf="${d}">${esc(name(d))}</button>`).join("")}</div>
+      <div class="lib-list">${shown.length ? shown.map(r => { const y = r.kind === "video" ? ytId(r.url) : null;
+        return `<div class="lib-item">
+          ${y ? `<button class="yt" data-yt="${y}" aria-label="Play video"><img src="https://i.ytimg.com/vi/${y}/hqdefault.jpg" alt="" loading="lazy"><span>▶</span></button>` : `<div class="res-ico">${r.kind === "file" ? "▤" : "↗"}</div>`}
+          <div class="lib-body"><div class="lib-meta">${esc(name(r.domain))} · ${r.kind === "file" ? "Document" : r.kind === "video" ? "Video" : "Link"} · ${fmtD(r.created_at)}</div>
+            <h4>${r.kind === "file" ? `<a href="#" data-open="${esc(r.storage_path)}">${esc(r.title)}</a>` : `<a href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">${esc(r.title)} ↗</a>`}</h4>
+            ${r.note ? `<p>${esc(r.note)}</p>` : ""}</div>
+          <button class="del" data-rdel="${esc(r.id)}" aria-label="Delete">×</button></div>`; }).join("") : `<p class="sub">Nothing here yet. Add the template or article you keep going back to.</p>`}</div>
+    </div>`;
+  }
+  A.viewLibrary = viewLibrary;
+  A.bindLibrary = (grc) => bindLibrary(grc);
+  function bindLibrary(grc) {
+    $$("[data-sf]").forEach(b => b.addEventListener("click", () => { shelfFilter = b.dataset.sf; A.rerender(); }));
     let kind = "link";
     $$("[data-rk]").forEach(b => b.addEventListener("click", () => { kind = b.dataset.rk; $$("[data-rk]").forEach(x => x.classList.toggle("on", x === b)); $("#rLinkRow").hidden = kind !== "link"; $("#rFileRow").hidden = kind !== "file"; }));
     $$("[data-lf]").forEach(b => b.addEventListener("click", () => { libFilter = b.dataset.lf; A.rerender(); }));
@@ -563,5 +603,5 @@
   A.register("mock", { render: viewMock, bind: bindMock, title: "Mock exam", nav: "mock", area: "mock" });
   A.register("flashcards", { render: viewFlash, bind: bindFlash, title: "Flashcards", nav: "flashcards", area: "flashcards" });
   A.register("insights", { render: viewInsights, bind: bindInsights, title: "Insights", nav: "insights", area: "insights" });
-  A.register("library", { render: viewLibrary, bind: bindLibrary, title: "My library", nav: "library", area: "library" });
+  A.register("library", { render: () => viewLibrary(false), bind: () => bindLibrary(false), title: "My library", nav: "library", area: "library" });
 })();
