@@ -351,6 +351,7 @@
     if (exKey && !site) out = withExplain(out, exKey);
     view.innerHTML = out + (site ? (App.siteFooter ? App.siteFooter() : "") : def.bare ? "" : footer());
     App.stackTables(view);
+    App.linkAbbr(view, r.page === "grc" ? "grc" : "cissp");
     view.classList.remove("view-enter"); void view.offsetWidth; view.classList.add("view-enter");
     if (!def.bare && !site) renderToc(r);
     paintNav(r, def);
@@ -414,11 +415,71 @@
       }));
     });
   };
+  /* short forms: tap any abbreviation to see its full form and meaning, with a link to the glossary */
+  const NOLINK = new Set(["IT"]);
+  const abbrIdx = {};
+  App.abbrIndex = (branch) => {
+    if (abbrIdx[branch]) return abbrIdx[branch];
+    const m = new Map();
+    (window.ABBR_EXTRA || []).forEach(([k, full, mean, br]) => { if (br === "both" || br === branch) m.set(k, { k, full, mean, where: "", g: "grc" }); });
+    Object.entries(window.GLOSSARY || {}).forEach(([d, list]) => list.forEach(t => {
+      const mm = String(t[0]).match(/^([A-Z][A-Za-z0-9\-\/&]*[A-Z0-9][A-Za-z0-9]*) \((.+)\)$/);
+      if (mm && !m.has(mm[1])) m.set(mm[1], { k: mm[1], full: mm[2], mean: t[1], where: t[2] || "", g: "cissp" });
+    }));
+    (window.ABBR_EXTRA || []).forEach(([k, full, mean, br]) => { if (!m.has(k) && br !== branch) m.set(k, { k, full, mean, where: "", g: "grc" }); });
+    const keys = [...m.keys()].filter(k => !NOLINK.has(k)).sort((a, b) => b.length - a.length).map(k => k.replace(/[.*+?^${}()|[\]\\\/]/g, "\\$&"));
+    return (abbrIdx[branch] = { map: m, re: new RegExp(`(?<![\\w-])(${keys.join("|")})(s?)(?![\\w-])`, "g") });
+  };
+  const ABBR_SKIP = "a, button, abbr, code, pre, kbd, h1, h2, h3, input, textarea, select, label, script, style, svg, .no-abbr, .opt, .nav-menu";
+  App.linkAbbr = (root, branch) => {
+    if (!root) return; const idx = App.abbrIndex(branch || (document.body.classList.contains("grc-mode") ? "grc" : "cissp"));
+    const scopes = root.matches && root.matches(".prose, .why, .qc-q, .q-stem, .grc-lab, .memorise, .rev-sheet, .note-text, .lede, .grc-mod small") ? [root]
+      : root.querySelectorAll(".prose, .why, .qc-q, .q-stem, .grc-lab, .memorise, .rev-sheet, .note-text, .grc-mod small");
+    scopes.forEach(sc => {
+      const walker = document.createTreeWalker(sc, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement.closest(ABBR_SKIP) || !/[A-Z]{2}/.test(n.nodeValue) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+      const nodes = []; while (walker.nextNode()) nodes.push(walker.currentNode);
+      nodes.forEach(n => {
+        const text = n.nodeValue; idx.re.lastIndex = 0; if (!idx.re.test(text)) return; idx.re.lastIndex = 0;
+        const frag = document.createDocumentFragment(); let last = 0, m;
+        while ((m = idx.re.exec(text))) {
+          const e = idx.map.get(m[1]); if (!e) continue;
+          frag.appendChild(document.createTextNode(text.slice(last, m.index)));
+          const ab = document.createElement("abbr"); ab.className = "gl"; ab.tabIndex = 0; ab.title = e.full; ab.dataset.k = m[1]; ab.setAttribute("role", "button"); ab.textContent = m[1] + (m[2] || "");
+          frag.appendChild(ab); last = m.index + m[0].length;
+        }
+        frag.appendChild(document.createTextNode(text.slice(last))); n.parentNode.replaceChild(frag, n);
+      });
+    });
+  };
+  let abbrPop = null;
+  const closeAbbr = () => { if (abbrPop) { abbrPop.remove(); abbrPop = null; } };
+  const openAbbr = (el) => {
+    closeAbbr(); const branch = document.body.classList.contains("grc-mode") ? "grc" : "cissp";
+    const e = App.abbrIndex(branch).map.get(el.dataset.k); if (!e) return;
+    const href = e.g === "cissp" ? `#/glossary/q/${encodeURIComponent(e.k)}` : `#/grc/glossary/${encodeURIComponent(e.k)}`;
+    abbrPop = document.createElement("div"); abbrPop.className = "abbr-pop"; abbrPop.setAttribute("role", "dialog"); abbrPop.setAttribute("aria-label", e.k);
+    abbrPop.innerHTML = `<b>${esc(e.k)}</b><span class="abbr-full">${esc(e.full)}</span><p>${esc(e.mean)}</p>${e.where ? `<p class="abbr-where">Used in: ${esc(e.where)}</p>` : ""}<a href="${href}">Open in the ${e.g === "cissp" ? "CISSP" : "GRC"} glossary →</a>`;
+    document.body.appendChild(abbrPop);
+    const r = el.getBoundingClientRect(), w = Math.min(320, innerWidth - 24);
+    abbrPop.style.width = w + "px";
+    abbrPop.style.left = Math.max(12, Math.min(innerWidth - w - 12, r.left + r.width / 2 - w / 2)) + "px";
+    const below = r.bottom + 8 + abbrPop.offsetHeight < innerHeight;
+    abbrPop.style.top = (below ? r.bottom + 8 : Math.max(8, r.top - abbrPop.offsetHeight - 8)) + scrollY + "px";
+    abbrPop.querySelector("a").addEventListener("click", closeAbbr);
+  };
+  document.addEventListener("click", (ev) => { const el = ev.target.closest && ev.target.closest("abbr.gl"); if (el) { ev.preventDefault(); ev.stopPropagation(); if (abbrPop && abbrPop.dataset.for === el.dataset.k + el.offsetTop) closeAbbr(); else { openAbbr(el); if (abbrPop) abbrPop.dataset.for = el.dataset.k + el.offsetTop; } return; } if (abbrPop && !abbrPop.contains(ev.target)) closeAbbr(); }, true);
+  document.addEventListener("keydown", (ev) => { if (ev.key === "Escape") closeAbbr(); else if ((ev.key === "Enter" || ev.key === " ") && ev.target.matches && ev.target.matches("abbr.gl")) { ev.preventDefault(); openAbbr(ev.target); } });
+  addEventListener("hashchange", closeAbbr);
   App.rerender = () => { rendered = null; const y = scrollY; route().then(() => scrollTo(0, y)); };
 
   function paintNav(r, def) {
     const key = def.nav || r.page;
-    const navKey = r.page === "domain" ? "read" : (document.querySelector(`.mainnav [data-nav="${r.page}"]`) ? r.page : key);
+    const grcMode = r.page === "grc";
+    $$(".mainnav").forEach(n => { n.hidden = n.classList.contains("grcnav") ? !grcMode : grcMode; });
+    const brand = $(".topbar .brand"); if (brand) { brand.setAttribute("href", grcMode ? "#/grc" : "#/"); const sm = brand.querySelector("small"); if (sm) sm.textContent = grcMode ? "GRC branch · learn GRC" : "read slowly · pass once"; }
+    document.body.classList.toggle("grc-mode", grcMode);
+    const navKey = grcMode ? (!r.a ? "grc-home" : grcMod(r.a) ? "grc-" + r.a : "grc-" + r.a)
+      : r.page === "domain" ? "read" : (document.querySelector(`.mainnav [data-nav="${r.page}"]`) ? r.page : key);
     $$(".pubnav a").forEach(a => a.classList.toggle("active", a.dataset.nav === key));
     $$(".mainnav a").forEach(a => a.classList.toggle("active", a.dataset.nav === navKey));
     $$(".mainnav .nav-group").forEach(g => { g.classList.remove("open"); g.querySelector(".nav-top").setAttribute("aria-expanded", "false"); g.classList.toggle("active", !!g.querySelector(`[data-nav="${navKey}"]`)); });
@@ -429,6 +490,7 @@
     $$(".pub-mobile-actions").forEach(x => { x.innerHTML = signedIn ? `<a href="#/" class="btn small primary">Open dashboard</a>` : `<a href="#/login" class="btn small">Sign in</a><a href="#/signup/gold" class="btn small primary">Get started</a>`; });
     const pn = $("#pubnav"); if (pn) pn.classList.remove("open");
     const adm = $("#navAdmin"); if (adm) adm.hidden = !App.isAdmin();
+    const adm2 = $("#navAdmin2"); if (adm2) adm2.hidden = !App.isAdmin();
     const grc = $("#navGrc"); if (grc) grc.hidden = !App.isPrivileged();
     $$(".mainnav a").forEach(a => a.classList.toggle("locked", !!App.profile && !App.can(App.FEATURE[a.dataset.nav === "read" ? "read" : a.dataset.nav])));
     const signed = db.mode === "local" || !!db.user;
@@ -439,7 +501,29 @@
   }
 
   /* ---------------- TOC & menus ---------------- */
+  const GRC_MODS = [["m1", "Foundations"], ["m2", "Risk management"], ["m3", "ISO 27001"], ["m4", "SOC 1 and SOC 2"], ["m5", "Controls and testing"], ["m6", "Third-party risk"], ["m7", "India: DPDP and CERT-In"], ["m8", "OT and critical infrastructure"], ["m9", "Incidents and continuity"], ["m10", "Reporting and leading"]];
+  function renderGrcToc(r) {
+    const C = window.GRC_COURSE || [], open = (pages) => pages.includes(r.a || "") || window.innerWidth > 1000;
+    const L = (href, ico, t, on) => `<li><a href="${href}" class="${on ? "active" : ""}"><span class="toc-num">${ico}</span>${t}</a></li>`;
+    const done = C.reduce((n, m) => n + grcProg(m).d, 0), all = C.reduce((n, m) => n + m.lessons.length, 0) || 32;
+    let h = `<div class="mob-nav"><a href="#/grc" class="${!r.a ? "active" : ""}">GRC home</a><a href="#/" class="mob-switch">Study CISSP</a>${App.isAdmin() ? `<a href="#/admin">Admin</a>` : ""}</div>`;
+    h += `<details class="toc-group" ${grcMod(r.a) || window.innerWidth > 1000 ? "open" : ""}><summary class="toc-head">Course <small>${done} of ${all} lessons</small></summary><ol class="toc-list">`;
+    GRC_MODS.forEach(([id, t], i) => { const m = grcMod(id), p = m ? grcProg(m) : { pct: 0 }, active = r.a === id;
+      h += `<li><a href="#/grc/${id}" class="${active ? "active" : ""}"><span class="toc-dot" style="background:#b8892a;margin-top:7px"></span><span class="toc-name">${i + 1}. ${esc(t)}<small>${p.pct}% done</small></span></a>`;
+      if (active && m) h += `<ol class="toc-sub">` + m.lessons.map((l, j) => `<li><a href="#/grc/${id}/${l.id}" class="${grcDone()[grcKey(id, l.id)] ? "read" : ""} ${r.b === l.id ? "active" : ""}">${i + 1}.${j + 1} ${esc(l.title)}</a></li>`).join("") + `</ol>`;
+      h += `</li>`; });
+    h += `</ol></details>`;
+    h += `<details class="toc-group" ${open(["library"]) ? "open" : ""}><summary class="toc-head">Library</summary><ol class="toc-list">
+      ${L("#/grc/library/iso-annex-a-2022", "§", "ISO 27001:2022 controls", r.b === "iso-annex-a-2022")}${L("#/grc/library/soc2-controls", "§", "SOC 2", r.b === "soc2-controls")}
+      ${L("#/grc/library/dpdp-sections-reference", "§", "DPDP Act and Rules", r.b === "dpdp-sections-reference")}${L("#/grc/library/tprm-lifecycle-and-monitoring", "§", "Third-party risk", r.b === "tprm-lifecycle-and-monitoring")}
+      ${L("#/grc/library", "❏", "All 44 documents", r.a === "library" && !r.b)}</ol></details>`;
+    h += `<details class="toc-group" ${open(["labs", "guide", "glossary"]) ? "open" : ""}><summary class="toc-head">Practise</summary><ol class="toc-list">
+      ${L("#/grc/labs", "◎", "Hands-on labs", r.a === "labs")}${L("#/grc/guide", "▤", "Field guide", r.a === "guide")}${L("#/grc/glossary", "Aa", "GRC glossary", r.a === "glossary")}</ol></details>`;
+    h += `<div class="toc-card"><b>${Math.round(done / all * 100)}%</b>of the GRC course · ${done} of ${all} lessons<div class="meter" style="margin-top:10px"><i style="width:${Math.round(done / all * 100)}%;background:#b8892a"></i></div></div>`;
+    toc.innerHTML = h;
+  }
   function renderToc(r) {
+    if (r.page === "grc") return renderGrcToc(r);
     const all = allProgress();
     const order = D;
     let h = `<div class="mob-nav"><a href="#/" class="${r.page === "home" ? "active" : ""}">Home</a>${App.isPrivileged() ? `<a href="#/grc" class="${r.page === "grc" ? "active" : ""}">Learn GRC</a>` : ""}${App.isAdmin() ? `<a href="#/admin">Admin</a>` : ""}</div>`;
@@ -802,7 +886,7 @@
   }
   function rerenderQC() {
     const r = parse(), d = byId[r.a], s = d && d.sections.find(x => x.id === r.b); if (!s) return;
-    const box = $("#qc"); box.outerHTML = quickCheck(d, s); bindQuickCheck();
+    const box = $("#qc"); box.outerHTML = quickCheck(d, s); bindQuickCheck(); App.linkAbbr($("#qc"), "cissp");
   }
   addEventListener("hashchange", () => { QC = { key: null, ans: null, n: 0 }; });
   function bindSecTools(k) {
@@ -1254,6 +1338,7 @@
   const glossAll = () => Object.entries(G).flatMap(([d, list]) => list.map(e => ({ d, term: e[0], mean: e[1], where: e[2], tools: e[3] })));
   let gq = "";
   function viewGlossary(r) {
+    if (r.a === "q" && r.b) { gq = decodeURIComponent(r.b); history.replaceState(null, "", "#/glossary"); }
     const dom = r.a && byId[r.a] ? r.a : "all";
     const q = gq.toLowerCase();
     const rows = glossAll().filter(x => (dom === "all" || x.d === dom) && (!q || [x.term, x.mean, x.where, x.tools].join(" ").toLowerCase().includes(q)))
@@ -1509,6 +1594,19 @@
       <p class="grc-src" style="margin-top:30px">Reference notes: ${LIB_SRC.sushegaad} Templates: ${LIB_SRC.comply}</p>
     </div>`;
   }
+  let grcGq = "";
+  function grcGlossary(focus) {
+    const list = (window.ABBR_EXTRA || []).filter(x => x[3] !== "cissp").sort((a, b) => a[0].localeCompare(b[0], "en", { sensitivity: "base" }));
+    const f = focus ? decodeURIComponent(focus) : "";
+    const rows = list.filter(x => !grcGq || x.join(" ").toLowerCase().includes(grcGq.toLowerCase()));
+    return `<div class="page-narrow grc-gloss">
+      <a class="kicker" href="#/grc">← Learn GRC</a>
+      <h1 class="h-display">GRC <em>glossary</em></h1>
+      <p class="lede">Every short form used in the GRC course, library and labs, with its full form and what it means. Tap any underlined short form on a page to see it in place. CISSP terms are in the <a href="#/glossary">CISSP glossary</a>.</p>
+      <input class="grc-libq" id="grcGq" type="search" placeholder="Search, e.g. SoA or breach" value="${esc(grcGq)}" aria-label="Search the GRC glossary">
+      <dl class="grc-gl">${rows.map(x => `<div class="grc-gl-row ${x[0] === f ? "focus" : ""}" id="gg-${esc(x[0])}"><dt><b>${esc(x[0])}</b><span>${esc(x[1])}</span></dt><dd>${esc(x[2])}</dd></div>`).join("") || `<p class="sub">No match.</p>`}</dl>
+    </div>`;
+  }
   function grcLabs() {
     const labs = window.GRC_LABS || [];
     return `<div class="page-narrow grc-labs">
@@ -1543,6 +1641,7 @@
     const C = window.GRC_COURSE;
     if (r.a === "library") return grcLibrary(r.b);
     if (r.a === "labs") return grcLabs();
+    if (r.a === "glossary") return grcGlossary(r.b);
     const m = r.a && grcMod(r.a);
     if (m && r.b) { const l = m.lessons.find(x => x.id === r.b); if (l) return grcLesson(m, l); }
     if (m) return grcModule(m);
@@ -1601,12 +1700,15 @@
     </article>`;
   }
   function bindGrc(r) {
+    const gg = $("#grcGq"); if (gg) gg.addEventListener("input", () => { grcGq = gg.value; clearTimeout(gg._t); gg._t = setTimeout(() => { App.rerender(); setTimeout(() => { const n = $("#grcGq"); if (n) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); } }, 30); }, 250); });
+    if (r.a === "glossary" && r.b) { const el = document.getElementById("gg-" + decodeURIComponent(r.b)); if (el) requestAnimationFrame(() => el.scrollIntoView({ block: "center" })); }
     const q = $("#libQ"); if (q) q.addEventListener("input", () => { libQ = q.value; clearTimeout(q._t); q._t = setTimeout(() => { App.rerender(); setTimeout(() => { const n = $("#libQ"); if (n) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); } }, 30); }, 250); });
     const n = $("#grcNext"); if (n) n.addEventListener("click", () => { grcDone()[n.dataset.key] = ymd(today()); save(); });
     $$(".grc-q").forEach(box => $$("[data-gq]", box).forEach(b => b.addEventListener("click", () => {
       const j = +b.dataset.gq, a = +box.dataset.a, ok = j === a;
       $$("[data-gq]", box).forEach((x, k) => { x.disabled = true; if (k === a) x.classList.add("correct"); else if (k === j) x.classList.add("wrong"); });
       box.querySelector(".grc-why").innerHTML = `<div class="why"><b style="color:${ok ? "var(--good)" : "var(--bad)"}">${ok ? "Correct." : "Not quite."}</b> ${box.dataset.w}</div>`;
+      App.linkAbbr(box.querySelector(".grc-why"), "grc");
     })));
     if (r.a && r.b) {
       const ids = (grcMod(r.a) || { lessons: [] }).lessons.map(x => x.id), at = ids.indexOf(r.b);
