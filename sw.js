@@ -1,4 +1,4 @@
-/* StudyCISSP service worker: instant repeat visits and offline reading.
+/* LearNtime service worker: instant repeat visits and offline reading.
    - The page shell and every script/style it references are cached when the worker installs.
    - Pages: network first, falling back to the cached copy when offline.
    - Scripts, styles, icons: served from cache, refreshed in the background.

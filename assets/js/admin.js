@@ -1,4 +1,4 @@
-/* StudyCISSP - admin console: analytics, learners, audit trail, privacy requests */
+/* LearNtime - admin console: analytics, learners, audit trail, privacy requests */
 (function () {
   "use strict";
   const A = window.App, { D, byId, $, $$, esc, dc, ymd, today, addDays, fmtDur, fmtD, fmtDY, band, db } = A;

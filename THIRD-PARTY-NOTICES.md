@@ -5,8 +5,8 @@
 `assets/js/bank3.js` contains 100 practice questions taken from
 [awesome-cert-sherpa](https://github.com/ThanhNguyxnOrg/awesome-cert-sherpa)
 (`bank/security/cissp.yml`). That project states that its questions are original and
-community-written, and it follows an anti-dump policy. StudyCISSP changes: each question is
-mapped to a StudyCISSP section, letter references in the explanations are removed because
+community-written, and it follows an anti-dump policy. LearNtime changes: each question is
+mapped to a LearNtime section, letter references in the explanations are removed because
 answers are shuffled, and the punctuation is normalised.
 
 ```

@@ -1,4 +1,4 @@
-/* StudyCISSP - Learn GRC, modules 6-10. Original lessons written for StudyCISSP from public laws and standards
+/* LearNtime - Learn GRC, modules 6-10. Original lessons written for LearNtime from public laws and standards
    (DPDP Act 2023 and Rules 2025, CERT-In Directions 2022, IEC 62443, NIST SP 800-82, ISO 22301). */
 window.GRC_COURSE = (window.GRC_COURSE || []).concat([
 {
@@ -419,7 +419,7 @@ window.GRC_LABS = [
       "Write a README explaining what each artefact shows and which framework it maps to."],
     deliver: "A tidy repository of GRC artefacts you can talk through." }
 ];
-/* Audit toolkit written for StudyCISSP: a PBC list for a SOC 2 Type II and ISO 27001 audit of a managed SOC service.
+/* Audit toolkit written for LearNtime: a PBC list for a SOC 2 Type II and ISO 27001 audit of a managed SOC service.
    Illustrative: adapt the items, owners and dates to the real audit scope. */
 window.GRC_PBC = {
   cols: ["#", "Area", "Evidence requested", "SOC 2", "ISO 27001:2022", "Period / sample", "Owner", "Format"],
@@ -466,7 +466,7 @@ window.GRC_PBC = {
     "Review every item before it goes to the auditor. A weak screenshot sent early causes more questions than a strong export sent a day later."
   ]
 };
-/* Reading room: written for StudyCISSP. Facts (titles, authors, years, what each framework is) with our own summaries. */
+/* Reading room: written for LearNtime. Facts (titles, authors, years, what each framework is) with our own summaries. */
 window.GRC_READING_ROOM = [
   { id: "start", title: "Where to start (first 30 days)", items: [
     ["Week 1", "Read ISO 31000 principles (Module 2) and NIST CSF 2.0's Govern function. Together they explain why risk decisions belong to the business, not the security team."],

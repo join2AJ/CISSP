@@ -1,4 +1,4 @@
-/* StudyCISSP - glossary.
+/* LearNtime - glossary.
    Each entry: [term (with full form), meaning, where it is used, tools / examples] */
 window.GLOSSARY = {
   d1: [

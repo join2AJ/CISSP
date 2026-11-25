@@ -1,4 +1,4 @@
-/* StudyCISSP - short forms that are not already in the CISSP glossary, used by both branches.
+/* LearNtime - short forms that are not already in the CISSP glossary, used by both branches.
    Each entry: [short form, full form, what it means, branch] where branch is "grc", "cissp" or "both".
    The GRC glossary page lists every entry marked grc or both. */
 window.ABBR_EXTRA = [

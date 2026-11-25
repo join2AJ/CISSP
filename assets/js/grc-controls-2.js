@@ -1,4 +1,4 @@
-/* StudyCISSP - common control framework, part 2: monitoring, change, incidents, continuity, third parties, privacy, physical, OT. */
+/* LearNtime - common control framework, part 2: monitoring, change, incidents, continuity, third parties, privacy, physical, OT. */
 window.GRC_CONTROLS = (window.GRC_CONTROLS || []).concat([
 { id: "MON-01", dom: "Monitoring", title: "Central logging, retention and time sync", type: "Detective", owner: "SOC", freq: "Continuous", ev: "Q", scope: "Corporate IT, SOC platform, Cloud, OT",
   desc: "Security-relevant logs from identity, endpoints, network, cloud and critical applications go to the SIEM, are protected from tampering and kept for at least 180 days in India (CERT-In). All systems sync time with NIC or NPL-traceable NTP servers.",

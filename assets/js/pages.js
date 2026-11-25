@@ -1,4 +1,4 @@
-/* StudyCISSP - plan, tactics, what's new, resources */
+/* LearNtime - plan, tactics, what's new, resources */
 window.PAGES = {
   exam: {
     target: "2027-02-09",

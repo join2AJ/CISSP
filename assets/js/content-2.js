@@ -1,4 +1,4 @@
-/* StudyCISSP - chapter content, Domains 5-8 */
+/* LearNtime - chapter content, Domains 5-8 */
 window.DOMAINS = window.DOMAINS || [];
 
 window.DOMAINS.push({

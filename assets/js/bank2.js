@@ -1,4 +1,4 @@
-/* StudyCISSP - additional questions so every section has at least three for topic quizzes. */
+/* LearNtime - additional questions so every section has at least three for topic quizzes. */
 (window.BANK.questions = window.BANK.questions || []).push(
   // ---------- D1 ----------
   { d: "d1", t: "cia", q: "An attacker changes the amount on an invoice in transit without being detected. Which security property was violated?",

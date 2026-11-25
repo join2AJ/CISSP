@@ -1,4 +1,4 @@
-/* StudyCISSP - core: state, router, personalisation, time tracking, reading views */
+/* LearNtime - core: state, router, personalisation, time tracking, reading views */
 (function () {
   "use strict";
 
@@ -300,6 +300,15 @@
   };
   App.secondsSince = (since) => (App.timeRows || []).filter(r => r.day >= since).reduce((n, r) => n + r.seconds, 0);
 
+  /* ---------------- branch (CISSP or GRC) ---------------- */
+  // Pages that belong to both branches keep whichever branch you were last in.
+  const SHARED = ["insights", "tracker", "notes", "profile", "privacy", "plans", "admin"];
+  const CISSP_ONLY = ["home", "read", "domain", "plan", "quiz", "mock", "flashcards", "revision", "glossary", "latest", "tactics", "resources", "library"];
+  App.branch = () => { try { return localStorage.getItem("cissp.branch") === "grc" ? "grc" : "cissp"; } catch (e) { return "cissp"; } };
+  App.setBranch = b => { try { localStorage.setItem("cissp.branch", b); } catch (e) {} };
+  App.inGrc = r => r.page === "grc" || (SHARED.includes(r.page) && App.branch() === "grc" && App.isPrivileged());
+  const noteBranch = r => { if (r.page === "grc") App.setBranch("grc"); else if (CISSP_ONLY.includes(r.page)) App.setBranch("cissp"); };
+
   /* ---------------- router ---------------- */
   const routes = {};
   App.routes = routes;
@@ -347,16 +356,18 @@
       try { out = await out; } catch (e) { out = `<div class="page-narrow"><h1 class="h-display">Something went wrong</h1><p class="lede">${esc(App.errMsg(e))}</p></div>`; }
       if (my !== token) return;
     }
-    const exKey = r.page === "quiz" && r.a === "run" ? null : r.page === "tracker" ? "tracker" : r.page;
+    const exKey = r.page === "quiz" && r.a === "run" ? null : r.page === "tracker" ? "tracker" : r.page === "insights" && App.inGrc(r) ? "insights-grc" : r.page;
     if (exKey && !site) out = withExplain(out, exKey);
     view.innerHTML = out + (site ? (App.siteFooter ? App.siteFooter() : "") : def.bare ? "" : footer());
     App.stackTables(view);
-    App.linkAbbr(view, r.page === "grc" ? "grc" : "cissp");
+    App.linkAbbr(view, App.inGrc(r) ? "grc" : "cissp");
     view.classList.remove("view-enter"); void view.offsetWidth; view.classList.add("view-enter");
     if (!def.bare && !site) renderToc(r);
     paintNav(r, def);
     document.documentElement.style.setProperty("--pc", r.page === "domain" && byId[r.a] ? `var(--${r.a})` : "var(--accent)");
-    App.setTrack(def.area ? { area: typeof def.area === "function" ? def.area(r) : def.area, domain: r.page === "domain" ? r.a : "", topic: "" } : null);
+    // GRC time is stored as area "other" with domain "grc" or "grc-<module>" (no database change needed)
+    App.setTrack(r.page === "grc" ? { area: "other", domain: grcMod(r.a) ? "grc-" + r.a : "grc", topic: grcMod(r.a) && r.b ? String(r.b).slice(0, 48) : "" }
+      : def.area ? { area: typeof def.area === "function" ? def.area(r) : def.area, domain: r.page === "domain" ? r.a : "", topic: "" } : null);
     bindCommon(r);
     if (def.bind) def.bind(r);
     if (r.page === "domain" && r.b) {
@@ -364,7 +375,7 @@
       if (el) requestAnimationFrame(() => el.scrollIntoView({ block: "start" })); else window.scrollTo(0, 0);
     } else window.scrollTo(0, 0);
     if (r.page === "domain") { S.last = { d: r.a, s: r.b || null }; save(); }
-    document.title = (def.title ? (typeof def.title === "function" ? def.title(r) : def.title) + " · " : "") + "StudyCISSP";
+    document.title = (def.title ? (typeof def.title === "function" ? def.title(r) : def.title) + " · " : "") + "LearNtime";
     onScroll();
   }
   App.route = route;
@@ -378,6 +389,7 @@
     glossary: ["Every term in one place, A to Z, with where you'll meet it.", "Acronyms trip people up on exam day.", "Search, or filter by your weakest domain and skim the list."],
     plan: ["Your route from today to exam day, built from your date and your answers.", "A date and a routine do more than motivation ever will.", "Set your study times below, add them to your calendar, and tick tasks as you go. Many tick themselves."],
     insights: ["Where your study time goes and how you're scoring.", "It shows whether your time is going where the marks are.", "Look once a week. Move time towards the red domains."],
+    "insights-grc": ["Your GRC course progress: time, lessons, lesson questions and controls tested.", "It shows which modules you have covered and where you are still thin.", "Look once a week. Finish the module you started before opening a new one."],
     tracker: ["Scores from outside practice tests, plus your error log.", "The pattern in your mistakes matters more than any single score.", "After each outside test, enter the score and log every miss with a reason."],
     library: ["Your own notes, PDFs and videos, kept next to the chapters they belong to.", "Everything you rely on, in one place.", "Add a link or upload a file and tag it with a domain."],
     resources: ["Official documents and a short list of study material we trust.", "When two sources disagree, the primary source settles it.", "Use these to check a detail. You don't need to read them cover to cover."],
@@ -474,9 +486,10 @@
 
   function paintNav(r, def) {
     const key = def.nav || r.page;
-    const grcMode = r.page === "grc";
+    noteBranch(r);
+    const grcMode = App.inGrc(r);
     $$(".mainnav").forEach(n => { n.hidden = n.classList.contains("grcnav") ? !grcMode : grcMode; });
-    const brand = $(".topbar .brand"); if (brand) { brand.setAttribute("href", grcMode ? "#/grc" : "#/"); const sm = brand.querySelector("small"); if (sm) sm.textContent = grcMode ? "GRC branch · learn GRC" : "read slowly · pass once"; }
+    const brand = $(".topbar .brand"); if (brand) { brand.setAttribute("href", grcMode ? "#/grc" : "#/"); const sm = brand.querySelector("small"); if (sm) sm.innerHTML = grcMode ? `<span class="bb">GRC</span><span class="bt"> · governance, risk, compliance</span>` : `<span class="bb">CISSP</span><span class="bt"> · read slowly, pass once</span>`; }
     document.body.classList.toggle("grc-mode", grcMode);
     const navKey = grcMode ? (!r.a ? "grc-home" : grcMod(r.a) ? "grc-" + r.a : "grc-" + r.a)
       : r.page === "domain" ? "read" : (document.querySelector(`.mainnav [data-nav="${r.page}"]`) ? r.page : key);
@@ -525,7 +538,7 @@
     toc.innerHTML = h;
   }
   function renderToc(r) {
-    if (r.page === "grc") return renderGrcToc(r);
+    if (App.inGrc(r)) return renderGrcToc(r);
     const all = allProgress();
     const order = D;
     let h = `<div class="mob-nav"><a href="#/" class="${r.page === "home" ? "active" : ""}">Home</a>${App.isPrivileged() ? `<a href="#/grc" class="${r.page === "grc" ? "active" : ""}">Learn GRC</a>` : ""}${App.isAdmin() ? `<a href="#/admin">Admin</a>` : ""}</div>`;
@@ -583,9 +596,9 @@
 
   function footer() {
     return `<footer class="foot">
-      <div class="foot-top"><a class="foot-brand" href="#/"><b>Study<span>CISSP</span></b><small>read slowly · pass once</small></a>
+      <div class="foot-top"><a class="foot-brand" href="#/"><b>LearN<span>time</span></b><small>CISSP · read slowly, pass once</small></a>
         <nav class="foot-links" aria-label="Footer"><a href="#/about">About CISSP</a><a href="#/faq">FAQ</a><a href="#/contact">Contact</a><a href="#/terms">Terms</a><a href="#/privacy">Privacy &amp; trust</a></nav></div>
-      <p class="foot-legal">© ${new Date().getFullYear()} StudyCISSP. Independent study material, not affiliated with ISC2. CISSP® is a registered mark of ISC2, Inc.</p>
+      <p class="foot-legal">© ${new Date().getFullYear()} LearNtime. Independent study material, not affiliated with ISC2. CISSP® is a registered mark of ISC2, Inc.</p>
     </footer>
     <button class="back-top" id="backTop" aria-label="Back to top">↑</button>`;
   }
@@ -746,7 +759,7 @@
       ${priorityMatrix()}
 
       <details class="howto" ${firstTime ? "open" : ""}>
-        <summary>How StudyCISSP works <small>(what each part is for)</small></summary>
+        <summary>How LearNtime works <small>(what each part is for)</small></summary>
         <ol class="howto-list">
           <li><a href="#/read"><b>Chapters</b></a> Read the eight domains one short page at a time. Tap <em>Got it - next</em> when a page makes sense.</li>
           <li><a href="#/quiz"><b>Quiz</b></a> Check yourself after each topic. Every answer explains why.</li>
@@ -964,7 +977,7 @@
   function bindNotes() {
     $$("[data-nf]").forEach(b => b.addEventListener("click", () => { notesFilter = b.dataset.nf; App.rerender(); }));
     const ex = $("#notesExport"); if (ex) ex.addEventListener("click", () => {
-      const N = S.notes || {}; let out = "StudyCISSP - my notes\n" + new Date().toLocaleDateString("en-GB") + "\n";
+      const N = S.notes || {}; let out = "LearNtime - my notes\n" + new Date().toLocaleDateString("en-GB") + "\n";
       D.forEach(d => { const items = d.sections.map((s, i) => ({ s, i, n: N[d.id + ":" + s.id] })).filter(x => x.n);
         if (items.length) { out += `\n# D${d.n} ${d.title}\n`; items.forEach(x => { out += `\n## ${d.n}.${x.i + 1} ${x.s.title}\n${x.n.t}\n`; }); } });
       const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([out], { type: "text/markdown" })); a.download = `cissp-notes-${ymd(today())}.md`; a.click();
@@ -1071,7 +1084,7 @@
       const BY = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"], p2 = n => String(n).padStart(2, "0");
       const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+Z$/, "Z");
       const until = App.examTarget().replace(/-/g, "") + "T235959";
-      const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//StudyCISSP//Study times//EN", "CALSCALE:GREGORIAN", "METHOD:PUBLISH"];
+      const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//LearNtime//Study times//EN", "CALSCALE:GREGORIAN", "METHOD:PUBLISH"];
       on.forEach(([d, x]) => {
         let first = today(); while (first.getDay() !== +d) first = addDays(first, 1);
         const [h, m] = x.start.split(":").map(Number);
@@ -1712,6 +1725,7 @@
   }
   /* second branch: Learn GRC (a full course) and the GRC Manager field guide, private to the owner's account */
   let grcLoading = null;
+  App.loadGrc = () => loadGrc();
   const loadGrc = () => window.GRC_COURSE && window.GRC_COURSE.length >= 10 && window.GRC_CONTROLS && window.ISO_2022 ? Promise.resolve() : (grcLoading = grcLoading || Promise.all(["grc-course-1", "grc-course-2", "grc-iso", "grc-controls-1", "grc-controls-2"].map(f => new Promise((ok, no) => {
     const sc = document.createElement("script"); sc.src = `assets/js/${f}.js?v=${(document.querySelector('script[src*="app.js"]').src.split("v=")[1] || "dev")}`; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc);
   }))));
@@ -1845,7 +1859,7 @@
       <a class="card grc-guide" href="#/grc/reading" style="margin-top:12px"><div><span class="kicker">On this site</span><h3>Reading room</h3><p>A 30-day reading plan, the risk frameworks, free tools, books, people to follow and certifications, each summarised in plain words.</p></div><span class="start-arrow" aria-hidden="true">→</span></a>
       <h2 class="h-section">Further reading</h2>
       <p class="sub">Free, openly licensed lists and official sources. The lessons above are written for this site; these help you go deeper.</p>
-      <div>${(window.GRC_READING || []).map(x => `<div class="res"><div class="res-ico">↗</div><div><h4><a href="${esc(x.u)}" target="_blank" rel="noopener">${esc(x.t)} ↗</a></h4><p>${esc(x.d)}</p></div></div>`).join("")}</div>
+      <div>${(window.GRC_READING || []).map(x => `<div class="res"><div class="res-ico">↗</div><div><h3><a href="${esc(x.u)}" target="_blank" rel="noopener">${esc(x.t)} ↗</a></h3><p>${esc(x.d)}</p></div></div>`).join("")}</div>
     </div>`;
   }
   function grcReading(sec) {
@@ -1888,7 +1902,7 @@
         <div class="memorise grc-remember"><div class="kicker">Remember</div><ul>${l.remember.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>
       </div>
       <div class="grc-checks"><h3>Check yourself</h3>
-        ${l.checks.map((q, k) => { const sq = App.shuffleQ(q, m.id + l.id + k); return `<div class="qc grc-q" data-a="${sq.a}" data-w="${esc(q.w)}"><p class="qc-q">${esc(q.q)}</p><div class="qc-opts">${sq.o.map((o, j) => `<button class="opt" data-gq="${j}"><span class="l">${L[j]}</span><span>${esc(o)}</span></button>`).join("")}</div><div class="grc-why"></div></div>`; }).join("")}
+        ${l.checks.map((q, k) => { const sq = App.shuffleQ(q, m.id + l.id + k); return `<div class="qc grc-q" data-k="${m.id}:${l.id}:${k}" data-a="${sq.a}" data-w="${esc(q.w)}"><p class="qc-q">${esc(q.q)}</p><div class="qc-opts">${sq.o.map((o, j) => `<button class="opt" data-gq="${j}"><span class="l">${L[j]}</span><span>${esc(o)}</span></button>`).join("")}</div><div class="grc-why"></div></div>`; }).join("")}
       </div>
       <div class="sec-finish">
         ${nx ? `<a class="start-btn" id="grcNext" href="#/grc/${nx.m.id}/${nx.l.id}" data-key="${grcKey(m.id, l.id)}"><span><small>${grcDone()[grcKey(m.id, l.id)] ? "Next" : "Got it · next"}${nx.m !== m ? " module" : ""}</small><b>${nx.m.n}.${nx.m.lessons.indexOf(nx.l) + 1} ${esc(nx.l.title)}</b></span><span class="start-arrow" aria-hidden="true">→</span></a>`
@@ -1926,6 +1940,7 @@
     const n = $("#grcNext"); if (n) n.addEventListener("click", () => { grcDone()[n.dataset.key] = ymd(today()); save(); });
     $$(".grc-q").forEach(box => $$("[data-gq]", box).forEach(b => b.addEventListener("click", () => {
       const j = +b.dataset.gq, a = +box.dataset.a, ok = j === a;
+      S.grcAns = S.grcAns || {}; if (box.dataset.k && !(box.dataset.k in S.grcAns)) { S.grcAns[box.dataset.k] = ok ? 1 : 0; save(); }
       $$("[data-gq]", box).forEach((x, k) => { x.disabled = true; if (k === a) x.classList.add("correct"); else if (k === j) x.classList.add("wrong"); });
       box.querySelector(".grc-why").innerHTML = `<div class="why"><b style="color:${ok ? "var(--good)" : "var(--bad)"}">${ok ? "Correct." : "Not quite."}</b> ${box.dataset.w}</div>`;
       App.linkAbbr(box.querySelector(".grc-why"), "grc");

@@ -1,4 +1,4 @@
-/* StudyCISSP - sign-in, onboarding, profile, privacy & trust centre */
+/* LearNtime - sign-in, onboarding, profile, privacy & trust centre */
 (function () {
   "use strict";
   const A = window.App, { D, byId, $, $$, esc, dc, ymd, today, addDays, fmtD, fmtDY, db } = A;
@@ -246,7 +246,7 @@
   const controller = C.contactEmail ? `<a href="mailto:${esc(C.contactEmail)}">${esc(C.contactEmail)}</a>` : "the site administrator (use “Raise a request” below)";
   function notice() {
     return `<div class="prose" style="max-width:none">
-      <p class="intro">This notice explains what StudyCISSP collects, why, and the control you have over it. It is written to meet the EU General Data Protection Regulation (GDPR) and India’s Digital Personal Data Protection Act 2023 (DPDP) with the DPDP Rules 2025. Version ${esc(VERSION)}.</p>
+      <p class="intro">This notice explains what LearNtime collects, why, and the control you have over it. It is written to meet the EU General Data Protection Regulation (GDPR) and India’s Digital Personal Data Protection Act 2023 (DPDP) with the DPDP Rules 2025. Version ${esc(VERSION)}.</p>
       <h3>Who is responsible</h3><p>The operator of this site is the data controller (a “Data Fiduciary” under DPDP). Contact and grievance officer: ${controller}. Requests are acknowledged automatically the moment you raise them, answered within 4 days (or you get an automatic update), and completed within 30 days. Requests can only be raised by the signed-in owner of an account with a verified email address.</p>
       <h3>What we collect</h3><ul>
         <li><strong>Account</strong>: email, username, name, and a password hash managed by our authentication provider. We never see your password.</li>
@@ -263,7 +263,7 @@
       </ul>
       <p>We don’t sell data, show ads, use your data to train AI models, or make automated decisions with legal effect. Your administrator can see learner progress and the audit trail to support learners and keep the service secure.</p>
       <h3>How we use your data for analysis</h3>
-      <p>All analysis happens inside StudyCISSP. We don’t use third-party analytics, advertising trackers or tracking cookies; the browser storage we use only keeps your settings and progress.</p>
+      <p>All analysis happens inside LearNtime. We don’t use third-party analytics, advertising trackers or tracking cookies; the browser storage we use only keeps your settings and progress.</p>
       <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Data</th><th>What we work out</th><th>What it is used for</th><th>Who sees it</th><th>Your control</th></tr></thead><tbody>
         <tr><td>Active study time per topic and day</td><td>Totals per day, domain and topic; streaks</td><td>Insights page, dashboard tiles, weekly target</td><td>You; the administrator per learner, for support</td><td>Switch off study analytics below</td></tr>
         <tr><td>Quiz and mock answers</td><td>Accuracy per domain and topic, weakest areas, mock trend</td><td>Weakest-first chapter order, the “What to work on first” matrix, plan checkpoints</td><td>You; the administrator per learner</td><td>Core to the service; delete your account to erase</td></tr>
@@ -271,7 +271,7 @@
         <tr><td>Exam dates, weekly hours, self-assessment</td><td>Days per domain and stage</td><td>Your study plan</td><td>You; the administrator</td><td>Change any time on the Plan or Profile page</td></tr>
         <tr><td>Sign-in and device records</td><td>New devices or places, counts by device, browser and country</td><td>Account security and spotting misuse</td><td>The administrator only</td><td>Kept 180 days; GPS only if you switch it on</td></tr>
         <tr><td>Audit trail</td><td>Who did what and when</td><td>Accountability and investigations</td><td>The administrator; your own entries are in your export</td><td>Pseudonymised when you delete your account</td></tr>
-        <tr><td>All learners together</td><td>Totals and averages (active learners, average accuracy per domain, popular sections)</td><td>Improving the content and the site</td><td>The administrator, as totals</td><td>Nobody is singled out; nothing is shared outside StudyCISSP</td></tr>
+        <tr><td>All learners together</td><td>Totals and averages (active learners, average accuracy per domain, popular sections)</td><td>Improving the content and the site</td><td>The administrator, as totals</td><td>Nobody is singled out; nothing is shared outside LearNtime</td></tr>
       </tbody></table></div>
       <h3>Who processes it for us</h3><ul>
         <li><strong>Supabase</strong> (database, authentication, file storage), hosted in the region chosen at set-up. Data is encrypted in transit (TLS) and at rest.</li>

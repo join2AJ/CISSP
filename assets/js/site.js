@@ -1,15 +1,15 @@
-/* StudyCISSP - public website pages: features, pricing, about, FAQ, contact, terms, footer */
+/* LearNtime - public website pages: features, pricing, about, FAQ, contact, terms, footer */
 (function () {
   "use strict";
   const A = window.App, { D, P, $, $$, esc, dc, db } = A;
-  const BRAND = "StudyCISSP";
+  const BRAND = "LearNtime";
 
   const shield = `<svg viewBox="0 0 64 64" width="34" height="34" aria-hidden="true"><defs><linearGradient id="lgf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2a7556"/><stop offset="1" stop-color="#1a4d38"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#lgf)"/><path d="M32 9.5l17.5 6.6v13.2c0 11-7.4 19.6-17.5 24.2C21.9 48.9 14.5 40.3 14.5 29.3V16.1z" fill="none" stroke="#f7f3ea" stroke-width="3.4" stroke-linejoin="round"/><path d="M21.5 25.6c3.8-1.2 7.6-.7 10.5 1.5 2.9-2.2 6.7-2.7 10.5-1.5v13.2c-3.8-1.2-7.6-.7-10.5 1.5-2.9-2.2-6.7-2.7-10.5-1.5z" fill="#f7f3ea" fill-opacity=".16" stroke="#f7f3ea" stroke-width="2.6" stroke-linejoin="round"/><path d="M32 27.1v13.2" stroke="#f7f3ea" stroke-width="2.6" stroke-linecap="round"/><circle cx="32" cy="19.2" r="2.1" fill="#e3b95a"/></svg>`;
   A.shield = shield;
 
   A.siteFooter = () => `<footer class="site-foot">
     <div class="sf-grid">
-      <div class="sf-brand"><a class="brand" href="#/landing"><span class="brand-mark">${shield}</span><span class="brand-text"><b>${BRAND}</b><small>read slowly · pass once</small></span></a>
+      <div class="sf-brand"><a class="brand" href="#/landing"><span class="brand-mark">${shield}</span><span class="brand-text"><b>LearN<span>time</span></b><small>CISSP · read slowly, pass once</small></span></a>
         <p>A calm, book-like way to prepare for the CISSP: clear chapters, small animations, a plan built around your date, and honest feedback on where you stand.</p></div>
       <div><h4>Product</h4><a href="#/features">Features</a><a href="#/pricing">Pricing</a><a href="#/faq">FAQ</a><a href="#/signup/gold">Get started</a></div>
       <div><h4>Learn</h4><a href="#/about">About the CISSP</a><a href="#/about/domains">The eight domains</a><a href="#/about/pathway">Path to certification</a><a href="resources/ISC2-Ultimate-Guide-to-the-CISSP.pdf" target="_blank" rel="noopener">ISC2 guide (PDF)</a></div>
@@ -91,9 +91,9 @@
 
   /* ---------- FAQ ---------- */
   const FAQ = [
-    ["Is this affiliated with ISC2?", "No. StudyCISSP is independent study material. CISSP is a registered mark of ISC2, Inc., and you book and sit the exam directly with ISC2 and Pearson VUE."],
+    ["Is this affiliated with ISC2?", "No. LearNtime is independent study material. CISSP is a registered mark of ISC2, Inc., and you book and sit the exam directly with ISC2 and Pearson VUE."],
     ["Is it really free?", "Yes, if you finish. Every plan is free for 90 days. Complete the four challenge goals in that time and it stays free. If you don’t, the yearly price on the Pricing page applies. No card is needed to start."],
-    ["Do I still need the official book?", "We recommend pairing StudyCISSP with the ISC2 Official Study Guide and Official Practice Tests. Each chapter tells you which book chapters to read alongside it."],
+    ["Do I still need the official book?", "We recommend pairing LearNtime with the ISC2 Official Study Guide and Official Practice Tests. Each chapter tells you which book chapters to read alongside it."],
     ["Which exam outline does it follow?", "The CISSP Exam Outline effective 15 April 2024, which applies to exams sat before 15 April 2027. We’ll update for the new outline."],
     ["I don’t have five years’ experience yet. Can I still use it?", "Yes. You can sit the exam and, if you pass, become an Associate of ISC2 while you build up the experience."],
     ["How is my study plan built?", "From your target date, the hours you have each week and how confident you are in each domain. Weaker domains come first and get the most time. Change your answers and the plan redraws itself."],
@@ -117,7 +117,7 @@
       <label>Topic<select name="topic"><option>General question</option><option>Plans and pricing</option><option>Content or a topic request</option><option>Can’t sign in</option><option>Feedback</option></select></label>
       <p class="hint">Requests about your own data (a copy, a correction, deletion, withdrawing consent or a grievance) are taken only from the account owner: sign in and use <a href="#/privacy">Privacy &amp; trust → Raise a request</a>. That way you get a reference number, an automatic acknowledgement and a full record.</p>
       <label>Message<textarea name="message" required maxlength="3000" rows="6"></textarea></label>
-      <label class="check"><input type="checkbox" required><span>I agree that StudyCISSP may use these details to reply to me, as described in the <a href="#/privacy">privacy notice</a>.</span></label>
+      <label class="check"><input type="checkbox" required><span>I agree that LearNtime may use these details to reply to me, as described in the <a href="#/privacy">privacy notice</a>.</span></label>
       <button class="btn primary" id="cSend">Send message</button>
       <div id="cMsg"></div>
     </form></div>`;
@@ -136,11 +136,11 @@
 
   /* ---------- terms ---------- */
   const TERMS = [
-    ["Using StudyCISSP", "StudyCISSP provides study material and tools to help you prepare for the CISSP exam. By creating an account or using the site you agree to these terms. You must be 18 or older."],
+    ["Using LearNtime", "LearNtime provides study material and tools to help you prepare for the CISSP exam. By creating an account or using the site you agree to these terms. You must be 18 or older."],
     ["Your account", "Keep your password safe and don’t share your account. You’re responsible for activity under your account. Tell us straight away if you think it has been misused."],
     ["Acceptable use", "Don’t try to break, overload or gain unauthorised access to the service; don’t upload malware, illegal content or material you don’t have the right to share; and don’t copy or resell the content."],
     ["Your content", "You keep ownership of anything you upload. You give us permission to store and display it to you (and to administrators for support) so the service works."],
-    ["Our content", "Chapters, questions, animations and other material are protected by copyright and are for your personal study only. CISSP® and ISC2® are marks of ISC2, Inc.; StudyCISSP is not affiliated with ISC2."],
+    ["Our content", "Chapters, questions, animations and other material are protected by copyright and are for your personal study only. CISSP® and ISC2® are marks of ISC2, Inc.; LearNtime is not affiliated with ISC2."],
     ["No guarantee of results", "We work hard to keep content accurate and current, but we can’t guarantee you will pass the exam. Always confirm exam rules, fees and policies with ISC2."],
     ["Plans and the 90-day challenge", "Each plan is free for 90 days from sign-up. If you complete the four challenge goals shown on your dashboard within that time, it stays free. Otherwise the yearly price shown on the Pricing page applies to continue; we’ll give notice before anything is charged."],
     ["Availability", "We aim to keep the service available but it may be interrupted for maintenance or reasons outside our control."],

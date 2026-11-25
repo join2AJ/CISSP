@@ -1,4 +1,4 @@
-/* StudyCISSP - Learn GRC, modules 1-5. Original lessons written for StudyCISSP from the public standards
+/* LearNtime - Learn GRC, modules 1-5. Original lessons written for LearNtime from the public standards
    (ISO/IEC 27001:2022, ISO 31000, NIST CSF 2.0, AICPA SOC, IIA Three Lines Model). */
 window.GRC_COURSE = (window.GRC_COURSE || []).concat([
 {

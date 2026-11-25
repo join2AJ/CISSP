@@ -1,4 +1,4 @@
-/* StudyCISSP - quiz, flashcards, mock exam, insights, personal library */
+/* LearNtime - quiz, flashcards, mock exam, insights, personal library */
 (function () {
   "use strict";
   const A = window.App, { D, byId, $, $$, esc, dc, ymd, today, addDays, fmtDur, fmtD, band, shuffle, pick, db } = A;
@@ -383,8 +383,11 @@
 
   /* ======================= INSIGHTS ======================= */
   let range = 30;
+  const branchTabs = (g) => `<div class="seg-tabs ins-branch" role="group" aria-label="Which course"><button class="${g ? "" : "on"}" data-branch="cissp" aria-pressed="${!g}">CISSP</button><button class="${g ? "on" : ""}" data-branch="grc" aria-pressed="${g}">GRC</button></div>`;
+  const isGrcRow = r => /^grc/.test(r.domain || "");
   async function viewInsights() {
-    const rows = await A.loadTime();
+    if (A.isPrivileged() && A.branch() === "grc") return viewGrcInsights();
+    const rows = (await A.loadTime()).filter(r => !isGrcRow(r));
     const since = range ? ymd(addDays(today(), -(range - 1))) : "0000";
     const R = rows.filter(r => r.day >= since);
     const total = R.reduce((n, r) => n + r.seconds, 0);
@@ -413,7 +416,7 @@
       ["First mock", "Finish a mock exam", A.mocks.length >= 1], ["Pass mark", "Score 75% or more in a mock", bestMock >= 75]];
     if (A.streak() > (S0.bestStreak || 0)) { S0.bestStreak = A.streak(); A.save(); }
     return `<div class="page-narrow">
-      <div class="kicker">Insights</div>
+      <div class="kicker">Insights · CISSP</div>${A.isPrivileged() ? branchTabs(false) : ""}
       <h1 class="h-display">Where your <em>time goes</em></h1>
       <p class="lede">Active study time only: the clock pauses when you switch tabs or stop interacting for 90 seconds.</p>
       <h2 class="h-section">Milestones <small class="sub">${MS.filter(m => m[2]).length} of ${MS.length}</small></h2>
@@ -439,7 +442,48 @@
       ${A.mocks.length ? `<h2 class="h-section">Mock exam trend</h2><div class="daychart mocks">${A.mocks.slice(-12).map(m => { const v = Math.round(m.correct / m.total * 100); return `<div class="dc-col" title="${fmtD(m.created_at)}: ${v}%"><i class="${band(v)}" style="height:${v}%"></i><small>${v}</small></div>`; }).join("")}</div><div class="dc-axis"><span>older</span><span>75% target</span><span>latest</span></div>` : ""}
     </div>`;
   }
-  function bindInsights() { $$("[data-range]").forEach(b => b.addEventListener("click", () => { range = +b.dataset.range; A.rerender(); })); }
+  async function viewGrcInsights() {
+    try { await A.loadGrc(); } catch (e) {}
+    const C = window.GRC_COURSE || [], S0 = A.state(), done = S0.grc || {}, ans = S0.grcAns || {}, tests = S0.grcTests || {};
+    const rows = (await A.loadTime()).filter(isGrcRow);
+    const since = range ? ymd(addDays(today(), -(range - 1))) : "0000";
+    const R = rows.filter(r => r.day >= since), total = R.reduce((n, r) => n + r.seconds, 0);
+    const byMod = {}, byLesson = {}, byDay = {};
+    R.forEach(r => { const m = r.domain.slice(4); if (m) byMod[m] = (byMod[m] || 0) + r.seconds; if (m && r.topic) byLesson[m + ":" + r.topic] = (byLesson[m + ":" + r.topic] || 0) + r.seconds; byDay[r.day] = (byDay[r.day] || 0) + r.seconds; });
+    const days = range || 30, series = Array.from({ length: days }, (_, i) => { const d = ymd(addDays(today(), i - days + 1)); return [d, byDay[d] || 0]; });
+    const maxDay = Math.max(60, ...series.map(s => s[1])), maxMod = Math.max(1, ...Object.values(byMod));
+    const allL = C.reduce((n, m) => n + m.lessons.length, 0), lessonsDone = C.reduce((n, m) => n + m.lessons.filter(l => done[m.id + ":" + l.id]).length, 0);
+    const modsDone = C.filter(m => m.lessons.every(l => done[m.id + ":" + l.id])).length;
+    const aN = Object.keys(ans).length, aOk = Object.values(ans).filter(Boolean).length, tested = Object.values(tests).filter(t => t && t.s && Object.keys(t.s).length).length;
+    let planDone = 0; try { planDone = Object.values(JSON.parse(localStorage.getItem("grc.plan.done") || "{}")).filter(Boolean).length; } catch (e) {}
+    const MS = [["First lesson", "Finish one lesson", lessonsDone >= 1], ["First module", "Every lesson in one module", modsDone >= 1], ["Halfway", `${Math.ceil(allL / 2)} lessons done`, lessonsDone >= allL / 2],
+      ["Whole course", `All ${C.length} modules done`, C.length > 0 && modsDone === C.length], ["25 checks", "Answer 25 lesson questions", aN >= 25], ["Sharp eye", "80% right over 50 questions", aN >= 50 && aOk / aN >= .8],
+      ["First control tested", "Rate one control's design and operation", tested >= 1], ["Ten controls", "Rate ten controls", tested >= 10], ["Plan started", "Tick 5 items in the field guide's 20-day plan", planDone >= 5], ["A week strong", "Study 7 days in a row", A.streak() >= 7 || (S0.bestStreak || 0) >= 7]];
+    const topL = Object.entries(byLesson).sort((a, b) => b[1] - a[1]).slice(0, 8);
+    return `<div class="page-narrow">
+      <div class="kicker">Insights · GRC</div>${branchTabs(true)}
+      <h1 class="h-display">Your GRC <em>progress</em></h1>
+      <p class="lede">Time on the GRC course, library and controls, and how you’re doing on the lesson questions. Active time only: the clock pauses when you switch tabs or stop for 90 seconds.</p>
+      <h2 class="h-section">Milestones <small class="sub">${MS.filter(m => m[2]).length} of ${MS.length}</small></h2>
+      <div class="ms-grid">${MS.map(([t, d, ok]) => `<div class="ms ${ok ? "on" : ""}"><span class="ms-ico" aria-hidden="true">${ok ? "✓" : "○"}</span><b>${t}</b><small>${d}</small></div>`).join("")}</div>
+      <div class="filters">${[[7, "7 days"], [30, "30 days"], [90, "90 days"], [0, "All time"]].map(([v, l]) => `<button class="chip ${range === v ? "on" : ""}" data-range="${v}">${l}</button>`).join("")}</div>
+      <section class="facts" style="border-top:1px solid var(--rule)">
+        <div class="fact"><b>${fmtDur(total)}</b><span>on GRC</span></div>
+        <div class="fact"><b>${lessonsDone}<small class="unit"> / ${allL}</small></b><span>lessons done</span></div>
+        <div class="fact"><b>${aN ? Math.round(aOk / aN * 100) + "%" : "-"}</b><span>right first time (${aN})</span></div>
+        <div class="fact"><b>${tested}</b><span>controls tested</span></div>
+      </section>
+      <h2 class="h-section">Daily GRC time</h2>
+      <div class="daychart">${series.map(([d, s]) => `<div class="dc-col" title="${fmtD(d)}: ${fmtDur(s)}"><i style="height:${Math.round(s / maxDay * 100)}%"></i></div>`).join("")}</div>
+      <div class="dc-axis"><span>${fmtD(series[0][0])}</span><span>today</span></div>
+      <h2 class="h-section">By module</h2>
+      <div class="bars">${C.map(m => { const s = byMod[m.id] || 0, d = m.lessons.filter(l => done[m.id + ":" + l.id]).length; return `<div class="hbar"><span><a href="#/grc/${m.id}">${m.n}. ${esc(m.short || m.title)}</a></span><div class="meter"><i style="width:${s / maxMod * 100}%"></i></div><b>${fmtDur(s)}</b><span class="band ${d === m.lessons.length ? "green" : d ? "orange" : ""}">${d}/${m.lessons.length}</span></div>`; }).join("")}</div>
+      <p class="legend">Bar = time spent. Badge = lessons done.</p>
+      <div class="card" style="margin-top:32px"><h3>Most-read lessons</h3>${topL.length ? topL.map(([k, v]) => { const [mi, li] = k.split(":"), m = C.find(x => x.id === mi), l = m && m.lessons.find(x => x.id === li); return `<div class="kv"><a href="#/grc/${mi}/${li}">${esc(l ? l.title : li)}</a><b>${fmtDur(v)}</b></div>`; }).join("") : `<p>Read a few lessons and they’ll show here.</p>`}</div>
+    </div>`;
+  }
+  function bindInsights() {
+    $$("[data-branch]").forEach(b => b.addEventListener("click", () => { A.setBranch(b.dataset.branch); A.rerender(); })); $$("[data-range]").forEach(b => b.addEventListener("click", () => { range = +b.dataset.range; A.rerender(); })); }
 
   /* ======================= LIBRARY ======================= */
   const ytId = (u) => { const m = String(u).match(/(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/|live\/)|youtu\.be\/)([\w-]{11})/); return m ? m[1] : null; };

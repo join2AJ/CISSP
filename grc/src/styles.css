@@ -1,7 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-/* StudyCISSP look: warm paper, green accent, book headings */
+/* LearNtime look: warm paper, green accent, book headings */
 #grc-guide { background: var(--g-bg); font-family: "Inter", system-ui, sans-serif; -webkit-font-smoothing: antialiased; color: var(--g-s900); line-height: 1.5; }
 /* scoped reset (instead of Tailwind's global one) */
 #grc-guide *, #grc-guide *::before, #grc-guide *::after { box-sizing: border-box; border-width: 0; border-style: solid; border-color: var(--g-s200); }
@@ -158,6 +158,6 @@
 :root[data-theme="sepia"] #grc-guide header.bg-slate-900 { background: linear-gradient(160deg, #7a4a1c, #5a3412); }
 :root[data-theme="sepia"] #grc-guide .text-white { color: #fbf3e3; }
 
-/* inside a StudyCISSP page: the tab bar sticks below the site's top bar */
+/* inside a LearNtime page: the tab bar sticks below the site's top bar */
 .grc-inpage #grc-guide nav.sticky { top: 64px; }
 .grc-inpage #grc-guide .min-h-screen { min-height: 0; border-radius: 18px; overflow: clip; }

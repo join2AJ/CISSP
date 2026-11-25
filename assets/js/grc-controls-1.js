@@ -1,5 +1,5 @@
-/* StudyCISSP - a common control framework for a managed SOC / critical-infrastructure security provider.
-   Written for StudyCISSP. Each control: what it is, who owns it, how often, evidence, how to test design and operation,
+/* LearNtime - a common control framework for a managed SOC / critical-infrastructure security provider.
+   Written for LearNtime. Each control: what it is, who owns it, how often, evidence, how to test design and operation,
    what can go wrong (each with its own test), and the framework requirements it helps meet.
    Fields: ev = evidence cadence (M monthly, Q quarterly, H half-yearly, A annual), mon = month it falls due (1-12) for A/H. */
 window.GRC_FW = {

@@ -1,6 +1,6 @@
 {
-  "name": "StudyCISSP",
-  "short_name": "StudyCISSP",
+  "name": "LearNtime",
+  "short_name": "LearNtime",
   "description": "Calm, book-like CISSP preparation: chapters, quizzes, flashcards, mock exams and a plan built around your exam date.",
   "start_url": "/#/",
   "scope": "/",
