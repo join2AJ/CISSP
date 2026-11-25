@@ -11,6 +11,12 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500..700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/grc/grc.css?v=dev">
+  <script>
+    // same theme as the rest of StudyCISSP, and follow changes made in the main window
+    (function(){function apply(){try{var s=JSON.parse(localStorage.getItem('cissp.settings')||'{}');
+      document.documentElement.dataset.theme=s.theme||(matchMedia('(prefers-color-scheme: dark)').matches?'night':'paper');}catch(e){}}
+      apply();addEventListener('storage',function(e){if(e.key==='cissp.settings')apply();});})();
+  </script>
 </head>
 <body>
   <div id="root"></div>

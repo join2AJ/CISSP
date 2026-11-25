@@ -1744,7 +1744,7 @@ sub, sup { font-size: max(12px, .72em); }
 .grc-bar { display: flex; flex-wrap: wrap; gap: 12px 20px; justify-content: space-between; align-items: flex-end; margin: 6px 0 16px; }
 .grc-bar h1 { font-family: var(--display); font-weight: 500; font-size: clamp(26px, 3.4vw, 36px); margin: 4px 0 0; letter-spacing: -.01em; }
 .grc-bar h1 em { color: var(--accent); }
-.grc-frame { display: block; width: 100%; height: calc(100vh - 210px); min-height: 560px; border: 1px solid var(--rule); border-radius: 18px; background: #f7f3ea; box-shadow: var(--shadow); }
+.grc-frame { display: block; width: 100%; height: calc(100vh - 210px); min-height: 560px; border: 1px solid var(--rule); border-radius: 18px; background: var(--paper); box-shadow: var(--shadow); }
 @media (max-width: 640px) { .grc-frame { height: calc(100vh - 150px); border-radius: 14px; } .grc-bar .sub { display: none; } }
 .mainnav [hidden], .mainnav .nav-top[hidden] { display: none !important; }
 

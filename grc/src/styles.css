@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 /* StudyCISSP look: warm paper, green accent, book headings */
-body { background: #f7f3ea; font-family: "Inter", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+body { background: var(--g-bg); font-family: "Inter", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
 h1, h2 { font-family: "Fraunces", Georgia, serif; letter-spacing: -.01em; }
 h1 { font-weight: 600 !important; }
 h2 { font-weight: 600 !important; }
@@ -11,4 +11,142 @@ nav::-webkit-scrollbar, .overflow-x-auto::-webkit-scrollbar { height: 6px; }
 nav::-webkit-scrollbar-thumb, .overflow-x-auto::-webkit-scrollbar-thumb { background: #d9d0bc; border-radius: 99px; }
 header.bg-slate-900 { background: linear-gradient(160deg, #1f5c43, #163f2f); }
 header .text-slate-400 { color: #e3b95a; letter-spacing: .12em; }
-nav.sticky { background: rgba(251, 248, 241, .94); backdrop-filter: blur(8px); }
+nav.sticky { background: color-mix(in srgb, var(--g-bg) 94%, transparent); backdrop-filter: blur(8px); }
+
+/* theme palettes: light (default), sepia, dark */
+:root {
+  --g-w: #fffdf8;
+  --g-bg: #f7f3ea;
+  --g-s50: #fbf8f1;
+  --g-s100: #f1ebde;
+  --g-s200: #e3dccb;
+  --g-s300: #cfc5ae;
+  --g-s400: #a69c86;
+  --g-s500: #7d7462;
+  --g-s600: #5f5848;
+  --g-s700: #45402f;
+  --g-s800: #2c2a22;
+  --g-s900: #1d1b17;
+  --g-i50: #ecf4ef;
+  --g-i100: #d5e8dc;
+  --g-i200: #a9d0b8;
+  --g-i500: #2f7a59;
+  --g-i600: #1f5c43;
+  --g-i700: #184a36;
+  --g-i800: #133a2b;
+  --g-i900: #0f2e22;
+  --g-e50: #ecfdf5;
+  --g-e100: #d1fae5;
+  --g-e500: #047857;
+  --g-e600: #047857;
+  --g-e700: #047857;
+  --g-e800: #065f46;
+  --g-e900: #064e3b;
+  --g-a50: #fffbeb;
+  --g-a100: #fef3c7;
+  --g-a200: #fde68a;
+  --g-a600: #92400e;
+  --g-a800: #92400e;
+  --g-a900: #78350f;
+  --g-r100: #ffe4e6;
+  --g-r200: #fecdd3;
+  --g-r600: #be123c;
+  --g-r700: #be123c;
+  --g-r800: #9f1239;
+  --g-y100: #fef9c3;
+  --g-y800: #854d0e;
+  --g-k600: #0369a1;
+}
+:root[data-theme="sepia"] {
+  --g-w: #f8eedb;
+  --g-bg: #f1e5cd;
+  --g-s50: #f3e8d2;
+  --g-s100: #e8d9bb;
+  --g-s200: #d6c39e;
+  --g-s300: #c4ad83;
+  --g-s400: #9c8564;
+  --g-s500: #7d6a4f;
+  --g-s600: #5f4b30;
+  --g-s700: #4c3b25;
+  --g-s800: #3a2c1a;
+  --g-s900: #3a2c1a;
+  --g-i50: #f1e3cc;
+  --g-i100: #ead3ae;
+  --g-i200: #d9b98a;
+  --g-i500: #8a5a2b;
+  --g-i600: #7a4a1c;
+  --g-i700: #6a3e16;
+  --g-i800: #5a3412;
+  --g-i900: #4a2a0f;
+  --g-e50: #ecfdf5;
+  --g-e100: #d1fae5;
+  --g-e500: #047857;
+  --g-e600: #047857;
+  --g-e700: #047857;
+  --g-e800: #065f46;
+  --g-e900: #064e3b;
+  --g-a50: #fffbeb;
+  --g-a100: #fef3c7;
+  --g-a200: #fde68a;
+  --g-a600: #92400e;
+  --g-a800: #92400e;
+  --g-a900: #78350f;
+  --g-r100: #ffe4e6;
+  --g-r200: #fecdd3;
+  --g-r600: #be123c;
+  --g-r700: #be123c;
+  --g-r800: #9f1239;
+  --g-y100: #fef9c3;
+  --g-y800: #854d0e;
+  --g-k600: #0369a1;
+}
+:root[data-theme="night"] {
+  --g-w: #1c2125;
+  --g-bg: #14171a;
+  --g-s50: #171b1f;
+  --g-s100: #232a2f;
+  --g-s200: #2e353b;
+  --g-s300: #3a4248;
+  --g-s400: #7d776b;
+  --g-s500: #958e80;
+  --g-s600: #b5ae9f;
+  --g-s700: #cfc8b9;
+  --g-s800: #2b3237;
+  --g-s900: #e7e1d4;
+  --g-i50: #1f2b26;
+  --g-i100: #26352e;
+  --g-i200: #2f4a3c;
+  --g-i500: #6fae8d;
+  --g-i600: #2e6b4f;
+  --g-i700: #8cc7a6;
+  --g-i800: #a6d6bb;
+  --g-i900: #c2e3cf;
+  --g-e50: #17271f;
+  --g-e100: #1d3328;
+  --g-e500: #1f6b51;
+  --g-e600: #1f6b51;
+  --g-e700: #7fd4ac;
+  --g-e800: #9fe0c0;
+  --g-e900: #bfead4;
+  --g-a50: #2a2214;
+  --g-a100: #33291a;
+  --g-a200: #5a4520;
+  --g-a600: #8a5a14;
+  --g-a800: #f0c27a;
+  --g-a900: #f5d39a;
+  --g-r100: #3a1f22;
+  --g-r200: #5a2a2f;
+  --g-r600: #a83246;
+  --g-r700: #f08f99;
+  --g-r800: #f4a7ae;
+  --g-y100: #33301a;
+  --g-y800: #f0dc8a;
+  --g-k600: #22607f;
+}
+
+:root[data-theme="night"] { color-scheme: dark; }
+:root[data-theme="night"] .text-white { color: #f3efe6; }
+:root[data-theme="night"] .text-slate-800 { color: #dcd5c6; }
+:root[data-theme="night"] header.bg-slate-900 { background: linear-gradient(160deg, #1d4a37, #11281f); }
+:root[data-theme="sepia"] header.bg-slate-900 { background: linear-gradient(160deg, #7a4a1c, #5a3412); }
+:root[data-theme="sepia"] .text-white { color: #fbf3e3; }
