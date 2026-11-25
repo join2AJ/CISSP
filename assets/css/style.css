@@ -1924,3 +1924,4 @@ body.grc-mode .brand-text .bb { color: #8a6414; }
 :root { --gold-ink: #8a6414; } :root[data-theme="night"] { --gold-ink: #d4a640; }
 .ms.on small { color: var(--ink-2); }
 .okbox, .band.green { color: color-mix(in srgb, var(--good) 70%, var(--ink)); }
+.user-menu .um-head + .um-group { border-top: 0; margin-top: 0; }
