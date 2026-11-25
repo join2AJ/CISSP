@@ -1472,6 +1472,58 @@
   const loadGrc = () => window.GRC_COURSE && window.GRC_COURSE.length >= 10 ? Promise.resolve() : (grcLoading = grcLoading || Promise.all(["grc-course-1", "grc-course-2"].map(f => new Promise((ok, no) => {
     const sc = document.createElement("script"); sc.src = `assets/js/${f}.js?v=${(document.querySelector('script[src*="app.js"]').src.split("v=")[1] || "dev")}`; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc);
   }))));
+  let libLoading = null;
+  const loadLib = () => window.GRC_LIBRARY ? Promise.resolve() : (libLoading = libLoading || new Promise((ok, no) => {
+    const sc = document.createElement("script"); sc.src = `assets/js/grc-library.js?v=${(document.querySelector('script[src*="app.js"]').src.split("v=")[1] || "dev")}`; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc);
+  }));
+  const LIB_SRC = {
+    sushegaad: `From <a href="https://github.com/Sushegaad/Claude-Skills-Governance-Risk-and-Compliance" target="_blank" rel="noopener">Claude Skills for GRC</a> by Hemant Naik, MIT licence. Check legal points against the official text before relying on them.`,
+    comply: `Template from <a href="https://github.com/strongdm/comply" target="_blank" rel="noopener">Comply</a> by strongDM, Apache License 2.0. A starting point to adapt, not a finished policy.`
+  };
+  const LIB_MOD = { "ISO 27001:2022": "m3", "SOC 2": "m4", "India: DPDP Act and Rules": "m7", "Third-party risk": "m6", "SOC 2 policy templates": "m1", "SOC 2 procedure templates": "m5" };
+  let libQ = "";
+  async function grcLibrary(id) {
+    try { await loadLib(); } catch (e) { return `<div class="page-narrow"><h1 class="h-display">Couldn’t load the library</h1><p class="lede">Check your connection and try again.</p></div>`; }
+    const L = window.GRC_LIBRARY, mins = d => Math.max(2, Math.round(d.words / 200));
+    const doc = id && L.find(d => d.id === id);
+    if (doc) {
+      const same = L.filter(d => d.group === doc.group), at = same.indexOf(doc), nx = same[at + 1], mod = LIB_MOD[doc.group] && grcMod(LIB_MOD[doc.group]);
+      return `<article class="page-narrow grc-doc">
+        <a class="kicker" href="#/grc/library">← GRC library · ${esc(doc.group)}</a>
+        <h1 class="h-display">${esc(doc.title)}</h1>
+        <p class="sub">◷ ${mins(doc)} min read${doc.tsc && doc.tsc.length ? ` · satisfies SOC 2 ${doc.tsc.map(esc).join(", ")}` : ""}${mod ? ` · goes with <a href="#/grc/${mod.id}">Module ${mod.n}: ${esc(mod.title)}</a>` : ""}</p>
+        <div class="prose">${doc.html}</div>
+        <p class="grc-src">${LIB_SRC[doc.src] || ""}</p>
+        <div class="sec-pager">${at > 0 ? `<a href="#/grc/library/${same[at - 1].id}">← ${esc(same[at - 1].title)}</a>` : `<a href="#/grc/library">← Library</a>`}${nx ? `<a href="#/grc/library/${nx.id}" class="skip">${esc(nx.title)} →</a>` : ""}</div>
+      </article>`;
+    }
+    const groups = [...new Set(L.map(d => d.group))];
+    const match = d => !libQ || (d._t = d._t || (d.title + " " + d.group + " " + (d.tsc || []).join(" ") + " " + d.html.replace(/<[^>]+>/g, " ")).toLowerCase()).includes(libQ.toLowerCase());
+    return `<div class="page grc-libpage">
+      <a class="kicker" href="#/grc">← Learn GRC</a>
+      <h1 class="h-display">GRC <em>library</em></h1>
+      <p class="lede">${L.length} reference documents and templates, about ${Math.round(L.reduce((n, d) => n + d.words, 0) / 1000)},000 words: all 93 ISO 27001 controls, SOC 2 controls and evidence, the DPDP Act and Rules section by section, third-party risk, and 29 SOC 2 policy and procedure templates you can adapt.</p>
+      <input class="grc-libq" id="libQ" type="search" placeholder="Search the library, e.g. access, breach, CC6.1" value="${esc(libQ)}" aria-label="Search the library">
+      ${groups.map(g => { const ds = L.filter(d => d.group === g && match(d)); if (!ds.length) return "";
+        return `<h2 class="h-section">${esc(g)}</h2><div class="grc-libgrid">${ds.map(d => `<a class="grc-libcard" href="#/grc/library/${d.id}"><b>${esc(d.title)}</b><small>◷ ${mins(d)} min${d.tsc && d.tsc.length ? " · " + d.tsc.slice(0, 4).map(esc).join(" ") : ""}</small></a>`).join("")}</div>`; }).join("")}
+      <p class="grc-src" style="margin-top:30px">Reference notes: ${LIB_SRC.sushegaad} Templates: ${LIB_SRC.comply}</p>
+    </div>`;
+  }
+  function grcLabs() {
+    const labs = window.GRC_LABS || [];
+    return `<div class="page-narrow grc-labs">
+      <a class="kicker" href="#/grc">← Learn GRC</a>
+      <h1 class="h-display">Hands-on <em>labs</em></h1>
+      <p class="lede">Reading builds understanding; doing builds confidence. Each lab uses a real open-source GRC tool, takes an evening or a weekend, and ends with something you can show.</p>
+      ${labs.map((x, i) => `<section class="card grc-lab" id="lab-${x.id}">
+        <div class="grc-lab-head"><span class="grc-n">${String(i + 1).padStart(2, "0")}</span><div><h2>${esc(x.title)}</h2><p class="sub" style="margin:0">◷ ${esc(x.time)} · practises ${x.mods.map(m => { const mm = grcMod(m); return mm ? `<a href="#/grc/${m}">Module ${mm.n}</a>` : ""; }).join(", ")}</p></div></div>
+        <p>${esc(x.why)}</p>
+        <p class="grc-lab-tool">Tool: <a href="${esc(x.u)}" target="_blank" rel="noopener">${esc(x.tool)} ↗</a></p>
+        <ol class="grc-lab-steps">${x.steps.map(s => `<li>${esc(s)}</li>`).join("")}</ol>
+        <p class="grc-lab-out"><b>You finish with:</b> ${esc(x.deliver)}</p>
+      </section>`).join("")}
+    </div>`;
+  }
   const grcKey = (m, l) => m + ":" + l;
   const grcDone = () => (S.grc = S.grc || {});
   const grcMod = id => (window.GRC_COURSE || []).find(m => m.id === id);
@@ -1489,6 +1541,8 @@
       <iframe class="grc-frame" src="grc.html" title="GRC Manager field guide"></iframe></div>`;
     try { await loadGrc(); } catch (e) { return `<div class="page-narrow"><h1 class="h-display">Couldn’t load the course</h1><p class="lede">Check your connection and try again.</p></div>`; }
     const C = window.GRC_COURSE;
+    if (r.a === "library") return grcLibrary(r.b);
+    if (r.a === "labs") return grcLabs();
     const m = r.a && grcMod(r.a);
     if (m && r.b) { const l = m.lessons.find(x => x.id === r.b); if (l) return grcLesson(m, l); }
     if (m) return grcModule(m);
@@ -1501,8 +1555,12 @@
         <div class="grc-ring"><b>${Math.round(done / all * 100)}%</b><small>${done} of ${all} lessons</small></div></header>
       ${nx ? `<a class="start-btn" href="#/grc/${nx.m.id}/${nx.l.id}" style="margin:6px 0 30px"><span><small>${done ? "Continue" : "Start"} · Module ${nx.m.n}</small><b>${esc(nx.l.title)}</b></span><span class="start-arrow" aria-hidden="true">→</span></a>` : `<div class="okbox" style="margin:6px 0 30px">Every lesson done. Use the field guide's 20-day plan and templates to practise.</div>`}
       <div class="grc-mods">${C.map(x => { const p = grcProg(x); return `<a class="grc-mod ${p.pct === 100 ? "done" : ""}" href="#/grc/${x.id}"><span class="grc-n">${String(x.n).padStart(2, "0")}</span><div><b>${esc(x.title)}</b><small>${esc(x.lede)}</small><span class="meter"><i style="width:${p.pct}%"></i></span><em>${p.d} of ${p.t} lessons</em></div></a>`; }).join("")}</div>
-      <h2 class="h-section">Practise with the field guide</h2>
-      <a class="card grc-guide" href="#/grc/guide"><div><span class="kicker">13 tabs</span><h3>GRC Manager field guide</h3><p>A day in the life, meetings, tools, a 50-term glossary with quiz mode, a drill for questions you can’t answer, 18 daily situations, a 20-day plan, your first 90 days and 18 filled-in templates.</p></div><span class="start-arrow" aria-hidden="true">→</span></a>
+      <h2 class="h-section">Go deeper and practise</h2>
+      <div class="grc-more">
+        <a class="card grc-guide" href="#/grc/library"><div><span class="kicker">44 documents · ~42,000 words</span><h3>GRC library</h3><p>All 93 ISO 27001 controls, SOC 2 controls and evidence, the DPDP Act and Rules section by section, third-party risk, and 29 SOC 2 policy and procedure templates.</p></div><span class="start-arrow" aria-hidden="true">→</span></a>
+        <a class="card grc-guide" href="#/grc/labs"><div><span class="kicker">7 labs</span><h3>Hands-on labs</h3><p>Use real open-source tools: an assessment in CISO Assistant, a SOC 2 gap scan of GitHub, policies as code, a vendor register, and quantifying risk in rupees.</p></div><span class="start-arrow" aria-hidden="true">→</span></a>
+      </div>
+      <a class="card grc-guide" href="#/grc/guide" style="margin-top:12px"><div><span class="kicker">13 tabs</span><h3>GRC Manager field guide</h3><p>A day in the life, meetings, tools, a 50-term glossary with quiz mode, a drill for questions you can’t answer, 18 daily situations, a 20-day plan, your first 90 days and 18 filled-in templates.</p></div><span class="start-arrow" aria-hidden="true">→</span></a>
       <h2 class="h-section">Further reading</h2>
       <p class="sub">Free, openly licensed lists and official sources. The lessons above are written for this site; these help you go deeper.</p>
       <div>${(window.GRC_READING || []).map(x => `<div class="res"><div class="res-ico">↗</div><div><h4><a href="${esc(x.u)}" target="_blank" rel="noopener">${esc(x.t)} ↗</a></h4><p>${esc(x.d)}</p></div></div>`).join("")}</div>
@@ -1543,6 +1601,7 @@
     </article>`;
   }
   function bindGrc(r) {
+    const q = $("#libQ"); if (q) q.addEventListener("input", () => { libQ = q.value; clearTimeout(q._t); q._t = setTimeout(() => { App.rerender(); setTimeout(() => { const n = $("#libQ"); if (n) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); } }, 30); }, 250); });
     const n = $("#grcNext"); if (n) n.addEventListener("click", () => { grcDone()[n.dataset.key] = ymd(today()); save(); });
     $$(".grc-q").forEach(box => $$("[data-gq]", box).forEach(b => b.addEventListener("click", () => {
       const j = +b.dataset.gq, a = +box.dataset.a, ok = j === a;

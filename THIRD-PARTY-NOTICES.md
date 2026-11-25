@@ -37,3 +37,21 @@ Questions in the repositories below were reviewed and **not** used: `Wammiri/cis
 (question content is "all rights reserved, personal study only"), `Joserwa/cissp-exam-simulator`
 and `037g/cissp_test_sim` (banks compiled from other sources, so their MIT licence cannot cover
 the questions).
+
+## GRC library: reference notes
+
+`assets/js/grc-library.js` includes reference notes from the `dpdpa`, `iso27001`, `soc2` and `tprm` skills in
+[Claude-Skills-Governance-Risk-and-Compliance](https://github.com/Sushegaad/Claude-Skills-Governance-Risk-and-Compliance)
+by Hemant Naik, used under the MIT License (Copyright (c) 2026 Hemant Naik). Full licence: `licenses/claude-skills-grc-MIT.txt`.
+Changes: converted from Markdown to HTML, long dashes replaced with hyphens, emoji markers replaced with words.
+
+## GRC library: SOC 2 policy and procedure templates
+
+`assets/js/grc-library.js` includes the example policies and procedures from [Comply](https://github.com/strongdm/comply)
+by strongDM and its contributors (see the project's AUTHORS.txt), used under the Apache License, Version 2.0.
+Full licence: `licenses/comply-APACHE-2.0.txt`. Changes: converted from Markdown to HTML and reformatted for this site.
+
+## Tools linked from the GRC labs
+
+The hands-on labs link to, and do not copy, these projects: CISO Assistant (AGPL-3.0), claude-grc-engineering (MIT),
+Probo (MIT), Netflix riskquant (Apache-2.0) and Cybersecurity-Projects (AGPL-3.0).
