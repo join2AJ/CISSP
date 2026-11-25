@@ -1817,7 +1817,11 @@
   const grcDone = () => (S.grc = S.grc || {});
   const grcMod = id => (window.GRC_COURSE || []).find(m => m.id === id);
   const grcProg = m => { const d = m.lessons.filter(l => grcDone()[grcKey(m.id, l.id)]).length; return { d, t: m.lessons.length, pct: Math.round(d / m.lessons.length * 100) }; };
-  const grcMins = l => Math.max(3, Math.round(String(l.body).replace(/<[^>]+>/g, " ").split(/\s+/).filter(Boolean).length / 180 + (l.body.match(/<table/g) || []).length + l.checks.length * 0.5));
+  // Lesson times are scaled so the whole course comes to 2h 30m, the measured reading time of the course.
+  const GRC_COURSE_MIN = 150;
+  let grcScale = null;
+  const grcMins = l => { if (grcScale == null && (window.GRC_COURSE || []).length >= 10) { const raw = window.GRC_COURSE.reduce((n, m) => n + m.lessons.reduce((k, x) => k + grcRaw(x), 0), 0); grcScale = GRC_COURSE_MIN / raw; } return Math.max(1, Math.round(grcRaw(l) * (grcScale || 1))); };
+  const grcRaw = l => Math.max(3, String(l.body).replace(/<[^>]+>/g, " ").split(/\s+/).filter(Boolean).length / 180 + (l.body.match(/<table/g) || []).length + l.checks.length * 0.5);
   const grcNext = () => { for (const m of window.GRC_COURSE || []) for (const l of m.lessons) if (!grcDone()[grcKey(m.id, l.id)]) return { m, l }; return null; };
   const notAllowed = () => `<div class="page-narrow"><div class="kicker">Private</div><h1 class="h-display">Not available</h1><p class="lede">This section is only for the site owner.</p><a class="btn" href="#/">Back to your study desk</a></div>`;
 
@@ -1878,7 +1882,7 @@
     const seen = new Set(rows.filter(r => r.topic).map(r => r.domain.slice(4) + ":" + r.topic));
     const est = { total: 0, n: 0, byMod: {}, byLesson: {} };
     (window.GRC_COURSE || []).forEach(m => m.lessons.forEach(l => { const k = m.id + ":" + l.id;
-      if (grcDone()[k] && !seen.has(k)) { const s = grcMins(l) * 120; est.total += s; est.n++; est.byMod[m.id] = (est.byMod[m.id] || 0) + s; est.byLesson[k] = s; } }));
+      if (grcDone()[k] && !seen.has(k)) { grcMins(l); const s = Math.round(grcRaw(l) * (grcScale || 1) * 60); est.total += s; est.n++; est.byMod[m.id] = (est.byMod[m.id] || 0) + s; est.byLesson[k] = s; } }));
     return { rows, est, tracked: rows.reduce((n, r) => n + r.seconds, 0) };
   };
   App.grcStats = () => {

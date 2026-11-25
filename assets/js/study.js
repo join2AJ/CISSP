@@ -473,7 +473,7 @@
         <div class="fact"><b>${aN ? Math.round(aOk / aN * 100) + "%" : "-"}</b><span>right first time (${aN})</span></div>
         <div class="fact"><b>${tested}</b><span>controls tested</span></div>
       </section>
-      ${est.n ? `<p class="hint">Includes about ${fmtDur(est.total)} for ${est.n} lesson${est.n > 1 ? "s" : ""} you finished before time tracking started, estimated as twice each lesson’s reading time to allow for the questions and re-reading. From now on the time is measured.</p>` : ""}
+      ${est.n ? `<p class="hint">Includes about ${fmtDur(est.total)} for ${est.n} lesson${est.n > 1 ? "s" : ""} you finished before time tracking started, estimated from each lesson’s reading time (the whole course is about 2h 30m). From now on the time is measured.</p>` : ""}
       <h2 class="h-section">Daily GRC time</h2>
       <div class="daychart">${series.map(([d, s]) => `<div class="dc-col" title="${fmtD(d)}: ${fmtDur(s)}"><i style="height:${Math.round(s / maxDay * 100)}%"></i></div>`).join("")}</div>
       <div class="dc-axis"><span>${fmtD(series[0][0])}</span><span>today</span></div>
