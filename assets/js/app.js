@@ -1720,6 +1720,7 @@
     const sc = document.createElement("script"); sc.src = `assets/js/grc-library.js?v=${(document.querySelector('script[src*="app.js"]').src.split("v=")[1] || "dev")}`; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc);
   }));
   const LIB_SRC = {
+    cc0: `From the public-domain (CC0) lists <a href="https://github.com/grcengineering/awesome-grcengineering" target="_blank" rel="noopener">awesome-grcengineering</a> and <a href="https://github.com/getprobo/awesome-compliance" target="_blank" rel="noopener">awesome-compliance</a>. Tools named here are third-party projects with their own licences.`,
     sushegaad: `From <a href="https://github.com/Sushegaad/Claude-Skills-Governance-Risk-and-Compliance" target="_blank" rel="noopener">Claude Skills for GRC</a> by Hemant Naik, MIT licence. Check legal points against the official text before relying on them.`,
     comply: `Template from <a href="https://github.com/strongdm/comply" target="_blank" rel="noopener">Comply</a> by strongDM, Apache License 2.0. A starting point to adapt, not a finished policy.`
   };

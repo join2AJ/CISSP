@@ -55,3 +55,9 @@ Full licence: `licenses/comply-APACHE-2.0.txt`. Changes: converted from Markdown
 
 The hands-on labs link to, and do not copy, these projects: CISO Assistant (AGPL-3.0), claude-grc-engineering (MIT),
 Probo (MIT), Netflix riskquant (Apache-2.0) and Cybersecurity-Projects (AGPL-3.0).
+
+## Public-domain lists in the GRC library
+
+Two library documents are copied from lists dedicated to the public domain under CC0 1.0:
+grcengineering/awesome-grcengineering and getprobo/awesome-compliance. No permission is needed;
+they are credited anyway.
