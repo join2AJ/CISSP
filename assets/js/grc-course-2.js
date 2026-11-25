@@ -505,6 +505,14 @@ window.GRC_READING_ROOM = [
     ["Foundations of Information Security - Jason Andress (2019)", "A short tour of security basics; useful for colleagues new to the field."],
     ["A Leader's Guide to Cybersecurity - Thomas Parenty and Jack Domet (2019)", "Security explained for business leaders; useful for Board conversations."],
     ["Rational Cybersecurity for Business - Dan Blum (2020)", "Aligning security with the business; available free as an open-access book from Apress."]] },
+  { id: "articles", title: "Articles worth reading", items: [
+    ["The GRC work CISOs would keep isn't the work you're doing - Ayoub Fandi, GRC Engineer (Nov 2026)",
+     "A CISO said he would have kept 3 of his 21 GRC staff, and the article asks what those three do differently. Three moves. One: if security questionnaires and contract redlines fill your week, treat the job as a trust role; sort last quarter's requests into audit work and deal work, let customers self-serve the standard answers and let sales engineers do first passes, and keep your own time for the big deals. Two: spend audit hours next to engineering; pick one control you report every quarter, ask the engineer who owns it to show you the real configuration, and ask what it covers and when it fails. Three: learn to read systems (a config file, a pull request) rather than to script evidence collection, because agents will automate the scripting first. Try it here: take one control in the workbench and write down what would make it fail.",
+     "https://grcengineer.com/p/the-grc-work-cisos-would-keep-isn-t-the-work-you-re-doing/"],
+    ["The human API: building interfaces between GRC and engineering teams - GRC Engineer", "How GRC and engineering can agree on simple, repeatable ways to ask for and give evidence, instead of one-off requests.", "https://grcengineer.com/p/the-human-api-building-interfaces-between-grc-and-engineering-teams-d222d944ce94d8cd/"],
+    ["5 metrics that prove a control works - GRC Engineer", "Why 'the control exists' proves nothing, and what to measure instead. Pairs well with Module 5 and the control workbench.", "https://grcengineer.com/p/5-metrics-that-prove-a-control-works-it-exists-didn-t-make-the-list/"],
+    ["What is GRC engineering - GRC Engineer", "A primer on running GRC like an engineering practice: automation, systems thinking and working with engineers.", "https://grcengineer.com/what-is-grc-engineering/"],
+    ["The GRC Engineering Manifesto", "The short statement of values behind GRC engineering, co-written by practitioners including Ayoub Fandi.", "https://grc.engineering"]] },
   { id: "people", title: "People and teams to learn from", items: [
     ["Phil Venables", "Long-time CISO (Goldman Sachs, Google Cloud). His blog on compliance versus security and on scaling security programmes is essential reading."],
     ["Ryan McGeehan", "Writes on risk forecasting and simple risk programmes for start-ups and scale-ups."],

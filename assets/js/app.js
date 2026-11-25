@@ -535,8 +535,8 @@
       ${L("#/grc/library", "❏", "All 46 documents", r.a === "library" && !r.b)}</ol></details>`;
     h += `<details class="toc-group" ${open(["controls", "map", "calendar"]) ? "open" : ""}><summary class="toc-head">Controls</summary><ol class="toc-list">
       ${L("#/grc/controls", "◇", "Control workbench", r.a === "controls")}${L("#/grc/map/iso", "⊞", "Framework map", r.a === "map")}${L("#/grc/calendar", "▦", "Evidence calendar", r.a === "calendar")}</ol></details>`;
-    h += `<details class="toc-group" ${open(["labs", "guide", "glossary", "pbc", "reading"]) ? "open" : ""}><summary class="toc-head">Practise</summary><ol class="toc-list">
-      ${L("#/grc/labs", "◎", "Hands-on labs", r.a === "labs")}${L("#/grc/pbc", "☑", "PBC list", r.a === "pbc")}${L("#/grc/guide", "▤", "Field guide", r.a === "guide")}${L("#/grc/reading", "❡", "Reading room", r.a === "reading")}${L("#/grc/glossary", "Aa", "GRC glossary", r.a === "glossary")}</ol></details>`;
+    h += `<details class="toc-group" ${open(["labs", "guide", "glossary", "pbc", "reading", "setup"]) ? "open" : ""}><summary class="toc-head">Practise</summary><ol class="toc-list">
+      ${L("#/grc/labs", "◎", "Hands-on labs", r.a === "labs")}${L("#/grc/setup", "⚙", "Run CISO Assistant", r.a === "setup")}${L("#/grc/pbc", "☑", "PBC list", r.a === "pbc")}${L("#/grc/guide", "▤", "Field guide", r.a === "guide")}${L("#/grc/reading", "❡", "Reading room", r.a === "reading")}${L("#/grc/glossary", "Aa", "GRC glossary", r.a === "glossary")}</ol></details>`;
     h += `<div class="toc-card"><b>${Math.round(done / all * 100)}%</b>of the GRC course · ${done} of ${all} lessons<div class="meter" style="margin-top:10px"><i style="width:${Math.round(done / all * 100)}%;background:#b8892a"></i></div></div>`;
     toc.innerHTML = h;
   }
@@ -745,6 +745,7 @@
         </div>
       </section>
 
+      ${App.reviewCard(false)}
       ${readinessCard()}
       ${challengeCard()}
       <h2 class="h-section">Where you are</h2>
@@ -839,6 +840,40 @@
       </ol></nav>
     </article>`;
   }
+  /* ---------- Easy / Normal / Hard: rate a page, and it comes back for review ---------- */
+  const DIFF = { hard: ["Hard", 2], normal: ["Normal", 7], easy: ["Easy", 21] };
+  App.diffBar = (k) => { const v = ((S.diff || {})[k] || {}).v;
+    return `<div class="diff-bar" data-diffk="${esc(k)}"><span class="diff-q">How did this page feel?</span><div class="diff-btns" role="group" aria-label="How did this page feel?">${["easy", "normal", "hard"].map(id => `<button class="diff ${id} ${v === id ? "on" : ""}" data-diff="${id}" aria-pressed="${v === id}"><b>${DIFF[id][0]}</b><small>back in ${DIFF[id][1]} days</small></button>`).join("")}</div></div>`; };
+  const diffItem = (k, o) => {
+    let t = null, h = null;
+    if (k.startsWith("grc:")) { const [, mi, li] = k.split(":"), m = grcMod(mi), l = m && m.lessons.find(x => x.id === li); if (l) { t = `${m.n}.${m.lessons.indexOf(l) + 1} ${l.title}`; h = `#/grc/${mi}/${li}`; } }
+    else { const [di, si] = k.split(":"), d = byId[di], s = d && d.sections.find(x => x.id === si); if (s) { t = `${d.n}.${d.sections.indexOf(s) + 1} ${s.title}`; h = `#/domain/${di}/${si}`; } }
+    if (!t) return null;
+    const due = ymd(addDays(parseD(o.at), DIFF[o.v][1]));
+    return { k, v: o.v, t, h, due, isDue: due <= ymd(today()) };
+  };
+  App.reviewCard = (grc) => {
+    const all = Object.entries(S.diff || {}).filter(([k, o]) => o && DIFF[o.v] && k.startsWith("grc:") === !!grc).map(([k, o]) => diffItem(k, o)).filter(Boolean);
+    const by = { hard: [], normal: [], easy: [] }; all.forEach(x => by[x.v].push(x));
+    Object.values(by).forEach(a => a.sort((x, y) => (y.isDue - x.isDue) || (x.due < y.due ? -1 : 1)));
+    const first = ["hard", "normal", "easy"].find(v => by[v].length) || "hard", dueN = all.filter(x => x.isDue).length;
+    return `<section class="card rev-card" aria-label="Pages to revisit">
+      <div class="rev-top"><div><span class="kicker">Revisit</span><h3>${dueN ? `${dueN} page${dueN > 1 ? "s" : ""} due for review` : all.length ? "Nothing due today" : "Rate pages as you read"}</h3></div>
+        <div class="seg-tabs rev-tabs" role="tablist" aria-label="Difficulty">${["hard", "normal", "easy"].map(v => `<button role="tab" class="${v === first ? "on" : ""}" aria-selected="${v === first}" data-revtab="${v}">${DIFF[v][0]} <small>${by[v].length}</small></button>`).join("")}</div></div>
+      ${all.length ? ["hard", "normal", "easy"].map(v => `<div class="rev-list" role="tabpanel" data-revpanel="${v}" ${v === first ? "" : "hidden"}>${by[v].length ? by[v].slice(0, 8).map(x => `<a class="rev-item" href="${x.h}"><span>${esc(x.t)}</span><small class="${x.isDue ? "due" : ""}">${x.isDue ? "Due now" : "Next " + fmtD(x.due)}</small></a>`).join("") + (by[v].length > 8 ? `<p class="hint">and ${by[v].length - 8} more</p>` : "") : `<p class="hint">No pages marked ${DIFF[v][0].toLowerCase()} yet.</p>`}</div>`).join("")
+        : `<p class="hint" style="margin:0">At the end of every ${grc ? "lesson" : "page"}, tap <b>Easy</b>, <b>Normal</b> or <b>Hard</b>. Hard pages come back in 2 days, normal in 7, easy in 21, and they are listed here so you know what to reread first.</p>`}
+    </section>`;
+  };
+  document.addEventListener("click", (ev) => {
+    const b = ev.target.closest && ev.target.closest("[data-diff]");
+    if (b) { const bar = b.closest("[data-diffk]"), k = bar.dataset.diffk, v = b.dataset.diff; S.diff = S.diff || {};
+      S.diff[k] = { v, at: ymd(today()) }; save();
+      bar.querySelectorAll("[data-diff]").forEach(x => { x.classList.toggle("on", x === b); x.setAttribute("aria-pressed", String(x === b)); });
+      toast(`Marked ${DIFF[v][0].toLowerCase()}. It comes back for review on ${fmtD(ymd(addDays(today(), DIFF[v][1])))}.`); return; }
+    const t = ev.target.closest && ev.target.closest("[data-revtab]");
+    if (t) { const card = t.closest(".rev-card"); card.querySelectorAll("[data-revtab]").forEach(x => { x.classList.toggle("on", x === t); x.setAttribute("aria-selected", String(x === t)); });
+      card.querySelectorAll("[data-revpanel]").forEach(p => { p.hidden = p.dataset.revpanel !== t.dataset.revtab; }); }
+  });
   function viewSection(d, i) {
     const s = d.sections[i], k = d.id + ":" + s.id, on = !!S.read[k];
     const prevS = d.sections[i - 1], nextS = d.sections[i + 1];
@@ -860,6 +895,7 @@
         </section>
         ${quickCheck(d, s)}
       </div>
+      ${App.diffBar(k)}
       <div class="sec-finish">
         <a class="btn primary big-next" id="readNext" href="${nextHref}" data-read-key="${k}">${on ? "Next" : "Got it - next"}: ${esc(nextName)} →</a>
         <div class="sec-finish-row">
@@ -1729,7 +1765,7 @@
   /* second branch: Learn GRC (a full course) and the GRC Manager field guide, private to the owner's account */
   let grcLoading = null;
   App.loadGrc = () => loadGrc();
-  const loadGrc = () => window.GRC_COURSE && window.GRC_COURSE.length >= 10 && window.GRC_CONTROLS && window.ISO_2022 ? Promise.resolve() : (grcLoading = grcLoading || Promise.all(["grc-course-1", "grc-course-2", "grc-iso", "grc-controls-1", "grc-controls-2"].map(f => new Promise((ok, no) => {
+  const loadGrc = () => window.GRC_COURSE && window.GRC_COURSE.length >= 10 && window.GRC_CONTROLS && window.ISO_2022 ? Promise.resolve() : (grcLoading = grcLoading || Promise.all(["grc-course-1", "grc-course-2", "grc-iso", "grc-controls-1", "grc-controls-2", "grc-oracle"].map(f => new Promise((ok, no) => {
     const sc = document.createElement("script"); sc.src = `assets/js/${f}.js?v=${(document.querySelector('script[src*="app.js"]').src.split("v=")[1] || "dev")}`; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc);
   }))));
   let libLoading = null;
@@ -1838,6 +1874,7 @@
     if (r.a === "labs") return grcLabs();
     if (r.a === "insights") return App.viewGrcInsights();
     if (r.a === "notes") return grcNotes();
+    if (r.a === "setup") return grcSetup();
     if (r.a === "log") return grcLog();
     if (r.a === "shelf") return App.viewLibrary(true);
     if (r.a === "reading") { try { await loadLib(); } catch (e) {} return grcReading(r.b); }
@@ -1935,6 +1972,7 @@
           <ul class="grc-todo">${todo.map(x => `<li><a href="${x.h}">${esc(x.t)} →</a></li>`).join("")}</ul>
           <a class="btn small ghost" href="#/grc/guide">20-day plan in the field guide →</a></div>
       </section>
+      ${App.reviewCard(true)}
       <section class="card rd" aria-label="GRC readiness">
         <div class="rd-ring ${band}"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="42" class="trk"/><circle cx="50" cy="50" r="42" class="val" stroke-dasharray="${(st.score / 100 * R).toFixed(1)} ${R.toFixed(1)}"/></svg><div><b>${st.score}</b><small>of 100</small></div></div>
         <div class="rd-body"><span class="kicker">GRC readiness</span><h3>${label}</h3>
@@ -1953,6 +1991,19 @@
       </div>
       ${order.length ? `<h2 class="h-section">What to work on next</h2><p class="sub">Modules you have started come first, then the rest in course order.</p>
       <div class="card grc-order">${order.map(x => `<a class="grc-order-row" href="#/grc/${x.m.id}"><span class="grc-n">${String(x.m.n).padStart(2, "0")}</span><span><b>${esc(x.m.title)}</b><small>${x.p.d} of ${x.p.t} lessons${(() => { const b = st.byMod.find(y => y.m === x.m); return b && b.v != null ? ` · ${b.v}% right first time` : ""; })()}</small></span><span class="meter"><i style="width:${x.p.pct}%"></i></span><span class="tile-go">${x.p.d ? "Continue" : "Start"} →</span></a>`).join("")}</div>` : ""}`;
+  }
+  function grcSetup() {
+    const G = window.GRC_ORACLE; if (!G) return "";
+    return `<div class="page-narrow grc-setup">
+      <a class="kicker" href="#/grc/labs">← Hands-on labs</a>
+      <h1 class="h-display">Run CISO Assistant <em>free</em></h1>
+      <p class="lede">${esc(G.intro)}</p>
+      <div class="card"><h3>You need</h3><ul>${G.need.map(x => `<li>${esc(x)}</li>`).join("")}</ul>
+        <h3 style="margin-top:14px">Useful links</h3><ul>${G.links.map(([t, u]) => `<li><a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)} ↗</a></li>`).join("")}</ul></div>
+      <nav class="setup-toc" aria-label="Steps"><ol>${G.steps.map(s => `<li><a href="#/grc/setup" data-jump="st-${s.id}">${esc(s.t)}</a></li>`).join("")}</ol></nav>
+      ${G.steps.map((s, i) => `<section class="setup-step prose" id="st-${s.id}"><h2><span class="setup-n">${i + 1}</span>${esc(s.t)}</h2>${s.body}</section>`).join("")}
+      <p class="hint">Written from CISO Assistant’s own install files. Oracle’s console changes from time to time; if a button has moved, search for its name in the console’s search box.</p>
+    </div>`;
   }
   function grcNotes() {
     const C = window.GRC_COURSE || [], N = S.notes || {};
@@ -2000,7 +2051,7 @@
       <p class="lede">What to read, which tools to try, whose work to follow and which certifications matter, summarised here so you don’t have to leave the site. Names of standards and books are given so you can find them later.</p>
       <nav class="chips" aria-label="Sections">${R.map(x => `<a class="chip${x.id === sec ? " on" : ""}" href="#/grc/reading/${x.id}">${esc(x.title)}</a>`).join("")}${sec ? `<a class="chip" href="#/grc/reading">Show all</a>` : ""}</nav>
       ${list.map(x => `<section class="grc-rr" id="rr-${x.id}"><h2 class="h-section">${esc(x.title)}</h2>
-        <div class="grc-rr-list">${x.items.map(([t, d]) => `<div class="card grc-rr-item"><h3>${esc(t)}</h3><p>${esc(d)}</p></div>`).join("")}</div></section>`).join("")}
+        <div class="grc-rr-list">${x.items.map(([t, d, u]) => `<div class="card grc-rr-item"><h3>${esc(t)}</h3><p>${esc(d)}</p>${u ? `<a class="rr-link" href="${esc(u)}" target="_blank" rel="noopener">Read the original ↗</a>` : ""}</div>`).join("")}</div></section>`).join("")}
       ${!sec && cc0.length ? `<section class="grc-rr"><h2 class="h-section">Curated lists, in full</h2><p class="sub">Public-domain (CC0) lists, copied into the library so you can read them here.</p>
         <div class="grc-rr-list">${cc0.map(d => `<a class="card grc-rr-item" href="#/grc/library/${d.id}"><h3>${esc(d.title)} →</h3><p>Open in the library</p></a>`).join("")}</div></section>` : ""}
     </div>`;
@@ -2034,6 +2085,7 @@
       <div class="grc-checks"><h3>Check yourself</h3>
         ${l.checks.map((q, k) => { const sq = App.shuffleQ(q, m.id + l.id + k); return `<div class="qc grc-q" data-k="${m.id}:${l.id}:${k}" data-a="${sq.a}" data-w="${esc(q.w)}"><p class="qc-q">${esc(q.q)}</p><div class="qc-opts">${sq.o.map((o, j) => `<button class="opt" data-gq="${j}"><span class="l">${L[j]}</span><span>${esc(o)}</span></button>`).join("")}</div><div class="grc-why"></div></div>`; }).join("")}
       </div>
+      ${App.diffBar("grc:" + m.id + ":" + l.id)}
       <div class="sec-finish">
         ${nx ? `<a class="start-btn" id="grcNext" href="#/grc/${nx.m.id}/${nx.l.id}" data-key="${grcKey(m.id, l.id)}"><span><small>${grcDone()[grcKey(m.id, l.id)] ? "Next" : "Got it · next"}${nx.m !== m ? " module" : ""}</small><b>${nx.m.n}.${nx.m.lessons.indexOf(nx.l) + 1} ${esc(nx.l.title)}</b></span><span class="start-arrow" aria-hidden="true">→</span></a>`
           : `<a class="start-btn" id="grcNext" href="#/grc" data-key="${grcKey(m.id, l.id)}"><span><small>Last lesson</small><b>Finish the course</b></span><span class="start-arrow" aria-hidden="true">✓</span></a>`}
@@ -2054,6 +2106,10 @@
   }
   function bindGrc(r) {
     if (r.a === "insights" && App.bindInsights) App.bindInsights();
+    $$("pre[data-copy]").forEach(pre => { const b = document.createElement("button"); b.className = "copy-btn"; b.type = "button"; b.textContent = "Copy";
+      b.addEventListener("click", async () => { try { await navigator.clipboard.writeText(pre.firstChild.textContent); b.textContent = "Copied"; setTimeout(() => { b.textContent = "Copy"; }, 1500); } catch (e) { toast("Copy didn’t work here. Select the text instead."); } });
+      pre.appendChild(b); });
+    $$("[data-jump]").forEach(a => a.addEventListener("click", e => { e.preventDefault(); const el = document.getElementById(a.dataset.jump); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); }));
     if (r.a === "shelf" && App.bindLibrary) App.bindLibrary(true);
     if (grcMod(r.a) && r.b) {
       S.grcLast = { m: r.a, l: r.b }; save();
