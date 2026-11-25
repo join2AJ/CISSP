@@ -1816,3 +1816,8 @@ body.grc-mode .topbar { box-shadow: inset 0 -2px 0 #b8892a; }
 .grc-gl-row dt b { font: 700 15px var(--mono); color: #8a6416; margin-right: 10px; }
 .grc-gl-row dt span { font-weight: 600; }
 .grc-gl-row dd { margin: 4px 0 0; color: var(--ink-2); font-size: 14.5px; line-height: 1.5; }
+
+/* PBC list */
+.grc-pbc-how { margin: 18px 0; } .grc-pbc-how ol { padding-left: 20px; display: grid; gap: 6px; font-size: 14.5px; line-height: 1.5; margin: 6px 0 0; }
+.grc-pbc-tbl td { font-size: 13.5px; vertical-align: top; } .grc-pbc-tbl td.num { font-family: var(--mono); color: var(--muted); }
+.grc-pbc-tbl td.area { font-weight: 600; white-space: nowrap; }

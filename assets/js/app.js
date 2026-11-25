@@ -433,8 +433,8 @@
   const ABBR_SKIP = "a, button, abbr, code, pre, kbd, h1, h2, h3, input, textarea, select, label, script, style, svg, .no-abbr, .opt, .nav-menu";
   App.linkAbbr = (root, branch) => {
     if (!root) return; const idx = App.abbrIndex(branch || (document.body.classList.contains("grc-mode") ? "grc" : "cissp"));
-    const scopes = root.matches && root.matches(".prose, .why, .qc-q, .q-stem, .grc-lab, .memorise, .rev-sheet, .note-text, .lede, .grc-mod small") ? [root]
-      : root.querySelectorAll(".prose, .why, .qc-q, .q-stem, .grc-lab, .memorise, .rev-sheet, .note-text, .grc-mod small");
+    const scopes = root.matches && root.matches(".prose, .why, .qc-q, .q-stem, .grc-lab, .memorise, .rev-sheet, .note-text, .lede, .grc-mod small, .grc-pbc-how, .grc-pbc-tbl") ? [root]
+      : root.querySelectorAll(".prose, .why, .qc-q, .q-stem, .grc-lab, .memorise, .rev-sheet, .note-text, .grc-mod small, .grc-pbc-how, .grc-pbc-tbl");
     scopes.forEach(sc => {
       const walker = document.createTreeWalker(sc, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement.closest(ABBR_SKIP) || !/[A-Z]{2}/.test(n.nodeValue) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
       const nodes = []; while (walker.nextNode()) nodes.push(walker.currentNode);
@@ -517,8 +517,8 @@
       ${L("#/grc/library/iso-annex-a-2022", "§", "ISO 27001:2022 controls", r.b === "iso-annex-a-2022")}${L("#/grc/library/soc2-controls", "§", "SOC 2", r.b === "soc2-controls")}
       ${L("#/grc/library/dpdp-sections-reference", "§", "DPDP Act and Rules", r.b === "dpdp-sections-reference")}${L("#/grc/library/tprm-lifecycle-and-monitoring", "§", "Third-party risk", r.b === "tprm-lifecycle-and-monitoring")}
       ${L("#/grc/library", "❏", "All 44 documents", r.a === "library" && !r.b)}</ol></details>`;
-    h += `<details class="toc-group" ${open(["labs", "guide", "glossary"]) ? "open" : ""}><summary class="toc-head">Practise</summary><ol class="toc-list">
-      ${L("#/grc/labs", "◎", "Hands-on labs", r.a === "labs")}${L("#/grc/guide", "▤", "Field guide", r.a === "guide")}${L("#/grc/glossary", "Aa", "GRC glossary", r.a === "glossary")}</ol></details>`;
+    h += `<details class="toc-group" ${open(["labs", "guide", "glossary", "pbc"]) ? "open" : ""}><summary class="toc-head">Practise</summary><ol class="toc-list">
+      ${L("#/grc/labs", "◎", "Hands-on labs", r.a === "labs")}${L("#/grc/pbc", "☑", "PBC list", r.a === "pbc")}${L("#/grc/guide", "▤", "Field guide", r.a === "guide")}${L("#/grc/glossary", "Aa", "GRC glossary", r.a === "glossary")}</ol></details>`;
     h += `<div class="toc-card"><b>${Math.round(done / all * 100)}%</b>of the GRC course · ${done} of ${all} lessons<div class="meter" style="margin-top:10px"><i style="width:${Math.round(done / all * 100)}%;background:#b8892a"></i></div></div>`;
     toc.innerHTML = h;
   }
@@ -1594,6 +1594,20 @@
       <p class="grc-src" style="margin-top:30px">Reference notes: ${LIB_SRC.sushegaad} Templates: ${LIB_SRC.comply}</p>
     </div>`;
   }
+  function grcPbc() {
+    const P = window.GRC_PBC; if (!P) return "";
+    return `<div class="page grc-pbc">
+      <a class="kicker" href="#/grc">← Learn GRC · Audit toolkit</a>
+      <h1 class="h-display">PBC <em>list</em></h1>
+      <p class="lede">The "provided by client" list: every piece of evidence an auditor will ask for, with the SOC 2 criteria and ISO 27001:2022 controls it supports, the period or sample, the owner and the format. Written for a SOC 2 Type II and ISO 27001 audit of a managed SOC service. Illustrative: adapt it to the real scope.</p>
+      <div class="btn-row"><button class="btn primary small" id="pbcCsv">Download for Excel</button><button class="btn small" id="pbcCopy">Copy for Excel</button><a class="btn small ghost" href="#/grc/m4/runaudit">Lesson: running an audit</a></div>
+      <div class="card grc-pbc-how"><h3>How to use it</h3><ol>${P.how.map(x => `<li>${esc(x)}</li>`).join("")}</ol></div>
+      <div class="tbl-wrap"><table class="tbl grc-pbc-tbl"><thead><tr>${P.cols.map(c => `<th>${esc(c)}</th>`).join("")}</tr></thead>
+        <tbody>${P.rows.map(r => `<tr>${r.map((c, i) => `<td class="${i === 0 ? "num" : i === 1 ? "area" : ""}">${esc(String(c))}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
+      <p class="sub" style="margin-top:12px">${P.rows.length} requests. When you track it, add three columns: Due date, Status and Auditor comments.</p>
+    </div>`;
+  }
+  const pbcRows = () => { const P = window.GRC_PBC; return [P.cols.concat(["Due date", "Status", "Auditor comments"])].concat(P.rows.map(r => r.map(String).concat(["", "Not started", ""]))); };
   let grcGq = "";
   function grcGlossary(focus) {
     const list = (window.ABBR_EXTRA || []).filter(x => x[3] !== "cissp").sort((a, b) => a[0].localeCompare(b[0], "en", { sensitivity: "base" }));
@@ -1642,6 +1656,7 @@
     if (r.a === "library") return grcLibrary(r.b);
     if (r.a === "labs") return grcLabs();
     if (r.a === "glossary") return grcGlossary(r.b);
+    if (r.a === "pbc") return grcPbc();
     const m = r.a && grcMod(r.a);
     if (m && r.b) { const l = m.lessons.find(x => x.id === r.b); if (l) return grcLesson(m, l); }
     if (m) return grcModule(m);
@@ -1700,6 +1715,15 @@
     </article>`;
   }
   function bindGrc(r) {
+    const pc = $("#pbcCsv"); if (pc) pc.addEventListener("click", () => {
+      const csv = pbcRows().map(r => r.map(c => /[",\n]/.test(c) ? `"${c.replace(/"/g, '""')}"` : c).join(",")).join("\r\n");
+      const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" })); a.download = "pbc-list-soc2-iso27001.csv"; a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1500); db.logEvent("user.pbc_download", {});
+    });
+    const pcp = $("#pbcCopy"); if (pcp) pcp.addEventListener("click", async () => {
+      const tsv = pbcRows().map(r => r.join("\t")).join("\n");
+      try { await navigator.clipboard.writeText(tsv); toast("Copied. Paste into Excel or Google Sheets."); } catch (e) { toast("Copy didn’t work here. Use Download for Excel."); }
+    });
     const gg = $("#grcGq"); if (gg) gg.addEventListener("input", () => { grcGq = gg.value; clearTimeout(gg._t); gg._t = setTimeout(() => { App.rerender(); setTimeout(() => { const n = $("#grcGq"); if (n) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); } }, 30); }, 250); });
     if (r.a === "glossary" && r.b) { const el = document.getElementById("gg-" + decodeURIComponent(r.b)); if (el) requestAnimationFrame(() => el.scrollIntoView({ block: "center" })); }
     const q = $("#libQ"); if (q) q.addEventListener("input", () => { libQ = q.value; clearTimeout(q._t); q._t = setTimeout(() => { App.rerender(); setTimeout(() => { const n = $("#libQ"); if (n) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); } }, 30); }, 250); });

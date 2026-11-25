@@ -419,3 +419,50 @@ window.GRC_LABS = [
       "Write a README explaining what each artefact shows and which framework it maps to."],
     deliver: "A tidy repository of GRC artefacts you can talk through." }
 ];
+/* Audit toolkit written for StudyCISSP: a PBC list for a SOC 2 Type II and ISO 27001 audit of a managed SOC service.
+   Illustrative: adapt the items, owners and dates to the real audit scope. */
+window.GRC_PBC = {
+  cols: ["#", "Area", "Evidence requested", "SOC 2", "ISO 27001:2022", "Period / sample", "Owner", "Format"],
+  rows: [
+    [1, "Governance", "Information security policy set, with approval record and last review date", "CC1.1, CC5.3", "5.1, 5.37", "Current version", "GRC", "PDF + approval email or minutes"],
+    [2, "Governance", "Organisation chart and security roles (RACI)", "CC1.3", "5.2, 5.3", "As at period end", "HR / GRC", "PDF"],
+    [3, "Governance", "Steering committee and management review minutes", "CC1.2, CC4.2", "Clause 9.3", "All meetings in the period", "GRC", "Minutes with attendees and actions"],
+    [4, "Governance", "ISMS scope, Statement of Applicability, risk treatment plan", "CC3.1", "Clauses 4.3, 6.1.3", "Current version", "GRC", "Approved documents"],
+    [5, "Risk", "Risk assessment and risk register with owners and treatment status", "CC3.2, CC3.3", "Clause 6.1.2, 8.2", "Latest assessment", "GRC", "Register export"],
+    [6, "Risk", "Signed risk acceptances and policy exceptions with expiry dates", "CC3.4", "Clause 6.1.3", "All in the period", "GRC", "Signed forms"],
+    [7, "People", "Joiners list from HR; background check evidence", "CC1.4", "6.1", "Sample of 25 joiners", "HR", "System export + check reports"],
+    [8, "People", "Signed confidentiality agreements and code of conduct", "CC1.1", "6.2, 6.6", "Same 25 joiners", "HR", "Signed copies"],
+    [9, "People", "Security awareness training completion", "CC2.2", "6.3", "All staff; completion report", "GRC / HR", "LMS export"],
+    [10, "Access", "Complete user list for the SIEM, ticketing and cloud consoles", "CC6.1", "5.15, 5.18", "As at a date in the period", "SOC / IT", "System export with timestamp"],
+    [11, "Access", "Access requests and approvals for new users", "CC6.2", "5.18", "Sample of 25", "IT", "Tickets"],
+    [12, "Access", "Leavers list and evidence of timely access removal", "CC6.2, CC6.3", "5.18, 6.5", "Sample of 25 leavers", "HR / IT", "HR export + deactivation logs"],
+    [13, "Access", "Quarterly user access reviews with sign-off and actions", "CC6.3", "5.18", "2 of 4 quarters", "SOC manager", "Signed review + removal tickets"],
+    [14, "Access", "Privileged account list, MFA configuration, session recording", "CC6.1, CC6.6", "8.2, 8.5", "As at a date", "IT", "Screenshots with date + config export"],
+    [15, "Operations", "Asset inventory and configuration baselines (CIS)", "CC6.1, CC7.1", "5.9, 8.9", "Current", "IT", "CMDB export"],
+    [16, "Operations", "Vulnerability scan reports and remediation within SLA", "CC7.1", "8.8", "Monthly reports; sample of 10 criticals", "SOC", "Reports + tickets"],
+    [17, "Operations", "Patch compliance reports", "CC7.1", "8.8", "Sample of 3 months", "IT", "Report"],
+    [18, "Operations", "EDR coverage against the asset inventory", "CC6.8", "8.7", "As at a date", "IT", "Console export"],
+    [19, "Operations", "Log sources onboarded to the SIEM; 180-day retention setting", "CC7.2", "8.15, 8.16", "As at a date", "SOC", "Config export"],
+    [20, "Operations", "Backup schedule, job reports and a restore test", "A1.2, A1.3", "8.13", "Sample of 5 days + latest restore test", "IT", "Job logs + test record"],
+    [21, "Change", "Complete list of changes in the period", "CC8.1", "8.32", "Full population", "IT", "ITSM export"],
+    [22, "Change", "Approval, testing and deployment evidence per change", "CC8.1", "8.32", "Sample of 25 (incl. emergency)", "IT", "Change tickets"],
+    [23, "Incidents", "Incident response plan and its last test", "CC7.3, CC7.4", "5.24, 5.26", "Current + latest test", "SOC", "Plan + test report"],
+    [24, "Incidents", "Security incident log, with CERT-In and client notifications", "CC7.4, CC7.5", "5.25, 5.26, 6.8", "Full population; sample of 5", "SOC / GRC", "Register + notifications"],
+    [25, "Incidents", "Post-incident reviews and tracked actions", "CC7.5", "5.27", "All major incidents", "SOC", "Review reports"],
+    [26, "Continuity", "BIA, BCP/DR plans and the latest DR test against RTO/RPO", "A1.2, A1.3", "5.29, 5.30", "Current + latest test", "IT / GRC", "Plans + test results"],
+    [27, "Vendors", "Vendor inventory with risk tiers", "CC9.2", "5.19", "Current", "GRC / Procurement", "Register export"],
+    [28, "Vendors", "Due diligence for critical vendors: SOC 2 reports, ISO certificates, reviews", "CC9.2", "5.19, 5.22", "All critical vendors", "GRC", "Reports + review notes"],
+    [29, "Vendors", "Contracts with security, breach notice and audit clauses", "CC9.2", "5.20", "Sample of 5", "Legal", "Contract extracts"],
+    [30, "Monitoring", "Internal audit report and corrective action tracker", "CC4.1, CC4.2", "Clause 9.2, 10.2", "Latest audit", "GRC", "Report + tracker"],
+    [31, "Privacy", "Record of processing, privacy notice, DPDP processor clauses", "P-series (if in scope)", "5.34", "Current", "DPO / Legal", "Documents"],
+    [32, "Physical", "Data centre / SOC floor access list and visitor log review", "CC6.4", "7.1, 7.2", "Sample of 2 months", "Facilities", "Access export + log"]
+  ],
+  how: [
+    "Send it early. Ask the auditor for their own PBC list 6 to 8 weeks before fieldwork and merge it with this one, keeping their numbering.",
+    "One owner and one due date per row. Add Status (not started, in progress, submitted, accepted) and Auditor comments columns when you track it.",
+    "Population first, samples second. For every sampled item, give the auditor the complete population from the system; they pick the sample, not you.",
+    "Evidence must be dated, show who did it and the result, and fall inside the audit period.",
+    "Name files by PBC number and control, for example 13_CC6.3_Q2-access-review.pdf, and keep one shared folder per audit.",
+    "Review every item before it goes to the auditor. A weak screenshot sent early causes more questions than a strong export sent a day later."
+  ]
+};
