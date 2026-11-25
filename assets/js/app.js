@@ -442,7 +442,7 @@
   function renderToc(r) {
     const all = allProgress();
     const order = D;
-    let h = `<div class="mob-nav"><a href="#/" class="${r.page === "home" ? "active" : ""}">Home</a>${App.isPrivileged() ? `<a href="#/grc" class="${r.page === "grc" ? "active" : ""}">GRC guide</a>` : ""}${App.isAdmin() ? `<a href="#/admin">Admin</a>` : ""}</div>`;
+    let h = `<div class="mob-nav"><a href="#/" class="${r.page === "home" ? "active" : ""}">Home</a>${App.isPrivileged() ? `<a href="#/grc" class="${r.page === "grc" ? "active" : ""}">Learn GRC</a>` : ""}${App.isAdmin() ? `<a href="#/admin">Admin</a>` : ""}</div>`;
     const inGroup = (pages) => pages.includes(r.page);
     const onChapters = r.page === "domain" || r.page === "read";
     h += `<details class="toc-group" ${onChapters || window.innerWidth > 1000 ? "open" : ""}><summary class="toc-head">Chapters <small>${all.pct}% read</small></summary><ol class="toc-list">`;
@@ -1295,6 +1295,7 @@
       <p class="lede">What would you like to do?</p>
       <div class="grid-2" style="margin-top:26px">
         <button class="card focus choose" data-mode="study"><span class="kicker">Learner</span><h3>Study CISSP</h3><p>Your plan, chapters, quizzes, flashcards and mock exams.</p></button>
+        ${App.isPrivileged() ? `<button class="card focus choose" data-mode="grc" style="--dc:#b8892a"><span class="kicker" style="--kc:#8a6416">Second branch</span><h3>Learn GRC</h3><p>A full governance, risk and compliance course for your GRC Manager role, plus the field guide.</p></button>` : ""}
         <button class="card focus choose" data-mode="admin" style="--dc:var(--d7)"><span class="kicker" style="--kc:var(--d7)">Administrator</span><h3>View admin console</h3><p>Learner analytics, audit trail, privacy requests and accounts.</p></button>
       </div>
       <p class="hint" style="text-align:center;margin-top:18px">You can switch any time from the menu under your initial.</p></div>`;
@@ -1302,7 +1303,7 @@
   function bindChoose() {
     $$(".choose").forEach(b => b.addEventListener("click", () => {
       App.sessionSet("cissp.mode", b.dataset.mode);
-      location.hash = b.dataset.mode === "admin" ? "#/admin" : "#/";
+      location.hash = b.dataset.mode === "admin" ? "#/admin" : b.dataset.mode === "grc" ? "#/grc" : "#/";
     }));
   }
 
@@ -1466,17 +1467,94 @@
     bindSchedule();
     if (r.a === "schedule") { const el = $("#schedule"); if (el) requestAnimationFrame(() => el.scrollIntoView({ block: "start" })); }
   } });
-  /* second branch: the GRC Manager field guide, private to the owner's account */
-  function viewGrc() {
-    if (!App.isPrivileged()) return `<div class="page-narrow"><div class="kicker">Private</div><h1 class="h-display">Not available</h1><p class="lede">This section is only for the site owner.</p><a class="btn" href="#/">Back to your study desk</a></div>`;
-    return `<div class="grc-wrap">
-      <div class="grc-bar"><div><span class="kicker">Second branch · private to you</span><h1>GRC Manager <em>field guide</em></h1>
+  /* second branch: Learn GRC (a full course) and the GRC Manager field guide, private to the owner's account */
+  let grcLoading = null;
+  const loadGrc = () => window.GRC_COURSE && window.GRC_COURSE.length >= 10 ? Promise.resolve() : (grcLoading = grcLoading || Promise.all(["grc-course-1", "grc-course-2"].map(f => new Promise((ok, no) => {
+    const sc = document.createElement("script"); sc.src = `assets/js/${f}.js?v=${(document.querySelector('script[src*="app.js"]').src.split("v=")[1] || "dev")}`; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc);
+  }))));
+  const grcKey = (m, l) => m + ":" + l;
+  const grcDone = () => (S.grc = S.grc || {});
+  const grcMod = id => (window.GRC_COURSE || []).find(m => m.id === id);
+  const grcProg = m => { const d = m.lessons.filter(l => grcDone()[grcKey(m.id, l.id)]).length; return { d, t: m.lessons.length, pct: Math.round(d / m.lessons.length * 100) }; };
+  const grcMins = l => Math.max(3, Math.round(String(l.body).replace(/<[^>]+>/g, " ").split(/\s+/).filter(Boolean).length / 180 + (l.body.match(/<table/g) || []).length + l.checks.length * 0.5));
+  const grcNext = () => { for (const m of window.GRC_COURSE || []) for (const l of m.lessons) if (!grcDone()[grcKey(m.id, l.id)]) return { m, l }; return null; };
+  const notAllowed = () => `<div class="page-narrow"><div class="kicker">Private</div><h1 class="h-display">Not available</h1><p class="lede">This section is only for the site owner.</p><a class="btn" href="#/">Back to your study desk</a></div>`;
+
+  async function viewGrc(r) {
+    if (!App.isPrivileged()) return notAllowed();
+    if (r.a === "guide") return `<div class="grc-wrap">
+      <div class="grc-bar"><div><a class="kicker" href="#/grc">← Learn GRC</a><h1>GRC Manager <em>field guide</em></h1>
         <p class="sub" style="margin:2px 0 0">The role, a skill ladder, 50-term glossary, daily situations, a 20-day plan, your first 90 days and 18 templates. Your checklist is saved on this device.</p></div>
         <a class="btn small" href="grc.html" target="_blank" rel="noopener">Open full screen ↗</a></div>
-      <iframe class="grc-frame" src="grc.html" title="GRC Manager field guide"></iframe>
+      <iframe class="grc-frame" src="grc.html" title="GRC Manager field guide"></iframe></div>`;
+    try { await loadGrc(); } catch (e) { return `<div class="page-narrow"><h1 class="h-display">Couldn’t load the course</h1><p class="lede">Check your connection and try again.</p></div>`; }
+    const C = window.GRC_COURSE;
+    const m = r.a && grcMod(r.a);
+    if (m && r.b) { const l = m.lessons.find(x => x.id === r.b); if (l) return grcLesson(m, l); }
+    if (m) return grcModule(m);
+    // hub
+    const all = C.reduce((n, x) => n + x.lessons.length, 0), done = C.reduce((n, x) => n + grcProg(x).d, 0), nx = grcNext();
+    return `<div class="page grc-hub">
+      <header class="grc-head"><div><span class="kicker">Second branch · private to you</span>
+        <h1 class="h-display">Learn <em>GRC</em></h1>
+        <p class="lede">Governance, risk and compliance from zero to ready for a GRC Manager role. Ten modules, ${all} lessons with worked examples, a "remember" box and check questions on every page.</p></div>
+        <div class="grc-ring"><b>${Math.round(done / all * 100)}%</b><small>${done} of ${all} lessons</small></div></header>
+      ${nx ? `<a class="start-btn" href="#/grc/${nx.m.id}/${nx.l.id}" style="margin:6px 0 30px"><span><small>${done ? "Continue" : "Start"} · Module ${nx.m.n}</small><b>${esc(nx.l.title)}</b></span><span class="start-arrow" aria-hidden="true">→</span></a>` : `<div class="okbox" style="margin:6px 0 30px">Every lesson done. Use the field guide's 20-day plan and templates to practise.</div>`}
+      <div class="grc-mods">${C.map(x => { const p = grcProg(x); return `<a class="grc-mod ${p.pct === 100 ? "done" : ""}" href="#/grc/${x.id}"><span class="grc-n">${String(x.n).padStart(2, "0")}</span><div><b>${esc(x.title)}</b><small>${esc(x.lede)}</small><span class="meter"><i style="width:${p.pct}%"></i></span><em>${p.d} of ${p.t} lessons</em></div></a>`; }).join("")}</div>
+      <h2 class="h-section">Practise with the field guide</h2>
+      <a class="card grc-guide" href="#/grc/guide"><div><span class="kicker">13 tabs</span><h3>GRC Manager field guide</h3><p>A day in the life, meetings, tools, a 50-term glossary with quiz mode, a drill for questions you can’t answer, 18 daily situations, a 20-day plan, your first 90 days and 18 filled-in templates.</p></div><span class="start-arrow" aria-hidden="true">→</span></a>
+      <h2 class="h-section">Further reading</h2>
+      <p class="sub">Free, openly licensed lists and official sources. The lessons above are written for this site; these help you go deeper.</p>
+      <div>${(window.GRC_READING || []).map(x => `<div class="res"><div class="res-ico">↗</div><div><h4><a href="${esc(x.u)}" target="_blank" rel="noopener">${esc(x.t)} ↗</a></h4><p>${esc(x.d)}</p></div></div>`).join("")}</div>
     </div>`;
   }
-  App.register("grc", { render: viewGrc, title: "GRC field guide", nav: "grc", area: "other" });
+  function grcModule(m) {
+    const p = grcProg(m);
+    return `<div class="page-narrow grc-module">
+      <a class="kicker" href="#/grc">← Learn GRC</a>
+      <h1 class="h-display">${esc(m.title)}</h1>
+      <p class="lede">${esc(m.lede)}</p>
+      <div class="meter" style="margin:10px 0 24px"><i style="width:${p.pct}%;background:var(--accent)"></i></div>
+      <ol class="grc-lessons">${m.lessons.map((l, i) => `<li><a href="#/grc/${m.id}/${l.id}" class="${grcDone()[grcKey(m.id, l.id)] ? "done" : ""}"><span class="grc-ln">${m.n}.${i + 1}</span><span><b>${esc(l.title)}</b><small>◷ ${grcMins(l)} min · ${l.checks.length} questions</small></span><span class="grc-tick">${grcDone()[grcKey(m.id, l.id)] ? "✓" : "→"}</span></a></li>`).join("")}</ol>
+    </div>`;
+  }
+  function grcLesson(m, l) {
+    const C = window.GRC_COURSE, i = m.lessons.indexOf(l), flat = C.flatMap(x => x.lessons.map(y => ({ m: x, l: y })));
+    const at = flat.findIndex(x => x.m === m && x.l === l), nx = flat[at + 1], pv = flat[at - 1];
+    const L = ["A", "B", "C", "D"];
+    return `<article class="chapter sec-page grc-lesson">
+      <div class="ch-bar"><a class="ch-bar-title" href="#/grc/${m.id}"><span class="kicker">Module ${String(m.n).padStart(2, "0")} · Learn GRC</span><b>${esc(m.title)}</b></a>
+        <div class="ch-bar-prog"><span class="meter"><i style="width:${grcProg(m).pct}%"></i></span><span>${grcProg(m).pct}%</span></div></div>
+      <nav class="steps" aria-label="Lessons in this module">${m.lessons.map((x, j) => `<a href="#/grc/${m.id}/${x.id}" class="${x === l ? "on" : ""} ${grcDone()[grcKey(m.id, x.id)] ? "done" : ""}" title="${esc(x.title)}">${m.n}.${j + 1}</a>`).join("")}</nav>
+      <div class="prose">
+        <div class="sec-head"><span class="sec-num">${m.n}.${i + 1}</span><h2>${esc(l.title)}</h2></div>
+        <div class="sec-tools"><span class="sec-time">◷ ${grcMins(l)} min</span></div>
+        ${l.body}
+        <div class="memorise grc-remember"><div class="kicker">Remember</div><ul>${l.remember.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>
+      </div>
+      <div class="grc-checks"><h3>Check yourself</h3>
+        ${l.checks.map((q, k) => { const sq = App.shuffleQ(q, m.id + l.id + k); return `<div class="qc grc-q" data-a="${sq.a}" data-w="${esc(q.w)}"><p class="qc-q">${esc(q.q)}</p><div class="qc-opts">${sq.o.map((o, j) => `<button class="opt" data-gq="${j}"><span class="l">${L[j]}</span><span>${esc(o)}</span></button>`).join("")}</div><div class="grc-why"></div></div>`; }).join("")}
+      </div>
+      <div class="sec-finish">
+        ${nx ? `<a class="start-btn" id="grcNext" href="#/grc/${nx.m.id}/${nx.l.id}" data-key="${grcKey(m.id, l.id)}"><span><small>${grcDone()[grcKey(m.id, l.id)] ? "Next" : "Got it · next"}${nx.m !== m ? " module" : ""}</small><b>${nx.m.n}.${nx.m.lessons.indexOf(nx.l) + 1} ${esc(nx.l.title)}</b></span><span class="start-arrow" aria-hidden="true">→</span></a>`
+          : `<a class="start-btn" id="grcNext" href="#/grc" data-key="${grcKey(m.id, l.id)}"><span><small>Last lesson</small><b>Finish the course</b></span><span class="start-arrow" aria-hidden="true">✓</span></a>`}
+        <div class="sec-pager">${pv ? `<a href="#/grc/${pv.m.id}/${pv.l.id}">← ${pv.m.n}.${pv.m.lessons.indexOf(pv.l) + 1} ${esc(pv.l.title)}</a>` : `<a href="#/grc">← Learn GRC</a>`}<a href="#/grc/${m.id}" class="skip">All lessons in this module</a></div>
+      </div>
+    </article>`;
+  }
+  function bindGrc(r) {
+    const n = $("#grcNext"); if (n) n.addEventListener("click", () => { grcDone()[n.dataset.key] = ymd(today()); save(); });
+    $$(".grc-q").forEach(box => $$("[data-gq]", box).forEach(b => b.addEventListener("click", () => {
+      const j = +b.dataset.gq, a = +box.dataset.a, ok = j === a;
+      $$("[data-gq]", box).forEach((x, k) => { x.disabled = true; if (k === a) x.classList.add("correct"); else if (k === j) x.classList.add("wrong"); });
+      box.querySelector(".grc-why").innerHTML = `<div class="why"><b style="color:${ok ? "var(--good)" : "var(--bad)"}">${ok ? "Correct." : "Not quite."}</b> ${box.dataset.w}</div>`;
+    })));
+    if (r.a && r.b) {
+      const ids = (grcMod(r.a) || { lessons: [] }).lessons.map(x => x.id), at = ids.indexOf(r.b);
+      pageKeys = { prev: at > 0 ? `#/grc/${r.a}/${ids[at - 1]}` : null, next: n ? n.getAttribute("href") : null };
+    }
+  }
+  App.register("grc", { render: viewGrc, bind: bindGrc, title: "Learn GRC", nav: "grc", area: "other" });
   App.register("revision", { render: viewRevision, bind: bindRevision, title: "Revision sheets", nav: "revision", area: "read" });
   App.register("notes", { render: viewNotes, bind: bindNotes, title: "My notes", nav: "notes", area: "library" });
   App.register("tracker", { render: viewTracker, bind: bindTracker, title: "Tracker", nav: "insights", area: "insights" });

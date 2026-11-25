@@ -1,0 +1,351 @@
+/* StudyCISSP - Learn GRC, modules 6-10. Original lessons written for StudyCISSP from public laws and standards
+   (DPDP Act 2023 and Rules 2025, CERT-In Directions 2022, IEC 62443, NIST SP 800-82, ISO 22301). */
+window.GRC_COURSE = (window.GRC_COURSE || []).concat([
+{
+  id: "m6", n: 6, title: "Third-party and supply chain risk", short: "Third-party risk",
+  lede: "Tier vendors, assess them in proportion, write the right contract clauses and keep watching after signing.",
+  lessons: [
+  { id: "lifecycle", title: "The vendor risk lifecycle", body: `
+<p>Most large breaches now involve a third party: a supplier with access, a software update, a cloud service. Third-party risk management (TPRM) handles that risk from first contact to exit.</p>
+<ol><li><b>Inventory</b>: you cannot manage vendors you do not know about. Pull from procurement, finance (who gets paid) and network logs (who connects).</li>
+<li><b>Tiering</b>: rate inherent risk by data access, system access, criticality to service and regulatory relevance.</li>
+<li><b>Due diligence</b> proportional to the tier.</li>
+<li><b>Contract</b> with the right security clauses.</li>
+<li><b>Ongoing monitoring</b>: reassessment on a schedule plus alerts when something changes.</li>
+<li><b>Offboarding</b>: revoke access, return or destroy data, get it in writing.</li></ol>
+<h3>Tiering example</h3>
+<table><thead><tr><th>Tier</th><th>Example</th><th>Assessment</th><th>Reassess</th></tr></thead><tbody>
+<tr><td>Critical</td><td>SIEM platform hosting client logs; OT maintenance vendor with remote access</td><td>Full questionnaire, SOC 2 / ISO evidence, call or onsite</td><td>Yearly</td></tr>
+<tr><td>High</td><td>HR system with employee data</td><td>Questionnaire plus certificates</td><td>Yearly</td></tr>
+<tr><td>Medium</td><td>Marketing agency with no data access</td><td>Short questionnaire</td><td>Every 2 years</td></tr>
+<tr><td>Low</td><td>Office supplies</td><td>None beyond contract basics</td><td>On change</td></tr></tbody></table>
+<p>Watch for <b>concentration risk</b> (many critical services on one provider) and <b>fourth parties</b> (your vendor's critical vendors).</p>`,
+    remember: ["Inventory, tier, assess, contract, monitor, offboard.", "Effort follows tier.", "Ask who your critical vendors depend on."],
+    checks: [
+      { q: "An OT maintenance vendor has remote access to airport systems. Tier:", o: ["Low", "Medium", "High", "Critical"], a: 3, w: "Remote access to critical infrastructure systems is critical tier." },
+      { q: "The FIRST step in TPRM is:", o: ["Sending questionnaires", "Building a complete vendor inventory", "Negotiating contracts", "Onsite audits"], a: 1, w: "You cannot tier or assess vendors you do not know about." }
+    ] },
+  { id: "diligence", title: "Due diligence and contract clauses", body: `
+<h3>Questionnaires and evidence</h3>
+<p>Standard questionnaires save everyone time: <b>SIG</b> (Shared Assessments) and the <b>CSA CAIQ</b> for cloud. Ask for evidence, not just answers: SOC 2 Type II report, ISO 27001 certificate <i>and its scope</i>, recent penetration test summary, insurance certificate, incident history.</p>
+<h3>Reading a vendor's SOC 2</h3>
+<ul><li>Is the period recent and the opinion unqualified?</li>
+<li>Does the system description cover the service you buy?</li>
+<li>What exceptions were found, and how were they fixed?</li>
+<li>Which <b>CUECs</b> must you implement? Put them in your own control set.</li>
+<li>Which subservice organisations (their cloud host) are carved out?</li></ul>
+<h3>Clauses worth fighting for</h3>
+<table><thead><tr><th>Clause</th><th>Why</th></tr></thead><tbody>
+<tr><td>Security requirements schedule</td><td>Makes your minimum controls contractual</td></tr>
+<tr><td>Breach notification (e.g. within 24 hours)</td><td>You need time for your own regulatory clocks (CERT-In 6 hours)</td></tr>
+<tr><td>Right to audit or to receive assurance reports</td><td>Lets you verify, not trust</td></tr>
+<tr><td>Data location, return and deletion</td><td>DPDP, client contracts</td></tr>
+<tr><td>Subcontractor approval</td><td>Controls fourth-party risk</td></tr>
+<tr><td>Liability and insurance</td><td>Transfers some financial impact</td></tr></tbody></table>
+<h3>When a vendor falls short</h3>
+<p>Do not just record "fail". Agree remediation with dates, add compensating controls on your side, or escalate a risk acceptance to the business owner who wants the vendor.</p>`,
+    remember: ["Ask for evidence: SOC 2, ISO scope, pen test summary.", "Breach notice in the contract must beat your own regulatory clock.", "Gaps become remediation plans or formal acceptances."],
+    checks: [
+      { q: "A vendor sends an ISO 27001 certificate. What must you check?", o: ["The logo", "That the certificate scope covers the service you buy", "The price", "Nothing more"], a: 1, w: "A certificate only covers its stated scope." },
+      { q: "Why should vendor breach notification be short (e.g. 24 hours)?", o: ["It is traditional", "So you can meet your own regulatory reporting deadlines", "To penalise vendors", "Auditors like short numbers"], a: 1, w: "CERT-In expects reports within 6 hours of noticing an incident." }
+    ] },
+  { id: "cloud", title: "Cloud and the shared responsibility model", body: `
+<p>In cloud, security is split between the provider and you. Misunderstanding the split causes most cloud incidents.</p>
+<table><thead><tr><th>Layer</th><th>IaaS</th><th>PaaS</th><th>SaaS</th></tr></thead><tbody>
+<tr><td>Physical, network, hypervisor</td><td>Provider</td><td>Provider</td><td>Provider</td></tr>
+<tr><td>Operating system, patching</td><td>You</td><td>Provider</td><td>Provider</td></tr>
+<tr><td>Application</td><td>You</td><td>You (your code)</td><td>Provider</td></tr>
+<tr><td>Identity, access, configuration</td><td>You</td><td>You</td><td>You</td></tr>
+<tr><td>Data classification and protection</td><td>You</td><td>You</td><td>You</td></tr></tbody></table>
+<p>Whatever the model, <b>identity, configuration and data are always yours</b>. A public storage bucket is a customer misconfiguration, not a cloud provider breach.</p>
+<h3>GRC tasks for cloud</h3>
+<ul><li>Keep an inventory of cloud accounts and SaaS, including shadow IT.</li>
+<li>Use the provider's assurance reports (SOC 2, ISO 27001/27017/27018) instead of auditing the data centre.</li>
+<li>Set and monitor configuration baselines (CIS Benchmarks) with posture tools.</li>
+<li>Confirm data residency where clients or regulators require it.</li>
+<li>Plan exit: can you get your data out, in what format, how fast?</li></ul>`,
+    remember: ["Identity, configuration and data are always yours.", "Use provider reports for their layers; test your own layers.", "Plan the exit before you depend on the service."],
+    checks: [
+      { q: "In SaaS, who is responsible for configuring user access correctly?", o: ["The SaaS provider", "The customer", "The cloud host", "Nobody"], a: 1, w: "Identity and access configuration remains with the customer in every model." },
+      { q: "An exposed storage bucket in your IaaS account is MOST likely:", o: ["A provider breach", "A customer misconfiguration", "A hardware fault", "Normal"], a: 1, w: "Configuration of resources is the customer's responsibility." }
+    ] }
+  ]
+},
+{
+  id: "m7", n: 7, title: "Indian privacy and cyber regulation", short: "India: DPDP & CERT-In",
+  lede: "The DPDP Act and Rules, CERT-In directions and the sector regulators you will meet, compared with GDPR.",
+  lessons: [
+  { id: "dpdp", title: "DPDP Act 2023 and Rules 2025", body: `
+<p>The <b>Digital Personal Data Protection Act, 2023</b> governs digital personal data in India. The <b>DPDP Rules, 2025</b> were notified on 13 November 2025, with the Data Protection Board set up immediately and most obligations phased in by 13 May 2027.</p>
+<h3>Key roles</h3>
+<ul><li><b>Data Principal</b>: the individual.</li>
+<li><b>Data Fiduciary</b>: decides why and how data is processed (like a GDPR controller).</li>
+<li><b>Data Processor</b>: processes on the fiduciary's behalf. A managed SOC handling client logs that contain personal data is usually a processor for that data.</li>
+<li><b>Significant Data Fiduciary</b>: designated by government for volume or sensitivity; must appoint a Data Protection Officer in India, run DPIAs and periodic audits.</li>
+<li><b>Consent Manager</b>: a registered platform for giving and withdrawing consent.</li></ul>
+<h3>Core obligations</h3>
+<ul><li>Lawful basis: <b>consent</b> (free, specific, informed, unambiguous, with a clear notice) or certain <b>legitimate uses</b> (for example employment, legal obligations, emergencies).</li>
+<li>Reasonable security safeguards, purpose limitation, erasure when the purpose is served.</li>
+<li>Rights: access, correction and erasure, grievance redressal, nomination.</li>
+<li>Extra care for children's data (verifiable parental consent) and persons with disabilities.</li></ul>
+<h3>Breach notification</h3>
+<p>Notify the Data Protection Board and each affected Data Principal. The Rules require an initial intimation without delay and a <b>detailed report to the Board within 72 hours</b> (extendable on request): what happened, likely impact, mitigation, and the findings about the person responsible where known.</p>
+<h3>Penalties</h3>
+<p>Up to <b>₹250 crore</b> per instance for failing to take reasonable security safeguards; up to ₹200 crore for failing to notify a breach.</p>`,
+    remember: ["Fiduciary decides; processor acts on instructions.", "Consent or a legitimate use; security safeguards always.", "Breach: tell the Board and the people; detailed report within 72 hours."],
+    checks: [
+      { q: "Under DPDP, the organisation that decides the purpose of processing is the:", o: ["Data Principal", "Data Fiduciary", "Data Processor", "Consent Manager"], a: 1, w: "The Data Fiduciary determines purpose and means." },
+      { q: "The detailed breach report to the Data Protection Board is due within:", o: ["6 hours", "24 hours", "72 hours", "30 days"], a: 2, w: "The Rules require a detailed report within 72 hours, extendable on request." }
+    ] },
+  { id: "certin", title: "CERT-In directions and sector regulators", body: `
+<h3>CERT-In Directions (April 2022)</h3>
+<p>Issued under section 70B of the IT Act, they apply to service providers, intermediaries, data centres and corporates. The headline rules:</p>
+<ul><li>Report specified cyber incidents to CERT-In <b>within 6 hours</b> of noticing them (the list includes targeted scanning, compromise of critical systems, data breaches, ransomware, attacks on cloud and IoT).</li>
+<li>Keep <b>ICT system logs for 180 days</b>, within India, and provide them when asked.</li>
+<li>Synchronise clocks with NTP servers of NIC or NPL (or traceable to them).</li>
+<li>Name a <b>point of contact</b> for CERT-In.</li>
+<li>VPN, cloud and data-centre providers must keep certain customer records for five years.</li></ul>
+<h3>Critical infrastructure</h3>
+<p><b>NCIIPC</b> protects Critical Information Infrastructure. Systems declared CII (likely for airports, power and telecom operators) face additional controls, audits and reporting. For airports, <b>DGCA</b> and <b>BCAS</b> add aviation security requirements; for power, the <b>CEA</b> cyber security regulations and sectoral CERTs (CERT-Trans, CERT-Thermal and others) apply.</p>
+<h3>Financial sector</h3>
+<p>RBI master directions on IT governance and cyber security for banks and NBFCs, and <b>SEBI's Cybersecurity and Cyber Resilience Framework (CSCRF, 2024)</b> for market entities. Fintech clients will pass these requirements to you through contracts.</p>
+<h3>Why it matters for a provider</h3>
+<p>Your clients have regulatory clocks. If you run their SOC, your detection and escalation must be fast enough for them to report to CERT-In in 6 hours, and your contracts should say so.</p>`,
+    remember: ["CERT-In: report in 6 hours, logs 180 days in India, NTP sync, a named contact.", "CII adds NCIIPC; aviation adds DGCA/BCAS; power adds CEA.", "Clients' clocks become your SLAs."],
+    checks: [
+      { q: "Under CERT-In directions, reportable incidents must be reported within:", o: ["1 hour", "6 hours", "72 hours", "7 days"], a: 1, w: "Six hours from noticing or being told of the incident." },
+      { q: "How long must ICT logs be kept under the CERT-In directions?", o: ["30 days", "90 days", "180 days", "5 years"], a: 2, w: "180 days, maintained within Indian jurisdiction." }
+    ] },
+  { id: "gdpr", title: "DPDP compared with GDPR, and running privacy", body: `
+<p>Clients in the UK and Singapore, and global groups, will ask about GDPR (or UK GDPR) and Singapore's PDPA. Knowing the differences lets one programme cover most of them.</p>
+<table><thead><tr><th>Topic</th><th>DPDP (India)</th><th>GDPR (EU/UK)</th></tr></thead><tbody>
+<tr><td>Scope</td><td>Digital personal data (and digitised offline data)</td><td>All personal data, digital or not</td></tr>
+<tr><td>Lawful bases</td><td>Consent or specified legitimate uses</td><td>Six bases including legitimate interests and contract</td></tr>
+<tr><td>Sensitive data category</td><td>No separate category; children's data has extra rules</td><td>Special categories with stricter rules</td></tr>
+<tr><td>Breach notice</td><td>Board and every affected person; detailed report in 72 hours</td><td>Regulator within 72 hours if risk; individuals if high risk</td></tr>
+<tr><td>DPO</td><td>Required for Significant Data Fiduciaries</td><td>Required in certain cases</td></tr>
+<tr><td>Fines</td><td>Up to ₹250 crore per instance</td><td>Up to €20 million or 4% of global turnover</td></tr></tbody></table>
+<h3>A practical privacy programme</h3>
+<ol><li><b>Data inventory and map</b>: what personal data, where, why, who can see it, how long.</li>
+<li><b>Notices and consent</b> that are short and specific.</li>
+<li><b>Rights handling</b> with a logged process and deadlines.</li>
+<li><b>Privacy impact assessments</b> for new high-risk processing.</li>
+<li><b>Retention and deletion</b> enforced, not just written.</li>
+<li><b>Processor contracts</b> with security and breach terms.</li>
+<li><b>Breach playbook</b> combining CERT-In 6-hour and DPDP 72-hour clocks.</li></ol>`,
+    remember: ["DPDP: consent or legitimate uses; GDPR has six bases.", "DPDP notifies every affected person; GDPR only when high risk.", "Build one programme: inventory, notices, rights, PIAs, retention, contracts, breach playbook."],
+    checks: [
+      { q: "Which is a lawful basis under GDPR but NOT under DPDP?", o: ["Consent", "Legitimate interests", "Legal obligation", "Medical emergency"], a: 1, w: "DPDP has no general legitimate interests basis; it lists specific legitimate uses." },
+      { q: "The FIRST step in building a privacy programme is usually:", o: ["Appointing a lawyer", "A data inventory and map", "Buying a consent tool", "Writing a cookie banner"], a: 1, w: "You cannot protect or report on data you have not mapped." }
+    ] }
+  ]
+},
+{
+  id: "m8", n: 8, title: "OT, IoT and critical infrastructure", short: "OT & critical infra",
+  lede: "Why airports, power and utilities are different, IEC 62443 in practice, and governing converged IT/OT.",
+  lessons: [
+  { id: "otdiff", title: "Why OT is different", body: `
+<p><b>Operational technology</b> controls physical processes: baggage handling, airfield lighting, HVAC, fuel systems, substations, water pumps. <b>IoT</b> adds sensors and smart devices everywhere.</p>
+<table><thead><tr><th></th><th>IT</th><th>OT</th></tr></thead><tbody>
+<tr><td>Top priority</td><td>Confidentiality</td><td><b>Safety and availability</b></td></tr>
+<tr><td>Lifespan</td><td>3 to 5 years</td><td>15 to 30 years</td></tr>
+<tr><td>Patching</td><td>Monthly</td><td>Rare; needs vendor approval and a maintenance window</td></tr>
+<tr><td>Scanning</td><td>Routine</td><td>Active scans can crash controllers; use passive monitoring</td></tr>
+<tr><td>Protocols</td><td>Modern, authenticated</td><td>Modbus, DNP3, BACnet: often no authentication</td></tr>
+<tr><td>Owner</td><td>CIO</td><td>Engineering or operations</td></tr></tbody></table>
+<h3>What this changes for GRC</h3>
+<ul><li>Risk impact scales must include <b>safety</b> and <b>public service</b>, not just money.</li>
+<li>"Patch within 30 days" policies do not fit; write OT standards with compensating controls (segmentation, allow-listing, monitored remote access).</li>
+<li>Engineering owns OT risk. Earn trust: never propose a control that could stop a runway without them.</li>
+<li>Asset inventory is hard and vital: use passive discovery tools and engineering drawings.</li></ul>
+<p>Guidance to know: <b>NIST SP 800-82 Rev. 3</b> (OT security guide), <b>IEC 62443</b> series, and for converged environments, NIST CSF 2.0 profiles for manufacturing and energy.</p>`,
+    remember: ["OT puts safety and availability first.", "Do not actively scan OT; patch with care; compensate.", "Engineering owns OT risk; GRC helps them govern it."],
+    checks: [
+      { q: "In OT, the TOP security priority is usually:", o: ["Confidentiality", "Safety and availability", "Non-repudiation", "Privacy"], a: 1, w: "Physical processes put safety and availability first." },
+      { q: "Why avoid aggressive vulnerability scans on OT networks?", o: ["They are expensive", "They can crash fragile controllers and disrupt operations", "They are illegal", "OT has no vulnerabilities"], a: 1, w: "Many controllers fail under unexpected traffic; passive monitoring is preferred." }
+    ] },
+  { id: "iec", title: "IEC 62443: zones, conduits and security levels", body: `
+<p><b>IEC 62443</b> is the international series for securing industrial automation and control systems. It speaks to asset owners, integrators and product vendors.</p>
+<h3>Zones and conduits</h3>
+<p>Group assets with similar security needs into <b>zones</b> (for example "baggage PLCs", "airfield lighting", "building management"). Every communication path between zones is a <b>conduit</b> with controlled, monitored traffic. This is segmentation with a design method behind it.</p>
+<h3>Security levels</h3>
+<table><thead><tr><th>Level</th><th>Protects against</th></tr></thead><tbody>
+<tr><td>SL 1</td><td>Casual or accidental violation</td></tr>
+<tr><td>SL 2</td><td>Intentional attack with simple means and low motivation</td></tr>
+<tr><td>SL 3</td><td>Sophisticated attack with moderate resources and OT skills</td></tr>
+<tr><td>SL 4</td><td>Sophisticated attack with extensive resources (nation-state level)</td></tr></tbody></table>
+<p>You set a <b>target</b> level per zone from a risk assessment (IEC 62443-3-2), then compare to the <b>achieved</b> level.</p>
+<h3>Parts you will hear about</h3>
+<ul><li><b>2-1</b>: security programme for asset owners.</li>
+<li><b>3-2</b>: risk assessment and zone/conduit design.</li>
+<li><b>3-3</b>: system security requirements per level.</li>
+<li><b>4-1 / 4-2</b>: secure product development and component requirements for vendors.</li></ul>
+<h3>Remote access</h3>
+<p>The most common OT attack path is a vendor's remote connection. Require a brokered remote-access solution with MFA, approval per session, recording and time limits, and keep a list of who can connect to what.</p>`,
+    remember: ["Zones group assets; conduits control the paths between them.", "SL 1 accident to SL 4 nation-state; set targets per zone.", "Broker, approve and record all vendor remote access."],
+    checks: [
+      { q: "In IEC 62443, a controlled communication path between zones is a:", o: ["Firewall", "Conduit", "Tunnel", "Bridge"], a: 1, w: "Conduits are the defined paths between zones." },
+      { q: "A zone that must resist a skilled attacker with moderate resources targets:", o: ["SL 1", "SL 2", "SL 3", "SL 4"], a: 2, w: "SL 3 covers sophisticated attacks with moderate resources and OT skills." }
+    ] },
+  { id: "converged", title: "Governing converged IT/OT for clients", body: `
+<p>Airports and utilities run IT, OT and IoT on increasingly connected networks, monitored by one SOC. Governance must join them without pretending they are the same.</p>
+<h3>Practical steps</h3>
+<ol><li><b>Joint risk register</b> with an OT section, scored on safety, operations, regulatory and financial impact.</li>
+<li><b>Asset inventory</b> combining IT CMDB and OT passive discovery, with criticality and owner.</li>
+<li><b>Segmentation programme</b> using zones and conduits, tracked as a KRI ("OT assets reachable from corporate network").</li>
+<li><b>OT-aware incident playbooks</b>: who can isolate what, and who decides to stop a process. The SOC must never shut down an OT system without operations.</li>
+<li><b>Change and maintenance windows</b> agreed with engineering for any security work.</li>
+<li><b>Regulatory map</b>: NCIIPC for CII, DGCA/BCAS for aviation, CEA for power.</li></ol>
+<h3>Monitoring OT in a SOC</h3>
+<p>OT monitoring tools (for example Nozomi, Claroty, Dragos, Tenable OT) passively decode industrial protocols and alert on new devices, unusual commands (a write to a PLC) or new remote connections. GRC's job is to make sure coverage is measured, alerts have OT-aware runbooks, and clients see it in reporting.</p>
+<h3>Reporting to the client</h3>
+<p>Show OT risk in operational terms: "Two baggage-handling zones can still be reached from the corporate network; target closure Q2; until then, monitored by OT alert rules 14 and 15."</p>`,
+    remember: ["One register, scored for safety and operations too.", "Never isolate OT without operations deciding.", "Report OT risk in operational language."],
+    checks: [
+      { q: "The SOC detects malware on a baggage-handling server. The FIRST action is to:", o: ["Shut it down immediately", "Follow the OT playbook and involve operations before isolating", "Wait for the next audit", "Reimage it"], a: 1, w: "OT actions affect safety and operations; operations must decide with the SOC." },
+      { q: "A good KRI for an OT segmentation programme is:", o: ["Number of firewalls bought", "OT assets reachable from the corporate network", "Training hours", "Policies approved"], a: 1, w: "It measures the risk the programme exists to reduce." }
+    ] }
+  ]
+},
+{
+  id: "m9", n: 9, title: "Incidents, continuity and resilience", short: "Incidents & BCP",
+  lede: "Incident governance, regulator clocks, business impact analysis, and testing that proves you can recover.",
+  lessons: [
+  { id: "incident", title: "Incident governance and the regulator clocks", body: `
+<p>The SOC handles the technical response. GRC makes sure the <b>decisions, notifications and records</b> are right.</p>
+<h3>Before an incident</h3>
+<ul><li>An incident response plan with roles: incident manager, technical lead, communications, legal, executive decision-maker.</li>
+<li><b>Severity levels</b> defined by impact (for example Sev 1: client critical service down or confirmed data breach).</li>
+<li>A <b>notification matrix</b>: who must be told, by whom, within how long.</li>
+<li>Contact lists for CERT-In, insurers, clients' incident contacts and external forensics.</li></ul>
+<h3>The clocks</h3>
+<table><thead><tr><th>Who</th><th>When</th></tr></thead><tbody>
+<tr><td>CERT-In</td><td>Within 6 hours of noticing a reportable incident</td></tr>
+<tr><td>DPDP Board and affected people</td><td>Without delay; detailed report to the Board within 72 hours</td></tr>
+<tr><td>Clients</td><td>As per contract (often 24 hours or less)</td></tr>
+<tr><td>Sector regulators</td><td>Per their rules (RBI, SEBI, NCIIPC)</td></tr>
+<tr><td>Insurer</td><td>Per policy, often "as soon as practicable"</td></tr></tbody></table>
+<h3>During and after</h3>
+<p>Keep a timestamped <b>decision log</b>: what was known, what was decided, by whom. Preserve evidence. After closure, run a <b>blameless post-incident review</b> within two weeks: timeline, root cause, what went well, actions with owners. Feed actions into the risk register; track them like audit findings.</p>`,
+    remember: ["GRC owns decisions, notifications and records.", "CERT-In 6 hours; DPDP detailed report 72 hours; clients per contract.", "Decision log during, blameless review after, actions tracked."],
+    checks: [
+      { q: "Which document BEST proves who decided what during an incident?", o: ["The SIEM alert", "A timestamped decision log", "The IR policy", "Email signatures"], a: 1, w: "A decision log records knowledge, decisions and owners in time order." },
+      { q: "Post-incident actions should be:", o: ["Discussed once", "Owned, dated and tracked like audit findings", "Kept secret", "Left to the SOC"], a: 1, w: "Lessons only matter if actions are completed." }
+    ] },
+  { id: "bia", title: "Business impact analysis, RTO and RPO", body: `
+<p>A <b>business impact analysis (BIA)</b> works out which services matter most and how fast they must come back. ISO 22301 is the standard for business continuity management.</p>
+<h3>Key terms</h3>
+<ul><li><b>MTPD</b> (maximum tolerable period of disruption): after this, damage becomes unacceptable.</li>
+<li><b>RTO</b> (recovery time objective): target time to restore the service; must be shorter than the MTPD.</li>
+<li><b>RPO</b> (recovery point objective): maximum acceptable data loss, measured in time. RPO 1 hour means backups or replication at least hourly.</li>
+<li><b>MBCO</b> (minimum business continuity objective): the reduced level of service acceptable during disruption.</li></ul>
+<h3>Running a BIA</h3>
+<ol><li>List services and their dependencies (people, sites, systems, suppliers).</li>
+<li>For each, ask: what happens after 1 hour, 4 hours, 1 day, 3 days? Score financial, client, regulatory and safety impact.</li>
+<li>Set MTPD, RTO and RPO with the business owner.</li>
+<li>Compare with what IT can actually deliver. The gap is a risk to treat or accept.</li></ol>
+<h3>Example</h3>
+<p>24×7 SOC monitoring for an airport client: MTPD 4 hours (contract SLA and safety-relevant monitoring), RTO 2 hours (failover to the secondary SOC site), RPO 15 minutes for alert data. If the SIEM restore actually takes 8 hours, that is a high risk with a clear treatment: a hot standby.</p>`,
+    remember: ["RTO is time to recover; RPO is data you can lose.", "RTO must be shorter than the MTPD.", "The gap between required and achievable recovery is a risk."],
+    checks: [
+      { q: "Backups run every 4 hours. The best achievable RPO is about:", o: ["15 minutes", "4 hours", "1 day", "It depends on RTO"], a: 1, w: "You can lose up to the time since the last backup." },
+      { q: "Which must be true?", o: ["RTO longer than MTPD", "RTO shorter than MTPD", "RPO equals RTO", "MTPD is zero"], a: 1, w: "You must recover before the disruption becomes intolerable." }
+    ] },
+  { id: "exercise", title: "Testing resilience: exercises that teach", body: `
+<p>A plan that has never been tested is a hope. Test in increasing realism:</p>
+<table><thead><tr><th>Type</th><th>What happens</th><th>Effort</th></tr></thead><tbody>
+<tr><td>Plan walkthrough</td><td>Owners read the plan together and fix gaps</td><td>Low</td></tr>
+<tr><td>Tabletop exercise</td><td>A facilitated scenario discussed step by step</td><td>Low to medium</td></tr>
+<tr><td>Simulation</td><td>Teams act out responses with injects, no real systems touched</td><td>Medium</td></tr>
+<tr><td>Technical recovery test</td><td>Restore systems from backup or fail over for real</td><td>High</td></tr>
+<tr><td>Full interruption</td><td>Production actually switched; rare and risky</td><td>Very high</td></tr></tbody></table>
+<h3>A tabletop in one hour</h3>
+<ol><li>Scenario: "Ransomware on the corporate network at 02:00; the OT jump host shows the same indicators."</li>
+<li>Inject every 10 minutes: the media calls; CERT-In's 6-hour clock; a client asks for status; backups are found encrypted.</li>
+<li>Ask: who decides, who is told, what do we say, which plan step applies?</li>
+<li>Close with what worked, what did not, and actions with owners.</li></ol>
+<h3>Evidence from tests</h3>
+<p>Auditors (ISO 27001 control 5.30, SOC 2 availability) want the plan, the test record, results against RTO and RPO, and the follow-up actions. Measure: "restored the SIEM in 3 h 10 m against an RTO of 2 h" is a useful finding, not a failure to hide.</p>`,
+    remember: ["Walkthrough, tabletop, simulation, technical test, full interruption.", "Injects make tabletops real.", "Record results against RTO and RPO, and track the actions."],
+    checks: [
+      { q: "The LOWEST-risk way to test whether executives know their incident roles:", o: ["Full interruption test", "Tabletop exercise", "Production failover", "Pen test"], a: 1, w: "A tabletop exercises decisions without touching systems." },
+      { q: "A restore took 3 hours against a 2-hour RTO. You should:", o: ["Hide it", "Record it, treat it as a risk and assign improvement actions", "Change the RTO to 3 hours quietly", "Retest until it passes"], a: 1, w: "Tests exist to find gaps; record and treat them." }
+    ] }
+  ]
+},
+{
+  id: "m10", n: 10, title: "Metrics, reporting and leading GRC", short: "Reporting & leading",
+  lede: "Board reporting that drives decisions, running the GRC programme, and leading people through change.",
+  lessons: [
+  { id: "board", title: "Reporting to the Board", body: `
+<p>Boards have little time and wide responsibilities. A good cyber report helps them <b>decide</b>, not just know.</p>
+<h3>A one-page structure</h3>
+<ol><li><b>Headline</b>: overall posture and trend in one sentence ("Risk reduced since last quarter; one new high risk from a supplier").</li>
+<li><b>Top five risks</b>: score, trend arrow, owner, treatment status, in business words.</li>
+<li><b>Key indicators</b> against appetite, red/amber/green with thresholds stated.</li>
+<li><b>Incidents and near misses</b> that matter, with lessons.</li>
+<li><b>Audit and regulatory status</b>: findings open, overdue, upcoming audits.</li>
+<li><b>Decisions needed</b>: risk acceptances, budget, priorities. Always end with what you need from them.</li></ol>
+<h3>Writing for the Board</h3>
+<ul><li>Lead with impact: "A ransomware event could stop airport baggage operations for up to 2 days" not "47 critical CVEs on Windows servers".</li>
+<li>Use trends over snapshots, ranges over false precision.</li>
+<li>Same format every quarter so changes stand out.</li>
+<li>No surprises: brief the CISO and risk owners before the meeting.</li></ul>
+<p>NIST CSF 2.0's <b>Govern</b> function is a useful frame: it explicitly makes cyber risk a Board-level governance responsibility.</p>`,
+    remember: ["One page; end with the decisions you need.", "Impact in business words, trends over snapshots.", "No surprises: pre-brief owners."],
+    checks: [
+      { q: "Which line is BEST for a Board report?", o: ["47 critical CVEs remain on Windows servers", "A ransomware event could halt baggage handling for up to 2 days; fix funded and due in Q2", "The SIEM processed 2 billion events", "Firewall rules were optimised"], a: 1, w: "It states business impact and the action, which the Board can act on." },
+      { q: "Every Board cyber report should end with:", o: ["A thank-you slide", "Decisions needed from the Board", "Technical appendices", "Vendor logos"], a: 1, w: "The purpose is to enable decisions." }
+    ] },
+  { id: "programme", title: "Running the GRC programme", body: `
+<h3>The annual calendar</h3>
+<table><thead><tr><th>Cadence</th><th>Activities</th></tr></thead><tbody>
+<tr><td>Monthly</td><td>Risk and action review with owners, KRI refresh, evidence collection, steering committee pre-read</td></tr>
+<tr><td>Quarterly</td><td>Steering committee, Board risk report, access reviews, vendor tier reviews</td></tr>
+<tr><td>Half-yearly</td><td>DR / BCP tests, policy exception review</td></tr>
+<tr><td>Yearly</td><td>Risk assessment refresh, policy review, internal audit, management review, ISO surveillance, SOC 2 period, awareness campaign</td></tr></tbody></table>
+<h3>Your first 90 days as a GRC manager</h3>
+<ol><li><b>Weeks 1-2</b>: read the risk register, SoA, last audit reports, open findings, contracts with security clauses. Meet the CISO, SOC lead, IT, legal, HR, procurement and key client managers.</li>
+<li><b>Weeks 3-6</b>: map the control set to frameworks, build the evidence calendar, list every open finding with owner and date.</li>
+<li><b>Weeks 7-12</b>: deliver one visible win (for example closing overdue findings or a clean access review), propose the reporting format, and agree priorities for the year.</li></ol>
+<h3>Measuring the programme</h3>
+<p>Overdue findings, overdue treatment actions, evidence submitted on time, policy exceptions past expiry, critical vendors without assessment. If these trend down, the programme works.</p>`,
+    remember: ["Run GRC on a published calendar.", "First 90 days: read, map, deliver one visible win.", "Measure the programme by what is overdue."],
+    checks: [
+      { q: "A good measure of a GRC programme's health is:", o: ["Number of policies", "Trend of overdue findings and actions", "Pages in the SoA", "Size of the GRC team"], a: 1, w: "Overdue items show whether governance turns into action." },
+      { q: "In your first two weeks, the MOST valuable activity is:", o: ["Rewriting all policies", "Reading the risk register, audit reports and open findings, and meeting key people", "Buying a GRC tool", "Running a pen test"], a: 1, w: "Understand the current state and people before changing anything." }
+    ] },
+  { id: "lead", title: "Influence, difficult conversations and your team", body: `
+<p>GRC has little direct authority. You succeed through trust, clarity and persistence.</p>
+<h3>Influencing without authority</h3>
+<ul><li><b>Start from their goal</b>: the SOC wants fewer false positives, operations want uptime. Frame controls as help with those goals.</li>
+<li><b>Make the right thing easy</b>: templates, pre-filled evidence requests, office hours before audits.</li>
+<li><b>Be predictable</b>: same calendar, same format, no surprise escalations.</li>
+<li><b>Escalate as a last resort</b>, with facts and a proposed decision, after telling the person first.</li></ul>
+<h3>When you do not know the answer</h3>
+<p>Say "Good question. I will confirm and come back to you by Thursday," write it down, and do it. Guessing in front of an auditor or a client costs more than a short delay. Your field guide's Unknowns tab has a drill for this.</p>
+<h3>A difficult conversation, step by step</h3>
+<ol><li>State the fact: "The Q3 access review for the SIEM was not done."</li>
+<li>State the impact: "It will be an exception in the SOC 2 report the client reads."</li>
+<li>Ask, do not accuse: "What got in the way?"</li>
+<li>Agree a fix and a date, and write it down.</li></ol>
+<h3>Mentoring analysts</h3>
+<p>Give each analyst ownership of a framework or a client, review their work with them, and let them present at the steering committee. People grow by owning real outcomes.</p>`,
+    remember: ["Frame controls around their goals.", "'I will confirm by Thursday' beats a guess.", "Fact, impact, question, agreed fix."],
+    checks: [
+      { q: "An auditor asks something you are unsure of. BEST response:", o: ["Guess confidently", "Say you will confirm and come back by a specific time, then do it", "Change the subject", "Say it is not applicable"], a: 1, w: "Accuracy and follow-through build credibility." },
+      { q: "A control owner keeps missing deadlines. FIRST step:", o: ["Escalate to the CEO", "Talk to them directly: fact, impact, question, agreed fix", "Mark the control failed", "Do the task yourself"], a: 1, w: "Direct conversation first; escalate only with facts if it continues." }
+    ] }
+  ]
+}
+]);
+window.GRC_READING = [
+  { t: "awesome-security-GRC (curated links)", u: "https://github.com/GRC-Engineer/awesome-security-GRC", d: "The largest curated list of GRC resources on GitHub." },
+  { t: "awesome-compliance (CC0)", u: "https://github.com/getprobo/awesome-compliance", d: "Tools, frameworks and standards for IT compliance, free to reuse." },
+  { t: "awesome-grcengineering (CC0)", u: "https://github.com/grcengineering/awesome-grcengineering", d: "Automating GRC: compliance as code, evidence automation." },
+  { t: "CISO Assistant (open-source GRC tool)", u: "https://github.com/intuitem/ciso-assistant-community", d: "Ready framework mappings for ISO 27001, NIST CSF, SOC 2 and more; great for practice." },
+  { t: "NIST Cybersecurity Framework 2.0", u: "https://www.nist.gov/cyberframework", d: "The six functions, with Govern added in 2024." },
+  { t: "NIST SP 800-82 Rev. 3: OT security", u: "https://csrc.nist.gov/pubs/sp/800/82/r3/final", d: "The reference guide for operational technology security." },
+  { t: "DPDP Act 2023 and Rules 2025 (MeitY)", u: "https://www.meity.gov.in/", d: "The official texts and notifications." },
+  { t: "CERT-In Directions, 28 April 2022", u: "https://www.cert-in.org.in/", d: "The 6-hour reporting and 180-day log rules." }
+];
