@@ -1,5 +1,7 @@
 // The guide's colours are CSS variables so it follows StudyCISSP's light, sepia and dark themes (values in grc/src/styles.css).
 module.exports = {
+  important: "#grc-guide",          // utilities only apply inside the guide, so it can sit in a StudyCISSP page
+  corePlugins: { preflight: false },  // no global reset; a small scoped reset is in styles.css
   content: ["./grc/src/**/*.jsx"],
   theme: { extend: { colors: {
   "white": "var(--g-w)",

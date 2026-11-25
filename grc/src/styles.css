@@ -2,16 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 /* StudyCISSP look: warm paper, green accent, book headings */
-body { background: var(--g-bg); font-family: "Inter", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
-h1, h2 { font-family: "Fraunces", Georgia, serif; letter-spacing: -.01em; }
-h1 { font-weight: 600 !important; }
-h2 { font-weight: 600 !important; }
-button { transition: background-color .15s, color .15s; }
-nav::-webkit-scrollbar, .overflow-x-auto::-webkit-scrollbar { height: 6px; }
-nav::-webkit-scrollbar-thumb, .overflow-x-auto::-webkit-scrollbar-thumb { background: #d9d0bc; border-radius: 99px; }
-header.bg-slate-900 { background: linear-gradient(160deg, #1f5c43, #163f2f); }
-header .text-slate-400 { color: #e3b95a; letter-spacing: .12em; }
-nav.sticky { background: color-mix(in srgb, var(--g-bg) 94%, transparent); backdrop-filter: blur(8px); }
+#grc-guide { background: var(--g-bg); font-family: "Inter", system-ui, sans-serif; -webkit-font-smoothing: antialiased; color: var(--g-s900); line-height: 1.5; }
+/* scoped reset (instead of Tailwind's global one) */
+#grc-guide *, #grc-guide *::before, #grc-guide *::after { box-sizing: border-box; border-width: 0; border-style: solid; border-color: var(--g-s200); }
+#grc-guide h1, #grc-guide h2, #grc-guide h3, #grc-guide h4, #grc-guide p, #grc-guide ul, #grc-guide ol, #grc-guide dl, #grc-guide dd, #grc-guide pre, #grc-guide figure { margin: 0; }
+#grc-guide ul, #grc-guide ol { padding: 0; } #grc-guide h1, #grc-guide h2, #grc-guide h3, #grc-guide h4 { font-size: inherit; }
+#grc-guide button { font: inherit; color: inherit; background: transparent; padding: 0; cursor: pointer; }
+#grc-guide table { border-collapse: collapse; } #grc-guide a { color: inherit; }
+#grc-guide input, #grc-guide textarea { font: inherit; color: inherit; }
+#grc-guide h1, #grc-guide h2 { font-family: "Fraunces", Georgia, serif; letter-spacing: -.01em; }
+#grc-guide h1 { font-weight: 600 !important; }
+#grc-guide h2 { font-weight: 600 !important; }
+#grc-guide button { transition: background-color .15s, color .15s; }
+#grc-guide nav::-webkit-scrollbar, #grc-guide .overflow-x-auto::-webkit-scrollbar { height: 6px; }
+#grc-guide nav::-webkit-scrollbar-thumb, #grc-guide .overflow-x-auto::-webkit-scrollbar-thumb { background: #d9d0bc; border-radius: 99px; }
+#grc-guide header.bg-slate-900 { background: linear-gradient(160deg, #1f5c43, #163f2f); }
+#grc-guide header .text-slate-400 { color: #e3b95a; letter-spacing: .12em; }
+#grc-guide nav.sticky { background: color-mix(in srgb, var(--g-bg) 94%, transparent); backdrop-filter: blur(8px); }
 
 /* theme palettes: light (default), sepia, dark */
 :root {
@@ -145,8 +152,12 @@ nav.sticky { background: color-mix(in srgb, var(--g-bg) 94%, transparent); backd
 }
 
 :root[data-theme="night"] { color-scheme: dark; }
-:root[data-theme="night"] .text-white { color: #f3efe6; }
-:root[data-theme="night"] .text-slate-800 { color: #dcd5c6; }
-:root[data-theme="night"] header.bg-slate-900 { background: linear-gradient(160deg, #1d4a37, #11281f); }
-:root[data-theme="sepia"] header.bg-slate-900 { background: linear-gradient(160deg, #7a4a1c, #5a3412); }
-:root[data-theme="sepia"] .text-white { color: #fbf3e3; }
+:root[data-theme="night"] #grc-guide .text-white { color: #f3efe6; }
+:root[data-theme="night"] #grc-guide .text-slate-800 { color: #dcd5c6; }
+:root[data-theme="night"] #grc-guide header.bg-slate-900 { background: linear-gradient(160deg, #1d4a37, #11281f); }
+:root[data-theme="sepia"] #grc-guide header.bg-slate-900 { background: linear-gradient(160deg, #7a4a1c, #5a3412); }
+:root[data-theme="sepia"] #grc-guide .text-white { color: #fbf3e3; }
+
+/* inside a StudyCISSP page: the tab bar sticks below the site's top bar */
+.grc-inpage #grc-guide nav.sticky { top: 64px; }
+.grc-inpage #grc-guide .min-h-screen { min-height: 0; border-radius: 18px; overflow: clip; }

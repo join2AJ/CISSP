@@ -516,11 +516,11 @@
     h += `<details class="toc-group" ${open(["library"]) ? "open" : ""}><summary class="toc-head">Library</summary><ol class="toc-list">
       ${L("#/grc/library/iso-annex-a-2022", "§", "ISO 27001:2022 controls", r.b === "iso-annex-a-2022")}${L("#/grc/library/soc2-controls", "§", "SOC 2", r.b === "soc2-controls")}
       ${L("#/grc/library/dpdp-sections-reference", "§", "DPDP Act and Rules", r.b === "dpdp-sections-reference")}${L("#/grc/library/tprm-lifecycle-and-monitoring", "§", "Third-party risk", r.b === "tprm-lifecycle-and-monitoring")}
-      ${L("#/grc/library", "❏", "All 44 documents", r.a === "library" && !r.b)}</ol></details>`;
+      ${L("#/grc/library", "❏", "All 46 documents", r.a === "library" && !r.b)}</ol></details>`;
     h += `<details class="toc-group" ${open(["controls", "map", "calendar"]) ? "open" : ""}><summary class="toc-head">Controls</summary><ol class="toc-list">
       ${L("#/grc/controls", "◇", "Control workbench", r.a === "controls")}${L("#/grc/map/iso", "⊞", "Framework map", r.a === "map")}${L("#/grc/calendar", "▦", "Evidence calendar", r.a === "calendar")}</ol></details>`;
-    h += `<details class="toc-group" ${open(["labs", "guide", "glossary", "pbc"]) ? "open" : ""}><summary class="toc-head">Practise</summary><ol class="toc-list">
-      ${L("#/grc/labs", "◎", "Hands-on labs", r.a === "labs")}${L("#/grc/pbc", "☑", "PBC list", r.a === "pbc")}${L("#/grc/guide", "▤", "Field guide", r.a === "guide")}${L("#/grc/glossary", "Aa", "GRC glossary", r.a === "glossary")}</ol></details>`;
+    h += `<details class="toc-group" ${open(["labs", "guide", "glossary", "pbc", "reading"]) ? "open" : ""}><summary class="toc-head">Practise</summary><ol class="toc-list">
+      ${L("#/grc/labs", "◎", "Hands-on labs", r.a === "labs")}${L("#/grc/pbc", "☑", "PBC list", r.a === "pbc")}${L("#/grc/guide", "▤", "Field guide", r.a === "guide")}${L("#/grc/reading", "❡", "Reading room", r.a === "reading")}${L("#/grc/glossary", "Aa", "GRC glossary", r.a === "glossary")}</ol></details>`;
     h += `<div class="toc-card"><b>${Math.round(done / all * 100)}%</b>of the GRC course · ${done} of ${all} lessons<div class="meter" style="margin-top:10px"><i style="width:${Math.round(done / all * 100)}%;background:#b8892a"></i></div></div>`;
     toc.innerHTML = h;
   }
@@ -1805,15 +1805,16 @@
 
   async function viewGrc(r) {
     if (!App.isPrivileged()) return notAllowed();
-    if (r.a === "guide") return `<div class="grc-wrap">
+    if (r.a === "guide") return `<div class="grc-inpage">
       <div class="grc-bar"><div><a class="kicker" href="#/grc">← Learn GRC</a><h1>GRC Manager <em>field guide</em></h1>
         <p class="sub" style="margin:2px 0 0">The role, a skill ladder, 50-term glossary, daily situations, a 20-day plan, your first 90 days and 18 templates. Your checklist is saved on this device.</p></div>
-        <a class="btn small" href="grc.html" target="_blank" rel="noopener">Open full screen ↗</a></div>
-      <iframe class="grc-frame" src="grc.html" title="GRC Manager field guide"></iframe></div>`;
+        <a class="btn small ghost" href="grc.html" target="_blank" rel="noopener">Open on its own ↗</a></div>
+      <div id="grc-guide"><p class="sub" style="padding:40px 0;text-align:center">Loading the field guide…</p></div></div>`;
     try { await loadGrc(); } catch (e) { return `<div class="page-narrow"><h1 class="h-display">Couldn’t load the course</h1><p class="lede">Check your connection and try again.</p></div>`; }
     const C = window.GRC_COURSE;
     if (r.a === "library") return grcLibrary(r.b);
     if (r.a === "labs") return grcLabs();
+    if (r.a === "reading") { try { await loadLib(); } catch (e) {} return grcReading(r.b); }
     if (r.a === "glossary") return grcGlossary(r.b);
     if (r.a === "pbc") return grcPbc();
     if (r.a === "controls") return grcControls(r.b);
@@ -1833,16 +1834,32 @@
       <div class="grc-mods">${C.map(x => { const p = grcProg(x); return `<a class="grc-mod ${p.pct === 100 ? "done" : ""}" href="#/grc/${x.id}"><span class="grc-n">${String(x.n).padStart(2, "0")}</span><div><b>${esc(x.title)}</b><small>${esc(x.lede)}</small><span class="meter"><i style="width:${p.pct}%"></i></span><em>${p.d} of ${p.t} lessons</em></div></a>`; }).join("")}</div>
       <h2 class="h-section">Go deeper and practise</h2>
       <div class="grc-more">
-        <a class="card grc-guide" href="#/grc/library"><div><span class="kicker">44 documents · ~42,000 words</span><h3>GRC library</h3><p>All 93 ISO 27001 controls, SOC 2 controls and evidence, the DPDP Act and Rules section by section, third-party risk, and 29 SOC 2 policy and procedure templates.</p></div><span class="start-arrow" aria-hidden="true">→</span></a>
+        <a class="card grc-guide" href="#/grc/library"><div><span class="kicker">46 documents · ~42,000 words</span><h3>GRC library</h3><p>All 93 ISO 27001 controls, SOC 2 controls and evidence, the DPDP Act and Rules section by section, third-party risk, and 29 SOC 2 policy and procedure templates.</p></div><span class="start-arrow" aria-hidden="true">→</span></a>
         <a class="card grc-guide" href="#/grc/controls"><div><span class="kicker">53 controls · 159 test scenarios</span><h3>Control workbench</h3><p>A common control set mapped to ISO 27001, SOC 2, NIST CSF, DPDP, CERT-In and IEC 62443. Filter by department, scope and frequency; test what can go wrong and rate each control.</p></div><span class="start-arrow" aria-hidden="true">→</span></a>
         <a class="card grc-guide" href="#/grc/map/iso"><div><span class="kicker">ISO · SOC 2 · NIST · India · IEC</span><h3>Framework map</h3><p>All 93 ISO controls with theme and "new in 2022" filters and their 2013 equivalents; see which common controls meet each requirement.</p></div><span class="start-arrow" aria-hidden="true">→</span></a>
         <a class="card grc-guide" href="#/grc/calendar"><div><span class="kicker">12-month plan</span><h3>Evidence calendar</h3><p>What evidence is due each month, by department, with chase dates a week before. Download the year plan.</p></div><span class="start-arrow" aria-hidden="true">→</span></a>
         <a class="card grc-guide" href="#/grc/labs"><div><span class="kicker">7 labs</span><h3>Hands-on labs</h3><p>Use real open-source tools: an assessment in CISO Assistant, a SOC 2 gap scan of GitHub, policies as code, a vendor register, and quantifying risk in rupees.</p></div><span class="start-arrow" aria-hidden="true">→</span></a>
       </div>
       <a class="card grc-guide" href="#/grc/guide" style="margin-top:12px"><div><span class="kicker">13 tabs</span><h3>GRC Manager field guide</h3><p>A day in the life, meetings, tools, a 50-term glossary with quiz mode, a drill for questions you can’t answer, 18 daily situations, a 20-day plan, your first 90 days and 18 filled-in templates.</p></div><span class="start-arrow" aria-hidden="true">→</span></a>
+      <a class="card grc-guide" href="#/grc/reading" style="margin-top:12px"><div><span class="kicker">On this site</span><h3>Reading room</h3><p>A 30-day reading plan, the risk frameworks, free tools, books, people to follow and certifications, each summarised in plain words.</p></div><span class="start-arrow" aria-hidden="true">→</span></a>
       <h2 class="h-section">Further reading</h2>
       <p class="sub">Free, openly licensed lists and official sources. The lessons above are written for this site; these help you go deeper.</p>
       <div>${(window.GRC_READING || []).map(x => `<div class="res"><div class="res-ico">↗</div><div><h4><a href="${esc(x.u)}" target="_blank" rel="noopener">${esc(x.t)} ↗</a></h4><p>${esc(x.d)}</p></div></div>`).join("")}</div>
+    </div>`;
+  }
+  function grcReading(sec) {
+    const R = window.GRC_READING_ROOM || [];
+    const cc0 = (window.GRC_LIBRARY || []).filter(d => /^cc0-/.test(d.id));
+    const list = sec ? R.filter(x => x.id === sec) : R;
+    return `<div class="page grc-reading">
+      <a class="kicker" href="#/grc">← Learn GRC</a>
+      <h1 class="h-display">Reading <em>room</em></h1>
+      <p class="lede">What to read, which tools to try, whose work to follow and which certifications matter, summarised here so you don’t have to leave the site. Names of standards and books are given so you can find them later.</p>
+      <nav class="chips" aria-label="Sections">${R.map(x => `<a class="chip${x.id === sec ? " on" : ""}" href="#/grc/reading/${x.id}">${esc(x.title)}</a>`).join("")}${sec ? `<a class="chip" href="#/grc/reading">Show all</a>` : ""}</nav>
+      ${list.map(x => `<section class="grc-rr" id="rr-${x.id}"><h2 class="h-section">${esc(x.title)}</h2>
+        <div class="grc-rr-list">${x.items.map(([t, d]) => `<div class="card grc-rr-item"><h3>${esc(t)}</h3><p>${esc(d)}</p></div>`).join("")}</div></section>`).join("")}
+      ${!sec && cc0.length ? `<section class="grc-rr"><h2 class="h-section">Curated lists, in full</h2><p class="sub">Public-domain (CC0) lists, copied into the library so you can read them here.</p>
+        <div class="grc-rr-list">${cc0.map(d => `<a class="card grc-rr-item" href="#/grc/library/${d.id}"><h3>${esc(d.title)} →</h3><p>Open in the library</p></a>`).join("")}</div></section>` : ""}
     </div>`;
   }
   function grcModule(m) {
@@ -1879,7 +1896,19 @@
       </div>
     </article>`;
   }
+  // The field guide is a small React bundle; load it once, then mount it inside this page.
+  const grcVer = () => { const t = document.querySelector('script[src*="assets/js/app.js"]'); const m = t && t.src.match(/[?&]v=([^&]+)/); return m ? m[1] : "dev"; };
+  let guideLoad = null;
+  function loadGuide() {
+    if (window.mountGrcGuide) return Promise.resolve();
+    if (guideLoad) return guideLoad;
+    const v = grcVer();
+    if (!document.querySelector('link[href*="assets/grc/grc.css"]')) { const l = document.createElement("link"); l.rel = "stylesheet"; l.href = "assets/grc/grc.css?v=" + v; document.head.appendChild(l); }
+    guideLoad = new Promise((ok, no) => { const sc = document.createElement("script"); sc.src = "assets/grc/grc.js?v=" + v; sc.onload = ok; sc.onerror = () => { guideLoad = null; no(); }; document.head.appendChild(sc); });
+    return guideLoad;
+  }
   function bindGrc(r) {
+    if (r.a === "guide") { const el = $("#grc-guide"); if (el) loadGuide().then(() => { if (el.isConnected) { el.innerHTML = ""; window.mountGrcGuide(el); } }).catch(() => { el.innerHTML = '<p class="sub" style="padding:40px 0;text-align:center">Couldn’t load the field guide. Check your connection and try again.</p>'; }); }
     if (["controls", "map", "calendar"].includes(r.a)) bindCcf(r);
     const pc = $("#pbcCsv"); if (pc) pc.addEventListener("click", () => {
       const csv = pbcRows().map(r => r.map(c => /[",\n]/.test(c) ? `"${c.replace(/"/g, '""')}"` : c).join(",")).join("\r\n");

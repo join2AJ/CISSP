@@ -1879,3 +1879,15 @@ body.grc-mode .topbar { box-shadow: inset 0 -2px 0 #b8892a; }
 .cc-rate .chip.on.r-pass { background: color-mix(in srgb, var(--good) 85%, #000); }
 .cc-rate .chip.on.r-fail { background: color-mix(in srgb, var(--bad) 90%, #000); }
 :root[data-theme="night"] .tag.new { color: #f0d08a; background: color-mix(in srgb, #b8892a 22%, transparent); }
+
+/* Field guide shown inside the page (no frame) */
+.grc-inpage { max-width: 1180px; margin: 0 auto; }
+.grc-inpage .grc-bar { margin-bottom: 14px; }
+.grc-inpage #grc-guide { border-radius: 18px; }
+
+/* GRC reading room */
+.grc-reading .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 8px; }
+.grc-reading .chip { display: inline-flex; min-height: 40px; align-items: center; padding: 0 14px; border: 1px solid var(--rule); border-radius: 999px; text-decoration: none; font-size: 14px; }
+.grc-reading .chip.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.grc-rr { margin-top: 26px; } .grc-rr-list { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+.grc-rr-item { padding: 16px 18px; text-decoration: none; } .grc-rr-item h3 { margin: 0 0 6px; font-size: 16.5px; } .grc-rr-item p { margin: 0; font-size: 14.5px; line-height: 1.55; color: var(--ink-2, inherit); }

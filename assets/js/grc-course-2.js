@@ -466,3 +466,58 @@ window.GRC_PBC = {
     "Review every item before it goes to the auditor. A weak screenshot sent early causes more questions than a strong export sent a day later."
   ]
 };
+/* Reading room: written for StudyCISSP. Facts (titles, authors, years, what each framework is) with our own summaries. */
+window.GRC_READING_ROOM = [
+  { id: "start", title: "Where to start (first 30 days)", items: [
+    ["Week 1", "Read ISO 31000 principles (Module 2) and NIST CSF 2.0's Govern function. Together they explain why risk decisions belong to the business, not the security team."],
+    ["Week 2", "Skim ISO/IEC 27005:2022 for the risk method and NIST SP 800-30 Rev. 1 for a worked risk assessment. Then write five risks for a managed SOC in cause, event, consequence form."],
+    ["Week 3", "Read the first half of 'How to Measure Anything in Cybersecurity Risk'. Put rupee ranges on your top three risks (Lab 5)."],
+    ["Week 4", "Read 'The Cybersecurity Manager's Guide' for the people side, and follow two practitioners from the list below for daily examples."]] },
+  { id: "frameworks", title: "Risk management frameworks", items: [
+    ["ISO 31000:2018 Risk management", "The principles and process behind every other risk method: scope and context, assess, treat, monitor, with communication throughout. Short and readable. Start here."],
+    ["IEC 31010:2019 Risk assessment techniques", "A catalogue of about 40 techniques (bow-tie, FMEA, scenario analysis, Monte Carlo) and when to use each. Use it as a reference, not a cover-to-cover read."],
+    ["ISO/IEC 27005:2022", "Applies ISO 31000 to information security and fits the ISO 27001 risk clauses. It describes event-based and asset-based approaches, which helps when auditors ask how your method works."],
+    ["COSO ERM (2017)", "Enterprise risk management linked to strategy and performance. Your CFO and internal audit think in COSO terms, so knowing it helps you speak their language."],
+    ["NIST SP 800-37 Rev. 2 (RMF)", "The seven-step Risk Management Framework: prepare, categorise, select, implement, assess, authorise, monitor. Useful structure even outside US government."],
+    ["NIST SP 800-39", "Risk at three levels: organisation, mission or business process, and system. Good for explaining why a server risk can matter to the Board."],
+    ["NIST SP 800-30 Rev. 1", "How to run a risk assessment, with example tables for threat sources, likelihood and impact you can adapt."],
+    ["NIST SP 800-53A Rev. 5", "How to assess controls: examine, interview and test. The same logic as SOC 2 testing and our control workbench."],
+    ["NIST SP 800-161 Rev. 1", "Supply chain risk management; pairs with Module 6."],
+    ["FAIR (Factor Analysis of Information Risk)", "Breaks risk into loss event frequency and loss magnitude, estimated as ranges. The standard way to put money on cyber risk."],
+    ["OCTAVE (Carnegie Mellon SEI)", "A workshop-based, self-directed risk method focused on critical assets; good for small teams."],
+    ["Mozilla Rapid Risk Assessment", "A 30 to 60 minute structured conversation for new services. Ideal for quick decisions on new tools."],
+    ["MITRE TARA", "An engineering method to identify cyber vulnerabilities and choose countermeasures, using threat catalogues."]] },
+  { id: "tools", title: "Free tools to practise with", items: [
+    ["CISO Assistant (community edition)", "Free, open source GRC platform with 200+ frameworks including ISO 27001, DPDPA and the RBI direction. Runs with Docker on your laptop. See Lab 1."],
+    ["Eramba community", "A long-standing free GRC tool for risks, controls, policies and audits."],
+    ["Probo", "Open source GRC for engineering teams: risks, controls, vendors, a Statement of Applicability. See Lab 4."],
+    ["Comply (strongDM)", "SOC 2 policies kept as Markdown in Git; its templates are in our Library. See Lab 3."],
+    ["Netflix riskquant", "A small Python library for loss estimates and loss exceedance curves. See Lab 5."],
+    ["MISP and OpenCTI", "Free threat intelligence platforms; the kind of tool behind control RSK-02."]] },
+  { id: "books", title: "Books worth reading", items: [
+    ["Security Risk Management - Evan Wheeler (2011)", "A practical, still-relevant guide to building a risk programme; each chapter ends with actions you can apply."],
+    ["Measuring and Managing Information Risk: A FAIR Approach - Jack Freund and Jack Jones (2014)", "The FAIR book. Read it when you are ready to quantify risks properly."],
+    ["How to Measure Anything in Cybersecurity Risk - Douglas Hubbard and Richard Seiersen (2016; 2nd ed. 2023)", "Shows that you have more data than you think and need less than you think. The best introduction to quantitative risk."],
+    ["The Cybersecurity Manager's Guide - Todd Barnum (2021)", "Leading a security programme when few people care or understand: documentation, governance, architecture and communication."],
+    ["ISO 27001 Controls: A Guide to Implementing and Auditing - Bridget Kenyon", "Goes through Annex A control by control: how to implement and how to audit each one. Ideal alongside our Framework map."],
+    ["IT Auditing: Using Controls to Protect Information Assets - Davis, Schiller and Wheeler", "How auditors test data centres, networks, applications and cloud. Helps you understand what auditors will ask."],
+    ["Transformational Security Awareness - Perry Carpenter (2019)", "Behaviour science and marketing applied to awareness; useful because GRC teams often own training."],
+    ["Foundations of Information Security - Jason Andress (2019)", "A short tour of security basics; useful for colleagues new to the field."],
+    ["A Leader's Guide to Cybersecurity - Thomas Parenty and Jack Domet (2019)", "Security explained for business leaders; useful for Board conversations."],
+    ["Rational Cybersecurity for Business - Dan Blum (2020)", "Aligning security with the business; available free as an open-access book from Apress."]] },
+  { id: "people", title: "People and teams to learn from", items: [
+    ["Phil Venables", "Long-time CISO (Goldman Sachs, Google Cloud). His blog on compliance versus security and on scaling security programmes is essential reading."],
+    ["Ryan McGeehan", "Writes on risk forecasting and simple risk programmes for start-ups and scale-ups."],
+    ["Adobe Common Controls Framework (CCF)", "Adobe published its open common control set, the same idea as our control workbench, mapping one control to many standards."],
+    ["Atlassian risk and compliance", "Writing on compliance inside fast DevOps pipelines: obligations, control objectives and automation."],
+    ["On LinkedIn", "Troy Fine and AJ Yawn (SOC 2 and general GRC), Aron Lange (ISO 27001), Jacob Horne (NIST and CMMC), Ayoub Fandi (cloud-native GRC and the GRC Engineer newsletter)."]] },
+  { id: "certs", title: "Certifications for a GRC manager", items: [
+    ["CISSP (ISC2)", "Broad security management knowledge; the other branch of this site."],
+    ["CISA (ISACA)", "IT audit. Very useful for running audits and understanding auditors."],
+    ["CRISC (ISACA)", "IT risk management; closest match to the risk side of the role."],
+    ["CISM (ISACA)", "Security management and programme governance."],
+    ["ISO/IEC 27001 Lead Implementer or Lead Auditor", "Practical ISMS implementation or certification auditing."],
+    ["CIPM or CIPP (IAPP)", "Privacy programme management; pair with DPDP knowledge."],
+    ["ISA/IEC 62443 certificates", "For OT and critical infrastructure clients such as airports and power."],
+    ["CCSK (Cloud Security Alliance)", "Cloud security fundamentals for cloud vendor and shared responsibility questions."]] }
+];
