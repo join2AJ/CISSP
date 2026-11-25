@@ -306,8 +306,8 @@
   App.register = (name, def) => { routes[name] = def; };
   function parse() {
     const h = location.hash.replace(/^#\/?/, "");
-    const [a, b, c] = h.split("/");
-    return { page: a || "home", a: b ? decodeURIComponent(b) : b, b: c ? decodeURIComponent(c) : c };
+    const [a, b, c, d] = h.split("/");
+    return { page: a || "home", a: b ? decodeURIComponent(b) : b, b: c ? decodeURIComponent(c) : c, c: d ? decodeURIComponent(d) : d };
   }
   App.parse = parse;
   const sessionGet = (k) => { try { return sessionStorage.getItem(k); } catch (e) { return "x"; } };
@@ -517,6 +517,8 @@
       ${L("#/grc/library/iso-annex-a-2022", "§", "ISO 27001:2022 controls", r.b === "iso-annex-a-2022")}${L("#/grc/library/soc2-controls", "§", "SOC 2", r.b === "soc2-controls")}
       ${L("#/grc/library/dpdp-sections-reference", "§", "DPDP Act and Rules", r.b === "dpdp-sections-reference")}${L("#/grc/library/tprm-lifecycle-and-monitoring", "§", "Third-party risk", r.b === "tprm-lifecycle-and-monitoring")}
       ${L("#/grc/library", "❏", "All 44 documents", r.a === "library" && !r.b)}</ol></details>`;
+    h += `<details class="toc-group" ${open(["controls", "map", "calendar"]) ? "open" : ""}><summary class="toc-head">Controls</summary><ol class="toc-list">
+      ${L("#/grc/controls", "◇", "Control workbench", r.a === "controls")}${L("#/grc/map/iso", "⊞", "Framework map", r.a === "map")}${L("#/grc/calendar", "▦", "Evidence calendar", r.a === "calendar")}</ol></details>`;
     h += `<details class="toc-group" ${open(["labs", "guide", "glossary", "pbc"]) ? "open" : ""}><summary class="toc-head">Practise</summary><ol class="toc-list">
       ${L("#/grc/labs", "◎", "Hands-on labs", r.a === "labs")}${L("#/grc/pbc", "☑", "PBC list", r.a === "pbc")}${L("#/grc/guide", "▤", "Field guide", r.a === "guide")}${L("#/grc/glossary", "Aa", "GRC glossary", r.a === "glossary")}</ol></details>`;
     h += `<div class="toc-card"><b>${Math.round(done / all * 100)}%</b>of the GRC course · ${done} of ${all} lessons<div class="meter" style="margin-top:10px"><i style="width:${Math.round(done / all * 100)}%;background:#b8892a"></i></div></div>`;
@@ -1552,9 +1554,165 @@
     bindSchedule();
     if (r.a === "schedule") { const el = $("#schedule"); if (el) requestAnimationFrame(() => el.scrollIntoView({ block: "start" })); }
   } });
+  /* ===== Common control framework: workbench, framework map, evidence calendar ===== */
+  const FWS = [["iso", "ISO 27001:2022"], ["soc", "SOC 2"], ["csf", "NIST CSF 2.0"], ["india", "India: DPDP & CERT-In"], ["iec", "IEC 62443 (OT)"]];
+  const fwList = fw => fw === "iso" ? (window.ISO_2022 || []).map(x => [x.id, x.name]) : ((window.GRC_FW || {})[fw === "soc" ? "soc2" : fw] || []);
+  const isoById = () => { const m = {}; (window.ISO_2022 || []).forEach(x => { m[x.id] = x; }); return m; };
+  const ctrls = () => window.GRC_CONTROLS || [];
+  const ctrlNew = c => { const I = isoById(); return c.iso.some(i => I[i] && I[i].new); };
+  const GT = () => (S.grcTests = S.grcTests || {});
+  const RATE = { pass: "Pass", partial: "Partial", fail: "Fail", na: "Not applicable" };
+  const overall = c => { const t = GT()[c.id]; if (!t || !t.s) return "Not tested";
+    const v = c.risks.map((_, i) => t.s[i]).filter(x => x && x !== "na");
+    if (!v.length) return "Not tested"; if (v.includes("fail")) return "Ineffective";
+    if (v.includes("partial")) return "Partially effective";
+    return v.length === c.risks.filter((_, i) => t.s[i] !== "na").length ? "Effective" : "In progress"; };
+  const rateCls = r => ({ "Effective": "strong", "Partially effective": "medium", "Ineffective": "weak", "In progress": "plain", "Not tested": "plain" })[r];
+  let CF = { dom: "", owner: "", scope: "", freq: "", fw: "", rating: "", q: "", newOnly: false };
+  function grcControls(id) {
+    const C = ctrls(); if (!C.length) return "";
+    const c = id && C.find(x => x.id === decodeURIComponent(id)); if (c) return grcControl(c);
+    const doms = [...new Set(C.map(x => x.dom))], owners = [...new Set(C.map(x => x.owner))].sort(), scopes = [...new Set(C.flatMap(x => x.scope.split(", ")))], freqs = [...new Set(C.map(x => x.freq))];
+    const ratings = C.map(overall), count = r => ratings.filter(x => x === r).length;
+    const list = C.filter(x => (!CF.dom || x.dom === CF.dom) && (!CF.owner || x.owner === CF.owner) && (!CF.scope || x.scope.includes(CF.scope)) && (!CF.freq || x.freq === CF.freq)
+      && (!CF.fw || x[CF.fw].length) && (!CF.newOnly || ctrlNew(x)) && (!CF.rating || overall(x) === CF.rating)
+      && (!CF.q || (x.id + " " + x.title + " " + x.desc + " " + x.iso.join(" ") + " " + x.soc.join(" ") + " " + x.csf.join(" ")).toLowerCase().includes(CF.q.toLowerCase())));
+    const sel = (k, label, opts) => `<label class="cf-sel">${label}<select data-cf="${k}"><option value="">All</option>${opts.map(o => `<option value="${esc(o[0])}" ${CF[k] === o[0] ? "selected" : ""}>${esc(o[1])}</option>`).join("")}</select></label>`;
+    return `<div class="page grc-ccf">
+      <a class="kicker" href="#/grc">← Learn GRC · Controls</a>
+      <h1 class="h-display">Control <em>workbench</em></h1>
+      <p class="lede">One common set of controls for a managed SOC and critical-infrastructure provider. Each control meets requirements in several frameworks at once. Open a control to see what can go wrong, test each scenario and give it a rating. Your ratings are saved.</p>
+      <div class="cf-stats">
+        <div><b>${doms.length}</b><span>categories</span></div><div><b>${owners.length}</b><span>departments</span></div><div><b>${scopes.length}</b><span>scopes</span></div>
+        <div><b>${C.length}</b><span>controls</span></div><div><b>${C.reduce((n, x) => n + x.risks.length, 0)}</b><span>test scenarios</span></div>
+        <div class="cf-rated"><b>${C.length - count("Not tested")}</b><span>tested · <i class="ok">${count("Effective")} effective</i> · <i class="mid">${count("Partially effective")} partial</i> · <i class="bad">${count("Ineffective")} ineffective</i></span></div>
+      </div>
+      <div class="btn-row"><a class="btn small" href="#/grc/map/iso">Framework map</a><a class="btn small" href="#/grc/calendar">Evidence calendar</a><button class="btn small ghost" id="cfExport">Download test workpaper</button></div>
+      <div class="filters cf-chips"><button class="chip ${!CF.dom ? "on" : ""}" data-cfdom="">All categories</button>${doms.map(d => `<button class="chip ${CF.dom === d ? "on" : ""}" data-cfdom="${esc(d)}">${esc(d)}</button>`).join("")}</div>
+      <div class="cf-bar">
+        ${sel("owner", "Department", owners.map(o => [o, o]))}${sel("scope", "Scope", scopes.map(o => [o, o]))}${sel("freq", "Frequency", freqs.map(o => [o, o]))}
+        ${sel("fw", "Framework", FWS)}${sel("rating", "Rating", ["Not tested", "In progress", "Effective", "Partially effective", "Ineffective"].map(o => [o, o]))}
+        <label class="check cf-new"><input type="checkbox" id="cfNew" ${CF.newOnly ? "checked" : ""}><span>Only controls using <b>new ISO 2022</b> controls</span></label>
+        <input class="grc-libq" id="cfQ" type="search" placeholder="Search controls, e.g. backup, CC6.3, 5.23" value="${esc(CF.q)}" aria-label="Search controls">
+      </div>
+      <p class="sub">${list.length} of ${C.length} controls</p>
+      <div class="cf-grid">${list.map(x => { const r = overall(x); return `<a class="cf-card" href="#/grc/controls/${x.id}">
+        <div class="cf-top"><span class="cf-id">${x.id}</span>${ctrlNew(x) ? `<span class="tag new">New control</span>` : ""}<span class="tag ${rateCls(r)}">${r}</span></div>
+        <b>${esc(x.title)}</b>
+        <small>${esc(x.dom)} · ${esc(x.owner)} · ${esc(x.freq)} · ${esc(x.type)}</small>
+        <span class="cf-maps">${x.iso.length ? `ISO ${x.iso.length}` : ""}${x.soc.length ? ` · SOC 2 ${x.soc.length}` : ""}${x.csf.length ? ` · CSF ${x.csf.length}` : ""}${x.india.length ? ` · India ${x.india.length}` : ""}${x.iec.length ? ` · IEC ${x.iec.length}` : ""}</span></a>`; }).join("") || `<p class="sub">No controls match these filters.</p>`}</div>
+    </div>`;
+  }
+  function grcControl(c) {
+    const t = GT()[c.id] || { s: {} }, r = overall(c), I = isoById(), C = ctrls(), at = C.indexOf(c);
+    const names = fw => { const m = {}; fwList(fw).forEach(x => { m[x[0]] = x[1]; }); return m; };
+    const maps = FWS.map(([k, label]) => { const ids = c[k]; if (!ids.length) return ""; const n = names(k);
+      return `<div class="cc-fw"><h4>${label}</h4><ul>${ids.map(i => `<li><a href="#/grc/map/${k}/${encodeURIComponent(i)}"><b>${esc(i)}</b> ${esc(k === "iso" && I[i] ? I[i].name : n[i] || "")}</a>${k === "iso" && I[i] && I[i].new ? ` <span class="tag new">New control</span>` : ""}</li>`).join("")}</ul></div>`; }).join("");
+    return `<article class="page-narrow grc-cc">
+      <a class="kicker" href="#/grc/controls">← Control workbench</a>
+      <div class="cc-head"><span class="cf-id big">${c.id}</span>${ctrlNew(c) ? `<span class="tag new">New control</span>` : ""}<span class="tag ${rateCls(r)}" id="ccRating">${r}</span></div>
+      <h1 class="h-display" style="margin-top:6px">${esc(c.title)}</h1>
+      <dl class="cc-card">
+        <div><dt>Control ID</dt><dd>${c.id}</dd></div><div><dt>Category</dt><dd>${esc(c.dom)}</dd></div><div><dt>Type</dt><dd>${esc(c.type)}</dd></div>
+        <div><dt>Owner</dt><dd>${esc(c.owner)}</dd></div><div><dt>Frequency</dt><dd>${esc(c.freq)}</dd></div><div><dt>Scope</dt><dd>${esc(c.scope)}</dd></div>
+        <div class="wide"><dt>Description</dt><dd>${esc(c.desc)}</dd></div>
+        <div class="wide"><dt>Evidence</dt><dd>${esc(c.evidence)}</dd></div>
+        <div class="wide"><dt>Test of design</dt><dd>${esc(c.tod)}</dd></div>
+        <div class="wide"><dt>Test of operating effectiveness</dt><dd>${esc(c.toe)}</dd></div>
+      </dl>
+      <h2 class="h-section">What can go wrong, and how to test it</h2>
+      <p class="sub">Run each test, then rate it. The control's overall rating follows: any fail makes it Ineffective; any partial makes it Partially effective; all passes make it Effective.</p>
+      <div class="cc-tests">${c.risks.map(([w, how], i) => `<div class="cc-test"><div class="cc-test-n">${i + 1}</div><div>
+        <p class="cc-wrong"><b>What can go wrong:</b> ${esc(w)}</p><p class="cc-how"><b>Test:</b> ${esc(how)}</p>
+        <div class="cc-rate" role="radiogroup" aria-label="Result for scenario ${i + 1}">${Object.entries(RATE).map(([k, l]) => `<button type="button" class="chip ${t.s[i] === k ? "on r-" + k : ""}" data-rate="${i}:${k}" role="radio" aria-checked="${t.s[i] === k}">${l}</button>`).join("")}</div></div></div>`).join("")}</div>
+      <label class="cc-note">Test notes, sample used and evidence references<textarea id="ccNote" maxlength="2000" placeholder="e.g. Sampled 25 leavers from HR export dated 30 Sep; 2 removed after 3 days (tickets 4412, 4419).">${esc(t.note || "")}</textarea></label>
+      <p class="hint" id="ccSaved">${t.at ? "Last rated " + fmtDY(t.at) : "Not rated yet"}</p>
+      <h2 class="h-section">Meets these requirements</h2>
+      <p class="sub">One control, tested once, gives evidence for all of these.</p>
+      <div class="cc-maps">${maps}</div>
+      <div class="sec-pager">${at > 0 ? `<a href="#/grc/controls/${C[at - 1].id}">← ${C[at - 1].id} ${esc(C[at - 1].title)}</a>` : `<a href="#/grc/controls">← All controls</a>`}${C[at + 1] ? `<a class="skip" href="#/grc/controls/${C[at + 1].id}">${C[at + 1].id} ${esc(C[at + 1].title)} →</a>` : ""}</div>
+    </article>`;
+  }
+  let MF = { theme: "", newOnly: false, q: "" };
+  function grcMap(fw, focus) {
+    fw = FWS.some(x => x[0] === fw) ? fw : "iso"; const C = ctrls(), I = isoById(), f = focus ? decodeURIComponent(focus) : "";
+    let reqs = fwList(fw).map(([id, name]) => ({ id, name, x: fw === "iso" ? I[id] : null, by: C.filter(c => c[fw].includes(id)) }));
+    const total = reqs.length, covered = reqs.filter(r => r.by.length).length;
+    if (fw === "iso") reqs = reqs.filter(r => (!MF.theme || r.x.theme === MF.theme) && (!MF.newOnly || r.x.new));
+    if (MF.q) reqs = reqs.filter(r => (r.id + " " + r.name + " " + (r.x ? r.x.desc + " " + r.x.old : "")).toLowerCase().includes(MF.q.toLowerCase()));
+    return `<div class="page grc-map">
+      <a class="kicker" href="#/grc/controls">← Control workbench</a>
+      <h1 class="h-display">Framework <em>map</em></h1>
+      <p class="lede">See any framework through the common controls. Pick a requirement to find the controls that meet it; open a control to see everything else it covers.</p>
+      <div class="filters">${FWS.map(([k, l]) => `<a class="chip ${fw === k ? "on" : ""}" href="#/grc/map/${k}">${l}</a>`).join("")}</div>
+      <p class="sub"><b>${covered} of ${total}</b> ${fw === "iso" ? "Annex A controls" : "requirements"} covered by at least one common control.</p>
+      ${fw === "iso" ? `<div class="filters cf-chips">${["", "Organisational", "People", "Physical", "Technological"].map(th => `<button class="chip ${MF.theme === th && !MF.newOnly ? "on" : ""}" data-mft="${th}">${th || "All 93"}</button>`).join("")}
+        <button class="chip ${MF.newOnly ? "on" : ""}" data-mfnew="1">★ New in 2022 (11)</button></div>` : ""}
+      <input class="grc-libq" id="mfQ" type="search" placeholder="Search requirements" value="${esc(MF.q)}" aria-label="Search requirements">
+      <div class="mf-list">${reqs.map(r => `<div class="mf-row ${r.id === f ? "focus" : ""} ${r.by.length ? "" : "gap"}" id="mf-${esc(r.id).replace(/[^\w-]/g, "_")}">
+        <div class="mf-req"><span class="cf-id">${esc(r.id)}</span>${r.x && r.x.new ? `<span class="tag new">New control</span>` : ""}${r.x ? `<span class="tag plain">${r.x.theme}</span>` : ""}<b>${esc(r.name)}</b>
+          ${r.x ? `<small>${esc(r.x.desc)}${r.x.old ? ` · 2013: ${esc(r.x.old)}` : " · new in 2022, no 2013 equivalent"}</small>` : ""}</div>
+        <div class="mf-by">${r.by.length ? r.by.map(c => `<a class="mf-c" href="#/grc/controls/${c.id}" title="${esc(c.title)}">${c.id} <span>${esc(c.title)}</span></a>`).join("") : `<span class="mf-gap">Not covered yet</span>`}</div></div>`).join("") || `<p class="sub">Nothing matches.</p>`}</div>
+    </div>`;
+  }
+  const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  let EF = { owner: "", dom: "", scope: "", ev: "" };
+  const calItems = () => { const out = [], now = today(), y0 = now.getFullYear(), m0 = now.getMonth() + (now.getDate() > 10 ? 1 : 0);  // after the 10th, this month's evidence is already due
+    for (let k = 0; k < 12; k++) { const y = y0 + Math.floor((m0 + k) / 12), m = (m0 + k) % 12, mm = m + 1;
+      ctrls().forEach(c => { const due = c.ev === "M" || (c.ev === "Q" && mm % 3 === 0) || (c.ev === "H" && (mm === c.mon || mm === ((c.mon + 5) % 12) + 1)) || (c.ev === "A" && mm === c.mon);
+        if (due) out.push({ c, y, m, due: new Date(y, m, 10), chase: new Date(y, m, 3) }); }); }
+    return out; };
+  function grcCalendar() {
+    const C = ctrls(); const owners = [...new Set(C.map(x => x.owner))].sort(), doms = [...new Set(C.map(x => x.dom))], scopes = [...new Set(C.flatMap(x => x.scope.split(", ")))];
+    const items = calItems().filter(i => (!EF.owner || i.c.owner === EF.owner) && (!EF.dom || i.c.dom === EF.dom) && (!EF.scope || i.c.scope.includes(EF.scope)) && (!EF.ev || i.c.ev === EF.ev));
+    const byMonth = {}; items.forEach(i => { const k = i.y + "-" + i.m; (byMonth[k] = byMonth[k] || []).push(i); });
+    const sel = (k, label, opts) => `<label class="cf-sel">${label}<select data-ef="${k}"><option value="">All</option>${opts.map(o => `<option value="${esc(o[0])}" ${EF[k] === o[0] ? "selected" : ""}>${esc(o[1])}</option>`).join("")}</select></label>`;
+    const perOwner = owners.map(o => [o, items.filter(i => i.c.owner === o).length]).filter(x => x[1]);
+    const fd = d => d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+    return `<div class="page grc-cal">
+      <a class="kicker" href="#/grc/controls">← Control workbench</a>
+      <h1 class="h-display">Evidence <em>calendar</em></h1>
+      <p class="lede">Every control's evidence, planned for the next 12 months: monthly reports, quarterly reviews (March, June, September, December), half-yearly tests and annual reviews. Evidence is due on the 10th; chase the owner on the 3rd, a week before, not a month after.</p>
+      <div class="cf-bar">${sel("owner", "Department", owners.map(o => [o, o]))}${sel("dom", "Category", doms.map(o => [o, o]))}${sel("scope", "Scope", scopes.map(o => [o, o]))}${sel("ev", "Cadence", [["M", "Monthly"], ["Q", "Quarterly"], ["H", "Half-yearly"], ["A", "Annual"]])}
+        <button class="btn small" id="efCsv">Download the year plan</button></div>
+      <div class="cal-owners">${perOwner.map(([o, n]) => `<span class="tag plain">${esc(o)}: ${n}</span>`).join("")}</div>
+      <div class="cal-grid">${Object.entries(byMonth).map(([k, list], idx) => { const [y, m] = k.split("-").map(Number);
+        return `<section class="cal-month ${idx === 0 ? "now" : ""}"><h3>${MONTHS[m]} ${y}<small>${list.length} items · chase ${fd(list[0].chase)} · due ${fd(list[0].due)}</small></h3>
+          <ul>${list.map(i => `<li><a href="#/grc/controls/${i.c.id}"><span class="cf-id">${i.c.id}</span> ${esc(i.c.title)}</a><small>${esc(i.c.owner)} · ${({ M: "monthly", Q: "quarterly", H: "half-yearly", A: "annual" })[i.c.ev]} · ${esc(i.c.evidence.split(",")[0])}</small></li>`).join("")}</ul></section>`; }).join("") || `<p class="sub">Nothing matches these filters.</p>`}</div>
+    </div>`;
+  }
+  function bindCcf(r) {
+    $$("[data-cfdom]").forEach(b => b.addEventListener("click", () => { CF.dom = b.dataset.cfdom; App.rerender(); }));
+    $$("[data-cf]").forEach(s => s.addEventListener("change", () => { CF[s.dataset.cf] = s.value; App.rerender(); }));
+    const n = $("#cfNew"); if (n) n.addEventListener("change", () => { CF.newOnly = n.checked; App.rerender(); });
+    const q = $("#cfQ"); if (q) q.addEventListener("input", () => { CF.q = q.value; clearTimeout(q._t); q._t = setTimeout(() => { App.rerender(); setTimeout(() => { const x = $("#cfQ"); if (x) { x.focus(); x.setSelectionRange(x.value.length, x.value.length); } }, 30); }, 250); });
+    const mq = $("#mfQ"); if (mq) mq.addEventListener("input", () => { MF.q = mq.value; clearTimeout(mq._t); mq._t = setTimeout(() => { App.rerender(); setTimeout(() => { const x = $("#mfQ"); if (x) { x.focus(); x.setSelectionRange(x.value.length, x.value.length); } }, 30); }, 250); });
+    $$("[data-mft]").forEach(b => b.addEventListener("click", () => { MF.theme = b.dataset.mft; MF.newOnly = false; App.rerender(); }));
+    $$("[data-mfnew]").forEach(b => b.addEventListener("click", () => { MF.newOnly = !MF.newOnly; MF.theme = ""; App.rerender(); }));
+    $$("[data-ef]").forEach(s => s.addEventListener("change", () => { EF[s.dataset.ef] = s.value; App.rerender(); }));
+    if (r.a === "map" && r.b && r.c) { const el = document.getElementById("mf-" + decodeURIComponent(r.c).replace(/[^\w-]/g, "_")); if (el) requestAnimationFrame(() => el.scrollIntoView({ block: "center" })); }
+    // rating a control
+    const id = r.a === "controls" && r.b ? decodeURIComponent(r.b) : null, c = id && ctrls().find(x => x.id === id);
+    if (c) {
+      const rec = () => (GT()[c.id] = GT()[c.id] || { s: {} });
+      $$("[data-rate]").forEach(b => b.addEventListener("click", () => {
+        const [i, k] = b.dataset.rate.split(":"); const t = rec(); t.s[i] = t.s[i] === k ? undefined : k; t.at = new Date().toISOString(); save();
+        $$(`[data-rate^="${i}:"]`).forEach(x => { const on = x.dataset.rate === i + ":" + t.s[i]; x.className = "chip" + (on ? " on r-" + t.s[i] : ""); x.setAttribute("aria-checked", on); });
+        const o = overall(c), el = $("#ccRating"); el.textContent = o; el.className = "tag " + rateCls(o); $("#ccSaved").textContent = "Saved · last rated " + fmtDY(t.at);
+      }));
+      const note = $("#ccNote"); let tm = null; note.addEventListener("input", () => { clearTimeout(tm); tm = setTimeout(() => { const t = rec(); t.note = note.value.trim(); t.at = new Date().toISOString(); save(); $("#ccSaved").textContent = "Saved"; }, 600); });
+      note.addEventListener("keydown", e => e.stopPropagation());
+      const ids = ctrls().map(x => x.id), at = ids.indexOf(c.id); pageKeys = { prev: at > 0 ? "#/grc/controls/" + ids[at - 1] : null, next: ids[at + 1] ? "#/grc/controls/" + ids[at + 1] : null };
+    }
+    const dl = (rows, name) => { const csv = rows.map(r => r.map(x => { x = String(x == null ? "" : x); return /[",\n]/.test(x) ? `"${x.replace(/"/g, '""')}"` : x; }).join(",")).join("\r\n");
+      const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" })); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1500); };
+    const ex = $("#cfExport"); if (ex) ex.addEventListener("click", () => { dl([["Control ID", "Title", "Category", "Owner", "Frequency", "Scope", "Overall rating", "Scenario 1", "Scenario 2", "Scenario 3", "Notes", "Last rated", "ISO 27001:2022", "SOC 2", "NIST CSF 2.0", "India", "IEC 62443"]].concat(ctrls().map(c => { const t = GT()[c.id] || { s: {} };
+      return [c.id, c.title, c.dom, c.owner, c.freq, c.scope, overall(c)].concat(c.risks.map((_, i) => RATE[t.s[i]] || "Not tested")).concat([t.note || "", t.at ? ymd(new Date(t.at)) : "", c.iso.join("; "), c.soc.join("; "), c.csf.join("; "), c.india.join("; "), c.iec.join("; ")]); })), "control-test-workpaper.csv"); db.logEvent("user.workpaper_download", {}); });
+    const ec = $("#efCsv"); if (ec) ec.addEventListener("click", () => { dl([["Month", "Chase on", "Due", "Control ID", "Control", "Department", "Category", "Scope", "Cadence", "Evidence"]].concat(calItems().map(i => [MONTHS[i.m] + " " + i.y, ymd(i.chase), ymd(i.due), i.c.id, i.c.title, i.c.owner, i.c.dom, i.c.scope, ({ M: "Monthly", Q: "Quarterly", H: "Half-yearly", A: "Annual" })[i.c.ev], i.c.evidence])), "evidence-calendar.csv"); });
+  }
   /* second branch: Learn GRC (a full course) and the GRC Manager field guide, private to the owner's account */
   let grcLoading = null;
-  const loadGrc = () => window.GRC_COURSE && window.GRC_COURSE.length >= 10 ? Promise.resolve() : (grcLoading = grcLoading || Promise.all(["grc-course-1", "grc-course-2"].map(f => new Promise((ok, no) => {
+  const loadGrc = () => window.GRC_COURSE && window.GRC_COURSE.length >= 10 && window.GRC_CONTROLS && window.ISO_2022 ? Promise.resolve() : (grcLoading = grcLoading || Promise.all(["grc-course-1", "grc-course-2", "grc-iso", "grc-controls-1", "grc-controls-2"].map(f => new Promise((ok, no) => {
     const sc = document.createElement("script"); sc.src = `assets/js/${f}.js?v=${(document.querySelector('script[src*="app.js"]').src.split("v=")[1] || "dev")}`; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc);
   }))));
   let libLoading = null;
@@ -1577,6 +1735,7 @@
         <a class="kicker" href="#/grc/library">← GRC library · ${esc(doc.group)}</a>
         <h1 class="h-display">${esc(doc.title)}</h1>
         <p class="sub">◷ ${mins(doc)} min read${doc.tsc && doc.tsc.length ? ` · satisfies SOC 2 ${doc.tsc.map(esc).join(", ")}` : ""}${mod ? ` · goes with <a href="#/grc/${mod.id}">Module ${mod.n}: ${esc(mod.title)}</a>` : ""}</p>
+        ${doc.id.startsWith("iso-") ? `<a class="okbox" style="display:block;margin:14px 0" href="#/grc/map/iso">Filter by theme, show only the 11 new 2022 controls, see 2013 equivalents and which common controls meet each one: open the framework map →</a>` : ""}
         <div class="prose">${doc.html}</div>
         <p class="grc-src">${LIB_SRC[doc.src] || ""}</p>
         <div class="sec-pager">${at > 0 ? `<a href="#/grc/library/${same[at - 1].id}">← ${esc(same[at - 1].title)}</a>` : `<a href="#/grc/library">← Library</a>`}${nx ? `<a href="#/grc/library/${nx.id}" class="skip">${esc(nx.title)} →</a>` : ""}</div>
@@ -1657,6 +1816,9 @@
     if (r.a === "labs") return grcLabs();
     if (r.a === "glossary") return grcGlossary(r.b);
     if (r.a === "pbc") return grcPbc();
+    if (r.a === "controls") return grcControls(r.b);
+    if (r.a === "map") return grcMap(r.b, r.c);
+    if (r.a === "calendar") return grcCalendar();
     const m = r.a && grcMod(r.a);
     if (m && r.b) { const l = m.lessons.find(x => x.id === r.b); if (l) return grcLesson(m, l); }
     if (m) return grcModule(m);
@@ -1672,6 +1834,9 @@
       <h2 class="h-section">Go deeper and practise</h2>
       <div class="grc-more">
         <a class="card grc-guide" href="#/grc/library"><div><span class="kicker">44 documents · ~42,000 words</span><h3>GRC library</h3><p>All 93 ISO 27001 controls, SOC 2 controls and evidence, the DPDP Act and Rules section by section, third-party risk, and 29 SOC 2 policy and procedure templates.</p></div><span class="start-arrow" aria-hidden="true">→</span></a>
+        <a class="card grc-guide" href="#/grc/controls"><div><span class="kicker">53 controls · 159 test scenarios</span><h3>Control workbench</h3><p>A common control set mapped to ISO 27001, SOC 2, NIST CSF, DPDP, CERT-In and IEC 62443. Filter by department, scope and frequency; test what can go wrong and rate each control.</p></div><span class="start-arrow" aria-hidden="true">→</span></a>
+        <a class="card grc-guide" href="#/grc/map/iso"><div><span class="kicker">ISO · SOC 2 · NIST · India · IEC</span><h3>Framework map</h3><p>All 93 ISO controls with theme and "new in 2022" filters and their 2013 equivalents; see which common controls meet each requirement.</p></div><span class="start-arrow" aria-hidden="true">→</span></a>
+        <a class="card grc-guide" href="#/grc/calendar"><div><span class="kicker">12-month plan</span><h3>Evidence calendar</h3><p>What evidence is due each month, by department, with chase dates a week before. Download the year plan.</p></div><span class="start-arrow" aria-hidden="true">→</span></a>
         <a class="card grc-guide" href="#/grc/labs"><div><span class="kicker">7 labs</span><h3>Hands-on labs</h3><p>Use real open-source tools: an assessment in CISO Assistant, a SOC 2 gap scan of GitHub, policies as code, a vendor register, and quantifying risk in rupees.</p></div><span class="start-arrow" aria-hidden="true">→</span></a>
       </div>
       <a class="card grc-guide" href="#/grc/guide" style="margin-top:12px"><div><span class="kicker">13 tabs</span><h3>GRC Manager field guide</h3><p>A day in the life, meetings, tools, a 50-term glossary with quiz mode, a drill for questions you can’t answer, 18 daily situations, a 20-day plan, your first 90 days and 18 filled-in templates.</p></div><span class="start-arrow" aria-hidden="true">→</span></a>
@@ -1715,6 +1880,7 @@
     </article>`;
   }
   function bindGrc(r) {
+    if (["controls", "map", "calendar"].includes(r.a)) bindCcf(r);
     const pc = $("#pbcCsv"); if (pc) pc.addEventListener("click", () => {
       const csv = pbcRows().map(r => r.map(c => /[",\n]/.test(c) ? `"${c.replace(/"/g, '""')}"` : c).join(",")).join("\r\n");
       const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" })); a.download = "pbc-list-soc2-iso27001.csv"; a.click();

@@ -40,7 +40,7 @@ the questions).
 
 ## GRC library: reference notes
 
-`assets/js/grc-library.js` includes reference notes from the `dpdpa`, `iso27001`, `soc2` and `tprm` skills in
+`assets/js/grc-library.js` and `assets/js/grc-iso.js` (the ISO 27001:2022 index with 2013 equivalents) include reference notes from the `dpdpa`, `iso27001`, `soc2` and `tprm` skills in
 [Claude-Skills-Governance-Risk-and-Compliance](https://github.com/Sushegaad/Claude-Skills-Governance-Risk-and-Compliance)
 by Hemant Naik, used under the MIT License (Copyright (c) 2026 Hemant Naik). Full licence: `licenses/claude-skills-grc-MIT.txt`.
 Changes: converted from Markdown to HTML, long dashes replaced with hyphens, emoji markers replaced with words.
