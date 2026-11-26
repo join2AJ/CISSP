@@ -418,7 +418,8 @@
   /* wide tables become stacked cards on phones */
   App.stackTables = (root) => {
     // wide tables scroll sideways, so keyboard users must be able to focus them
-    (root || view).querySelectorAll(".tbl-wrap").forEach(w => { if (!w.hasAttribute("tabindex")) { w.tabIndex = 0; w.setAttribute("role", "region"); w.setAttribute("aria-label", "Scrollable table"); } });
+    (root || view).querySelectorAll(".tbl-wrap").forEach(w => { if (!w.hasAttribute("tabindex")) { w.tabIndex = 0; w.setAttribute("role", "region"); const h = (() => { let e = w; while (e && e !== document.body) { let p = e.previousElementSibling; while (p) { if (/^H[1-4]$/.test(p.tagName)) return p.textContent.trim(); const q = p.querySelector && p.querySelector("h1,h2,h3,h4"); if (q) return q.textContent.trim(); p = p.previousElementSibling; } e = e.parentElement; } return ""; })(); w.setAttribute("aria-label", (h ? h + ": " : "") + "scrollable table"); } });
+    const seenL = {}; (root || view).querySelectorAll(".tbl-wrap[role=region]").forEach(w => { const l = w.getAttribute("aria-label"); seenL[l] = (seenL[l] || 0) + 1; if (seenL[l] > 1) w.setAttribute("aria-label", l + " " + seenL[l]); });
     (root || view).querySelectorAll(".prose table, .tbl.stackable").forEach(t => {
       if (t.dataset.stacked) return; t.dataset.stacked = "1"; t.classList.add("stk");
       const heads = [...t.querySelectorAll("thead th")].map(th => th.textContent.trim());
@@ -535,8 +536,8 @@
       ${L("#/grc/library", "❏", "All 46 documents", r.a === "library" && !r.b)}</ol></details>`;
     h += `<details class="toc-group" ${open(["controls", "map", "calendar"]) ? "open" : ""}><summary class="toc-head">Controls</summary><ol class="toc-list">
       ${L("#/grc/controls", "◇", "Control workbench", r.a === "controls")}${L("#/grc/map/iso", "⊞", "Framework map", r.a === "map")}${L("#/grc/calendar", "▦", "Evidence calendar", r.a === "calendar")}</ol></details>`;
-    h += `<details class="toc-group" ${open(["labs", "guide", "glossary", "pbc", "reading", "setup", "visuals"]) ? "open" : ""}><summary class="toc-head">Practise</summary><ol class="toc-list">
-      ${L("#/grc/labs", "◎", "Hands-on labs", r.a === "labs")}${L("#/grc/setup", "⚙", "Run CISO Assistant", r.a === "setup")}${L("#/grc/pbc", "☑", "PBC list", r.a === "pbc")}${L("#/grc/guide", "▤", "Field guide", r.a === "guide")}${L("#/grc/reading", "❡", "Reading room", r.a === "reading")}${L("#/grc/visuals", "◇", "Diagrams", r.a === "visuals")}${L("#/grc/glossary", "Aa", "GRC glossary", r.a === "glossary")}</ol></details>`;
+    h += `<details class="toc-group" ${open(["labs", "guide", "glossary", "pbc", "reading", "setup", "visuals", "vendors", "briefings"]) ? "open" : ""}><summary class="toc-head">Practise</summary><ol class="toc-list">
+      ${L("#/grc/labs", "◎", "Hands-on labs", r.a === "labs")}${L("#/grc/vendors", "⇄", "Vendor register", r.a === "vendors")}${L("#/grc/setup", "⚙", "Run CISO Assistant", r.a === "setup")}${L("#/grc/pbc", "☑", "PBC list", r.a === "pbc")}${L("#/grc/guide", "▤", "Field guide", r.a === "guide")}${L("#/grc/reading", "❡", "Reading room", r.a === "reading")}${L("#/grc/visuals", "◇", "Diagrams", r.a === "visuals")}${L("#/grc/briefings", "✦", "Briefings", r.a === "briefings")}${L("#/grc/glossary", "Aa", "GRC glossary", r.a === "glossary")}</ol></details>`;
     h += `<div class="toc-card"><b>${Math.round(done / all * 100)}%</b>of the GRC course · ${done} of ${all} lessons<div class="meter" style="margin-top:10px"><i style="width:${Math.round(done / all * 100)}%;background:#b8892a"></i></div></div>`;
     toc.innerHTML = h;
   }
@@ -846,14 +847,15 @@
     return `<div class="diff-bar" data-diffk="${esc(k)}"><span class="diff-q">How did this page feel?</span><div class="diff-btns" role="group" aria-label="How did this page feel?">${["easy", "normal", "hard"].map(id => `<button class="diff ${id} ${v === id ? "on" : ""}" data-diff="${id}" aria-pressed="${v === id}"><b>${DIFF[id][0]}</b><small>back in ${DIFF[id][1]} days</small></button>`).join("")}</div></div>`; };
   const diffItem = (k, o) => {
     let t = null, h = null;
-    if (k.startsWith("grc:")) { const [, mi, li] = k.split(":"), m = grcMod(mi), l = m && m.lessons.find(x => x.id === li); if (l) { t = `${m.n}.${m.lessons.indexOf(l) + 1} ${l.title}`; h = `#/grc/${mi}/${li}`; } }
+    if (k.startsWith("grcb:")) { const b = (window.GRC_BRIEFINGS || []).find(x => x.id === k.slice(5)); if (b) { t = "Briefing: " + b.t; h = "#/grc/briefings/" + b.id; } }
+    else if (k.startsWith("grc:")) { const [, mi, li] = k.split(":"), m = grcMod(mi), l = m && m.lessons.find(x => x.id === li); if (l) { t = `${m.n}.${m.lessons.indexOf(l) + 1} ${l.title}`; h = `#/grc/${mi}/${li}`; } }
     else { const [di, si] = k.split(":"), d = byId[di], s = d && d.sections.find(x => x.id === si); if (s) { t = `${d.n}.${d.sections.indexOf(s) + 1} ${s.title}`; h = `#/domain/${di}/${si}`; } }
     if (!t) return null;
     const due = ymd(addDays(parseD(o.at), DIFF[o.v][1]));
     return { k, v: o.v, t, h, due, isDue: due <= ymd(today()) };
   };
   App.reviewCard = (grc) => {
-    const all = Object.entries(S.diff || {}).filter(([k, o]) => o && DIFF[o.v] && k.startsWith("grc:") === !!grc).map(([k, o]) => diffItem(k, o)).filter(Boolean);
+    const all = Object.entries(S.diff || {}).filter(([k, o]) => o && DIFF[o.v] && k.startsWith("grc") === !!grc).map(([k, o]) => diffItem(k, o)).filter(Boolean);
     const by = { hard: [], normal: [], easy: [] }; all.forEach(x => by[x.v].push(x));
     Object.values(by).forEach(a => a.sort((x, y) => (y.isDue - x.isDue) || (x.due < y.due ? -1 : 1)));
     const first = ["hard", "normal", "easy"].find(v => by[v].length) || "hard", dueN = all.filter(x => x.isDue).length;
@@ -1765,7 +1767,7 @@
   /* second branch: Learn GRC (a full course) and the GRC Manager field guide, private to the owner's account */
   let grcLoading = null;
   App.loadGrc = () => loadGrc();
-  const loadGrc = () => window.GRC_COURSE && window.GRC_COURSE.length >= 10 && window.GRC_CONTROLS && window.ISO_2022 ? Promise.resolve() : (grcLoading = grcLoading || Promise.all(["grc-course-1", "grc-course-2", "grc-iso", "grc-controls-1", "grc-controls-2", "grc-oracle", "grc-visuals"].map(f => new Promise((ok, no) => {
+  const loadGrc = () => window.GRC_COURSE && window.GRC_COURSE.length >= 10 && window.GRC_CONTROLS && window.ISO_2022 ? Promise.resolve() : (grcLoading = grcLoading || Promise.all(["grc-course-1", "grc-course-2", "grc-iso", "grc-controls-1", "grc-controls-2", "grc-oracle", "grc-visuals", "grc-briefings"].map(f => new Promise((ok, no) => {
     const sc = document.createElement("script"); sc.src = `assets/js/${f}.js?v=${(document.querySelector('script[src*="app.js"]').src.split("v=")[1] || "dev")}`; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc);
   }))));
   let libLoading = null;
@@ -1852,6 +1854,130 @@
       ${body}
     </div>`;
   }
+
+  /* ---------- Vendor register: who gets which data, what they give us, risks and controls ---------- */
+  const VDATA = [["hr", "HR personal data", 4], ["cust", "Customer personal data", 4], ["client", "Client log data", 4], ["ot", "OT and engineering data", 4], ["fin", "Finance and payment", 3], ["code", "Source code", 3], ["internal", "Internal documents", 2]];
+  const VACC = [["none", "No access to our systems", 0], ["read", "Read only", 1], ["write", "Read and write", 2], ["exec", "Admin or execute", 3], ["script", "Runs code on our website", 3], ["ot", "Remote access into OT", 4]];
+  const VFLOW = { out: "We send data to them", in: "They send data to us", both: "Both ways", none: "No data exchanged" };
+  const VCHK = [["soc", "SOC 2 or ISO 27001 evidence reviewed"], ["dpa", "DPA signed (personal data)"], ["audit", "Right to audit"], ["notice", "Breach notice within 6 hours"], ["exit", "Exit plan and data export"], ["local", "Indian law and courts"], ["fallback", "Tested fallback or second provider"]];
+  const VEX = [
+    { name: "Payroll provider", service: "Monthly payroll and payslips", owner: "CHRO", parent: "India", data: ["hr", "fin"], flow: "out", access: "none", crit: 2, ck: { soc: 1, dpa: 1, exit: 1, local: 1 }, sanct: 0, give: "Payslips, bank transfer files, tax filings" },
+    { name: "Cloud email and collaboration suite", service: "Email, chat, documents", owner: "CIO", parent: "United States", data: ["internal", "cust", "hr"], flow: "both", access: "exec", crit: 3, ck: { soc: 1, dpa: 1 }, sanct: 1, give: "Email, file storage, video meetings" },
+    { name: "Hyperscale cloud (SIEM hosting)", service: "Hosts the SOC's SIEM and log storage", owner: "Head of SOC", parent: "United States", data: ["client"], flow: "out", access: "exec", crit: 3, ck: { soc: 1, dpa: 1, audit: 1, notice: 1 }, sanct: 1, give: "Compute, storage, the SIEM platform" },
+    { name: "Baggage system OEM", service: "Maintains airport baggage PLCs", owner: "Head of OT engineering", parent: "Germany", data: ["ot"], flow: "both", access: "ot", crit: 3, ck: { audit: 1, local: 1 }, sanct: 0, give: "Firmware updates, remote fault fixing" },
+    { name: "Website experimentation script", service: "A/B tests on the public website", owner: "Head of marketing", parent: "United States", data: ["cust"], flow: "in", access: "script", crit: 1, ck: { soc: 1 }, sanct: 0, give: "JavaScript that runs in visitors' browsers" },
+    { name: "Background verification agency", service: "Pre-joining checks", owner: "CHRO", parent: "India", data: ["hr"], flow: "out", access: "none", crit: 1, ck: { dpa: 1, local: 1 }, sanct: 0, give: "Verification reports" }
+  ];
+  const vList = () => (S.grcVendors = S.grcVendors || []);
+  const vScore = v => {
+    const d = Math.max(0, ...v.data.map(k => (VDATA.find(x => x[0] === k) || [0, 0, 0])[2])), a = (VACC.find(x => x[0] === v.access) || [0, 0, 0])[2];
+    const s = d + a + v.crit * 2; return { s, tier: s >= 9 || (v.crit === 3 && d >= 3) ? 1 : s >= 6 ? 2 : 3, d, a };
+  };
+  const vRisks = v => {
+    const sc = vScore(v), ck = v.ck || {}, R = [], has = k => v.data.includes(k), pers = has("hr") || has("cust");
+    const add = (sev, t, c) => R.push({ sev, t, c });
+    if (pers && !ck.dpa) add("high", "Processes personal data without a DPA: you stay liable under DPDP for what they do", ["PRV-01", "TPR-03"]);
+    if (sc.d >= 3 && !ck.soc) add("high", "No independent evidence that their controls work", ["TPR-02"]);
+    if (v.access === "exec" || v.access === "write") add(v.access === "exec" ? "high" : "med", "Their admin or write access could be misused or stolen", ["IAM-04", "IAM-03"]);
+    if (v.access === "ot") add("high", "Remote access into OT can stop a physical process", ["OT-02", "IAM-05"]);
+    if (v.access === "script") add("high", "Their code runs on our website; if they are hacked, our visitors are attacked (as in OPTIMJACK)", ["TPR-02", "CHG-01"]);
+    if (sc.d >= 3 && !ck.notice) add("med", "Slow breach notice could make us miss CERT-In's 6-hour reporting", ["INC-02", "TPR-03"]);
+    if (v.crit === 3 && !ck.fallback) add("high", "Single point of failure: no tested fallback for a critical service", ["BCM-01", "TPR-04"]);
+    if (v.sanct && v.crit >= 2) add("high", `Sanctions shadow: a ${esc(v.parent || "foreign")} parent could be forced to suspend service`, ["TPR-04", "BCM-01"]);
+    if (v.crit >= 2 && !ck.exit) add("med", "Lock-in: no exit plan or routine data export", ["TPR-04"]);
+    if (sc.tier === 1 && !ck.audit) add("med", "No right to audit a Tier 1 vendor", ["TPR-03"]);
+    if (v.sanct && !ck.local) add("med", "Disputes would be fought under foreign law and courts", ["TPR-03"]);
+    return R;
+  };
+  let vEdit = null, vFilter = "all";
+  function vForm(v) {
+    v = v || { name: "", service: "", owner: "", parent: "India", data: [], flow: "out", access: "none", crit: 2, ck: {}, sanct: 0, give: "" };
+    return `<form class="card vd-form" id="vdForm" data-id="${esc(v.id || "")}"><h3>${v.id ? "Edit vendor" : "Add a vendor"}</h3>
+      <div class="form-row"><label style="flex:2;min-width:200px">Vendor<input name="name" required maxlength="80" value="${esc(v.name)}" placeholder="e.g. Payroll provider"></label>
+        <label style="flex:2;min-width:200px">Service they provide<input name="service" maxlength="120" value="${esc(v.service)}" placeholder="e.g. Monthly payroll"></label></div>
+      <div class="form-row"><label style="flex:1;min-width:160px">Business owner<input name="owner" maxlength="60" value="${esc(v.owner)}" placeholder="e.g. CHRO"></label>
+        <label style="flex:1;min-width:160px">Parent company is in<input name="parent" maxlength="60" value="${esc(v.parent)}" placeholder="e.g. United States"></label>
+        <label style="flex:1;min-width:160px">How critical?<select name="crit">${[[1, "Low: we can manage without it for a week"], [2, "Medium: we can manage for a day"], [3, "High: we stop within hours"]].map(([k, t]) => `<option value="${k}" ${v.crit === k ? "selected" : ""}>${t}</option>`).join("")}</select></label></div>
+      <fieldset class="vd-set"><legend>Data they get or hold</legend>${VDATA.map(([k, t]) => `<label class="check"><input type="checkbox" name="data" value="${k}" ${v.data.includes(k) ? "checked" : ""}><span>${t}</span></label>`).join("")}</fieldset>
+      <div class="form-row"><label style="flex:1;min-width:180px">Direction<select name="flow">${Object.entries(VFLOW).map(([k, t]) => `<option value="${k}" ${v.flow === k ? "selected" : ""}>${t}</option>`).join("")}</select></label>
+        <label style="flex:1;min-width:180px">Access to our systems<select name="access">${VACC.map(([k, t]) => `<option value="${k}" ${v.access === k ? "selected" : ""}>${t}</option>`).join("")}</select></label></div>
+      <label style="display:block">What they give us<input name="give" maxlength="160" value="${esc(v.give)}" placeholder="e.g. Payslips, tax filings"></label>
+      <fieldset class="vd-set"><legend>What is in place</legend>${VCHK.map(([k, t]) => `<label class="check"><input type="checkbox" name="ck" value="${k}" ${(v.ck || {})[k] ? "checked" : ""}><span>${t}</span></label>`).join("")}
+        <label class="check"><input type="checkbox" name="sanct" value="1" ${v.sanct ? "checked" : ""}><span>Parent could be bound by foreign sanctions (US, EU, UK) that India doesn't apply</span></label></fieldset>
+      <div class="btn-row"><button class="btn primary small" type="submit">Save vendor</button><button class="btn small ghost" type="button" id="vdCancel">Cancel</button></div></form>`;
+  }
+  function grcVendors() {
+    const V = vList(), rows = V.map(v => ({ v, sc: vScore(v), R: vRisks(v) }));
+    const shown = rows.filter(x => vFilter === "all" || (vFilter === "t1" && x.sc.tier === 1) || (vFilter === "gaps" && x.R.length) || (vFilter === "sanct" && x.v.sanct));
+    const openR = rows.reduce((n, x) => n + x.R.length, 0), highR = rows.reduce((n, x) => n + x.R.filter(r => r.sev === "high").length, 0);
+    const cName = id => { const c = (window.GRC_CONTROLS ? ctrls() : []).find(x => x.id === id); return c ? c.title : id; };
+    const dataCols = VDATA.filter(([k]) => V.some(v => v.data.includes(k)));
+    return `<div class="page grc-vendors">
+      <a class="kicker" href="#/grc">← Learn GRC · Third-party risk</a>
+      <h1 class="h-display">Vendor <em>register</em></h1>
+      <p class="lede">Every vendor, the data they get, what they give you, how far into your systems they reach, and the risks and controls that follow. The tier and the risks are worked out for you from your answers. Saved on this device${db.mode === "cloud" ? " and to your account" : ""}.</p>
+      <div class="btn-row">${vEdit === null ? `<button class="btn primary small" id="vdAdd">Add a vendor</button>` : ""}${V.length ? "" : `<button class="btn small" id="vdEx">Load 6 example vendors</button>`}
+        ${V.length ? `<button class="btn small" id="vdCsv">Download register (Excel)</button>` : ""}<button class="btn small ghost" id="vdTpl">Download blank template</button></div>
+      ${vEdit !== null ? vForm(V.find(v => v.id === vEdit)) : ""}
+      ${V.length ? `<section class="facts" style="border-top:1px solid var(--rule)">
+        <div class="fact"><b>${V.length}</b><span>vendors</span></div>
+        <div class="fact"><b>${rows.filter(x => x.sc.tier === 1).length}</b><span>Tier 1 (critical)</span></div>
+        <div class="fact"><b>${openR}</b><span>open risks (${highR} high)</span></div>
+        <div class="fact"><b>${rows.filter(x => x.v.sanct && x.v.crit >= 2).length}</b><span>in a sanctions shadow</span></div>
+      </section>
+      <h2 class="h-section">Who holds which data</h2>
+      <div class="tbl-wrap"><table class="tbl vd-matrix"><thead><tr><th>Vendor</th><th>Tier</th>${dataCols.map(([, t]) => `<th>${t}</th>`).join("")}<th>Direction</th><th>Access</th></tr></thead>
+        <tbody>${rows.map(x => `<tr><td>${esc(x.v.name)}</td><td><span class="vz-tag c${5 - x.sc.tier}">Tier ${x.sc.tier}</span></td>${dataCols.map(([k]) => `<td class="dot">${x.v.data.includes(k) ? "●" : ""}</td>`).join("")}<td>${{ out: "→ out", in: "← in", both: "⇄ both", none: "-" }[x.v.flow]}</td><td>${esc((VACC.find(a => a[0] === x.v.access) || [, ""])[1])}</td></tr>`).join("")}</tbody></table></div>
+      <div class="filters" style="margin-top:26px">${[["all", `All (${V.length})`], ["t1", "Tier 1"], ["gaps", "With open risks"], ["sanct", "Sanctions shadow"]].map(([k, t]) => `<button class="chip ${vFilter === k ? "on" : ""}" data-vf="${k}">${t}</button>`).join("")}</div>
+      <div class="vd-list">${shown.map(x => `<article class="card vd-card">
+        <div class="vd-head"><div><h3>${esc(x.v.name)}</h3><p class="sub">${esc(x.v.service || "")}${x.v.owner ? ` · owner: ${esc(x.v.owner)}` : ""}${x.v.parent ? ` · parent in ${esc(x.v.parent)}` : ""}</p></div><span class="vz-tag c${5 - x.sc.tier}">Tier ${x.sc.tier}</span></div>
+        <div class="vd-io"><div><span class="kicker">They get</span><p>${x.v.data.length ? x.v.data.map(k => esc((VDATA.find(d => d[0] === k) || [, k])[1])).join(", ") : "No data"} <small>(${VFLOW[x.v.flow]})</small></p></div>
+          <div><span class="kicker">They give us</span><p>${esc(x.v.give || "-")}</p></div>
+          <div><span class="kicker">Access</span><p>${esc((VACC.find(a => a[0] === x.v.access) || [, ""])[1])}</p></div></div>
+        <div class="vd-cks">${VCHK.map(([k, t]) => `<span class="vd-ck ${(x.v.ck || {})[k] ? "ok" : "no"}">${(x.v.ck || {})[k] ? "✓" : "✗"} ${t}</span>`).join("")}</div>
+        ${x.R.length ? `<h4>Risks and the controls that treat them</h4><ul class="vd-risks">${x.R.map(r => `<li class="${r.sev}"><span class="vd-sev">${r.sev === "high" ? "High" : "Medium"}</span><span>${r.t}<small>${r.c.map(id => `<a href="#/grc/controls/${id}">${id} ${esc(cName(id))}</a>`).join(" · ")}</small></span></li>`).join("")}</ul>` : `<p class="okbox">No open risks from these answers. Review it again in a year.</p>`}
+        <div class="btn-row"><button class="btn small" data-vedit="${esc(x.v.id)}">Edit</button><button class="btn small ghost" data-vdel="${esc(x.v.id)}">Remove</button></div>
+      </article>`).join("") || `<p class="sub">No vendors match this filter.</p>`}</div>`
+      : `<div class="card" style="margin-top:22px"><h3>Start your register</h3><p>Add your vendors one by one, or load six worked examples (payroll, cloud email, cloud hosting, an OT equipment maker, a website script and a background check agency) to see how the dashboard works.</p></div>`}
+      <p class="hint" style="margin-top:22px">How the tier is worked out: data sensitivity (0 to 4) + access (0 to 4) + criticality × 2. Tier 1 is 9 or more, or a high-criticality vendor with sensitive data. See the <a href="#/grc/visuals/tprm">TPRM lifecycle</a> and the briefing <a href="#/grc/briefings/geopolitics">What if your cloud vendor gets political?</a></p>
+    </div>`;
+  }
+  const vCsv = (rows) => rows.map(r => r.map(c => { c = String(c ?? ""); return /[",\n]/.test(c) ? `"${c.replace(/"/g, '""')}"` : c; }).join(",")).join("\r\n");
+  const vDl = (name, text) => { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["﻿" + text], { type: "text/csv;charset=utf-8" })); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1500); };
+  const VHEAD = ["Vendor", "Service", "Business owner", "Parent country", "Criticality (1-3)", "Data they get", "Direction", "Access", "What they give us"].concat(VCHK.map(c => c[1])).concat(["Foreign sanctions exposure", "Tier", "Open risks", "Controls"]);
+  function bindVendors() {
+    const rr = () => App.rerender();
+    const add = $("#vdAdd"); if (add) add.addEventListener("click", () => { vEdit = ""; rr(); });
+    const ex = $("#vdEx"); if (ex) ex.addEventListener("click", () => { S.grcVendors = VEX.map((v, i) => Object.assign({ id: "v" + Date.now() + i }, JSON.parse(JSON.stringify(v)))); save(); toast("Six example vendors loaded. Edit or remove them any time."); rr(); });
+    const cs = $("#vdCsv"); if (cs) cs.addEventListener("click", () => vDl("vendor-register.csv", vCsv([VHEAD].concat(vList().map(v => { const sc = vScore(v), R = vRisks(v);
+      return [v.name, v.service, v.owner, v.parent, v.crit, v.data.map(k => (VDATA.find(d => d[0] === k) || [, k])[1]).join("; "), VFLOW[v.flow], (VACC.find(a => a[0] === v.access) || [, ""])[1], v.give]
+        .concat(VCHK.map(([k]) => (v.ck || {})[k] ? "Yes" : "No")).concat([v.sanct ? "Yes" : "No", "Tier " + sc.tier, R.map(r => r.t.replace(/<[^>]+>/g, "")).join("; "), [...new Set(R.flatMap(r => r.c))].join(", ")]); })))));
+    const tp = $("#vdTpl"); if (tp) tp.addEventListener("click", () => vDl("vendor-register-template.csv", vCsv([VHEAD.slice(0, 9 + VCHK.length + 1), ["Payroll provider", "Monthly payroll", "CHRO", "India", "2", "HR personal data; Finance and payment", "We send data to them", "No access to our systems", "Payslips, tax filings"].concat(VCHK.map(() => "Yes/No")).concat(["No"])])));
+    const f = $("#vdForm"); if (f) {
+      f.addEventListener("submit", e => { e.preventDefault(); const fd = new FormData(f), id = f.dataset.id;
+        const v = { id: id || "v" + Date.now(), name: String(fd.get("name") || "").trim(), service: String(fd.get("service") || "").trim(), owner: String(fd.get("owner") || "").trim(), parent: String(fd.get("parent") || "").trim(),
+          crit: +fd.get("crit") || 2, data: fd.getAll("data"), flow: fd.get("flow"), access: fd.get("access"), give: String(fd.get("give") || "").trim(), ck: {}, sanct: fd.get("sanct") ? 1 : 0 };
+        fd.getAll("ck").forEach(k => { v.ck[k] = 1; }); if (!v.name) return toast("Give the vendor a name");
+        const L = vList(), at = L.findIndex(x => x.id === v.id); if (at >= 0) L[at] = v; else L.push(v); save(); vEdit = null; toast("Vendor saved"); rr(); });
+      $("#vdCancel").addEventListener("click", () => { vEdit = null; rr(); });
+      f.querySelector("input[name=name]").focus();
+    }
+    $$("[data-vf]").forEach(b => b.addEventListener("click", () => { vFilter = b.dataset.vf; rr(); }));
+    $$("[data-vedit]").forEach(b => b.addEventListener("click", () => { vEdit = b.dataset.vedit; rr(); scrollTo(0, 0); }));
+    $$("[data-vdel]").forEach(b => b.addEventListener("click", () => { const v = vList().find(x => x.id === b.dataset.vdel); if (v && confirm(`Remove ${v.name}?`)) { S.grcVendors = vList().filter(x => x !== v); save(); rr(); } }));
+  }
+  function grcBriefings(id) {
+    const B = window.GRC_BRIEFINGS || [], b = id && B.find(x => x.id === id);
+    if (b) return `<article class="page-narrow grc-brief"><a class="kicker" href="#/grc/briefings">← Briefings</a>
+      <span class="kicker" style="display:block;margin-top:14px">${esc(b.kicker)}</span><h1 class="h-display">${esc(b.t)}</h1>
+      <p class="sub">◷ ${b.mins} min read · ${fmtD(b.date)}</p><div class="prose bf-body">${b.html}</div>
+      ${App.diffBar ? App.diffBar("grcb:" + b.id) : ""}
+      <div class="bf-more"><h2 class="h-section">More briefings</h2>${B.filter(x => x !== b).map(x => `<a class="card bf-card" href="#/grc/briefings/${x.id}"><span class="kicker">${esc(x.kicker)}</span><h3>${esc(x.t)}</h3><p>${esc(x.sum)}</p></a>`).join("")}</div></article>`;
+    return `<div class="page-narrow grc-briefs"><a class="kicker" href="#/grc">← Learn GRC</a>
+      <h1 class="h-display">GRC <em>briefings</em></h1>
+      <p class="lede">Short, practical reads on what is happening now and how a GRC Manager should respond: the news, the risk, the controls, and what to tell the Board.</p>
+      <div class="bf-list">${B.map(x => `<a class="card bf-card" href="#/grc/briefings/${x.id}"><span class="kicker">${esc(x.kicker)}</span><h3>${esc(x.t)}</h3><p>${esc(x.sum)}</p><small>◷ ${x.mins} min</small></a>`).join("")}</div></div>`;
+  }
   function grcVisuals(sec) {
     const V = window.GRC_VISUALS || [];
     return `<div class="page grc-visuals">
@@ -1905,6 +2031,8 @@
     if (r.a === "notes") return grcNotes();
     if (r.a === "setup") return grcSetup();
     if (r.a === "visuals") return grcVisuals(r.b);
+    if (r.a === "vendors") return grcVendors();
+    if (r.a === "briefings") return grcBriefings(r.b);
     if (r.a === "log") return grcLog();
     if (r.a === "shelf") return App.viewLibrary(true);
     if (r.a === "reading") { try { await loadLib(); } catch (e) {} return grcReading(r.b); }
@@ -1936,6 +2064,8 @@
         <a class="card grc-guide" href="#/grc/labs"><div><span class="kicker">7 labs</span><h3>Hands-on labs</h3><p>Use real open-source tools: an assessment in CISO Assistant, a SOC 2 gap scan of GitHub, policies as code, a vendor register, and quantifying risk in rupees.</p></div><span class="start-arrow" aria-hidden="true">→</span></a>
       </div>
       <a class="card grc-guide" href="#/grc/guide" style="margin-top:12px"><div><span class="kicker">13 tabs</span><h3>GRC Manager field guide</h3><p>A day in the life, meetings, tools, a 50-term glossary with quiz mode, a drill for questions you can’t answer, 18 daily situations, a 20-day plan, your first 90 days and 18 filled-in templates.</p></div><span class="start-arrow" aria-hidden="true">→</span></a>
+      <a class="card grc-guide" href="#/grc/vendors" style="margin-top:12px"><div><span class="kicker">Tool</span><h3>Vendor register</h3><p>Which vendors get which data, what they give you, their access, tier, risks and the controls that treat them. Download it for Excel.</p></div><span class="start-arrow" aria-hidden="true">→</span></a>
+      <a class="card grc-guide" href="#/grc/briefings" style="margin-top:12px"><div><span class="kicker">New</span><h3>Briefings</h3><p>Sanctions and your cloud vendors, MITRE ATT&amp;CK for GRC, and the OPTIMJACK supply-chain attack: what happened and what to do.</p></div><span class="start-arrow" aria-hidden="true">→</span></a>
       <a class="card grc-guide" href="#/grc/reading" style="margin-top:12px"><div><span class="kicker">On this site</span><h3>Reading room</h3><p>A 30-day reading plan, the risk frameworks, free tools, books, people to follow and certifications, each summarised in plain words.</p></div><span class="start-arrow" aria-hidden="true">→</span></a>
       <h2 class="h-section">Further reading</h2>
       <p class="sub">Free, openly licensed lists and official sources. The lessons above are written for this site; these help you go deeper.</p>
@@ -2155,6 +2285,7 @@
         ta.addEventListener("keydown", e => e.stopPropagation());
       }
     }
+    if (r.a === "vendors") bindVendors();
     $$("[data-glview]").forEach(b => b.addEventListener("click", () => { grcGview = b.dataset.glview; App.rerender(); }));
     $$(".vz-mat").forEach(fig => { const L = +fig.dataset.l, I = +fig.dataset.i, g = fig.querySelector(".vz-grid"); let h = "";
       for (let l = 5; l >= 1; l--) { h += `<span class="vz-yl">${l}</span>`; for (let i = 1; i <= 5; i++) { const s = l * i, c = s >= 15 ? "c4" : s >= 10 ? "c3" : s >= 5 ? "c2" : "c1"; h += `<span class="vz-cell ${c} ${l === L && i === I ? "hit" : ""}">${l === L && i === I ? s : ""}</span>`; } }

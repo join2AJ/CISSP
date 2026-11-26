@@ -2053,3 +2053,32 @@ body.grc-mode .brand-text .bb { color: #8a6414; }
 .vz-box.me small { color: var(--ink); }
 .vz-mat { max-width: 380px; width: 100%; } .vz-mats { justify-content: start; grid-template-columns: repeat(2, minmax(0, 380px)); }
 @media (max-width: 720px) { .vz-mats { grid-template-columns: minmax(0, 380px); } .vz-dflow { gap: 14px; } .vz-df { padding: 12px; border: 1px solid var(--rule-2); border-radius: 14px; background: color-mix(in srgb, var(--card) 60%, transparent); } }
+
+/* Vendor register */
+.vd-form { margin: 18px 0; } .vd-form label { font-size: 14px; } .vd-form input:not([type=checkbox]), .vd-form select { width: 100%; }
+.vd-set { border: 1px solid var(--rule-2); border-radius: 12px; padding: 10px 14px; margin: 12px 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 4px 14px; }
+.vd-set legend { font-weight: 600; font-size: 14px; padding: 0 6px; }
+.vd-set .check { display: flex; gap: 8px; align-items: flex-start; min-height: 36px; font-size: 14px; }
+.vd-matrix td, .vd-matrix th { font-size: 13.5px; } .vd-matrix td.dot { text-align: center; color: var(--accent); font-size: 16px; }
+.vd-list { display: grid; gap: 14px; margin-top: 8px; }
+.vd-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; } .vd-head h3 { margin: 0; } .vd-head .sub { margin: 2px 0 0; }
+.vd-io { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 12px 0; } .vd-io p { margin: 2px 0 0; font-size: 14.5px; } .vd-io small { color: var(--muted); }
+.vd-cks { display: flex; flex-wrap: wrap; gap: 6px; }
+.vd-ck { font-size: 12.5px; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--rule); }
+.vd-ck.ok { border-color: color-mix(in srgb, var(--good) 50%, var(--rule)); } .vd-ck.no { color: var(--ink-2); border-style: dashed; }
+.vd-card h4 { margin: 16px 0 6px; font-size: 15px; }
+.vd-risks { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.vd-risks li { display: grid; grid-template-columns: 64px 1fr; gap: 10px; padding: 10px 12px; border-radius: 10px; background: var(--paper-2); font-size: 14.5px; line-height: 1.45; }
+.vd-risks small { display: block; margin-top: 4px; font-size: 13px; } .vd-risks small a { color: var(--accent); }
+.vd-sev { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+.vd-risks li.high .vd-sev { color: var(--bad); } .vd-risks li.med .vd-sev { color: var(--gold-ink); }
+@media (max-width: 720px) { .vd-io { grid-template-columns: 1fr; } .vd-risks li { grid-template-columns: 1fr; gap: 2px; } }
+/* Briefings */
+.bf-list { display: grid; gap: 12px; margin-top: 18px; } .bf-card { text-decoration: none; display: block; } .bf-card h3 { margin: 4px 0 6px; } .bf-card p { margin: 0; color: var(--ink-2); font-size: 15px; } .bf-card small { color: var(--muted); }
+.bf-body .lede-s { font-size: 1.08em; } .bf-body h2 { font-family: var(--display); }
+.bf-case { padding: 14px 16px; border-radius: 12px; border-left: 4px solid var(--gold-ink); background: var(--paper-2); font-family: var(--sans); font-size: 15px; line-height: 1.6; margin: 16px 0; }
+.bf-try { padding: 12px 14px; border-radius: 10px; background: color-mix(in srgb, var(--accent) 9%, var(--card)); font-family: var(--sans); font-size: 15px; }
+.bf-src { font-family: var(--sans); font-size: 13.5px; color: var(--ink-2); border-top: 1px solid var(--rule-2); padding-top: 12px; margin-top: 24px; }
+.bf-body .tbl td, .bf-body .tbl th { font-family: var(--sans); font-size: 14px; vertical-align: top; }
+.bf-more { margin-top: 30px; } .bf-more .bf-card { margin-top: 10px; }
+.vd-risks li.med .vd-sev { color: color-mix(in srgb, var(--gold-ink) 65%, var(--ink)); }
