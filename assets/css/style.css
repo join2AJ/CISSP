@@ -2082,3 +2082,33 @@ body.grc-mode .brand-text .bb { color: #8a6414; }
 .bf-body .tbl td, .bf-body .tbl th { font-family: var(--sans); font-size: 14px; vertical-align: top; }
 .bf-more { margin-top: 30px; } .bf-more .bf-card { margin-top: 10px; }
 .vd-risks li.med .vd-sev { color: color-mix(in srgb, var(--gold-ink) 65%, var(--ink)); }
+
+/* Vendor dashboard */
+.vd-dash { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
+.vd-panel h3 { margin: 0 0 10px; font-size: 17px; }
+.vd-stack { display: flex; gap: 2px; height: 22px; border-radius: 6px; overflow: hidden; }
+.vd-stack span { display: block; min-width: 6px; }
+.vd-stack .t1, .vd-legend .t1 { background: #c0392b; } .vd-stack .t2, .vd-legend .t2 { background: #d9782d; } .vd-stack .t3, .vd-legend .t3 { background: #4f9d6c; }
+.vd-legend { list-style: none; padding: 0; margin: 12px 0 0; display: grid; gap: 6px; font-size: 14px; }
+.vd-legend li { display: flex; align-items: center; gap: 8px; } .vd-legend li b { margin-left: auto; }
+.vd-legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; flex: none; }
+.vd-legend.inline { display: flex; gap: 16px; } .vd-legend.inline li b { margin: 0; }
+.vd-legend .hi, .vd-track .hi { background: #c0392b; } .vd-legend .me, .vd-track .me { background: #c9a227; }
+.vd-bars { display: grid; gap: 9px; }
+.vd-bar { display: grid; grid-template-columns: minmax(0, 44%) 1fr 40px; gap: 10px; align-items: center; font-size: 13.5px; }
+.vd-bl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vd-bar > b { text-align: right; font-variant-numeric: tabular-nums; font-size: 13.5px; }
+.vd-track { display: flex; gap: 2px; height: 12px; background: var(--rule-2); border-radius: 4px; overflow: hidden; }
+.vd-track i { display: block; height: 100%; border-radius: 0 4px 4px 0; }
+.vd-track .cv { background: var(--accent); } .vd-track .cv.lo { background: #d9782d; }
+.vd-rev { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.vd-rev div { padding: 10px; border-radius: 10px; background: var(--paper-2); } .vd-rev b { display: block; font-family: var(--display); font-size: 26px; } .vd-rev span { font-size: 12.5px; color: var(--ink-2); }
+.vd-late { list-style: none; padding: 0; margin: 10px 0 0; } .vd-late li { display: flex; justify-content: space-between; gap: 8px; padding: 7px 0; border-top: 1px solid var(--rule-2); font-size: 14px; } .vd-late small { color: var(--ink-2); }
+.vd-todo { margin-top: 12px; } .vd-todo h3 { margin: 0 0 8px; } .vd-todo ol { margin: 0; padding-left: 20px; display: grid; gap: 8px; } .vd-todo li { font-size: 14.5px; }
+.vd-todo li > span:last-child small { color: var(--ink-2); }
+.vd-sev.high { color: var(--bad); } .vd-sev.med { color: color-mix(in srgb, var(--gold-ink) 65%, var(--ink)); }
+.vd-todo .vd-sev { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; margin-right: 8px; }
+.vd-revline { font-size: 13.5px; color: var(--ink-2); margin: 0 0 10px; } .vd-revline .vd-sev { font-weight: 700; }
+@media (max-width: 760px) { .vd-dash { grid-template-columns: 1fr; } }
+.vd-legend li, .vd-late li, .vd-todo li { margin: 0; } .vd-legend li { line-height: 1.3; } .vd-late { margin-left: 0 !important; padding-left: 0 !important; }
+.vd-legend, .vd-todo ol { margin-left: 0 !important; } .vd-legend { padding-left: 0 !important; } .vd-panel .hint { margin-top: 12px; }

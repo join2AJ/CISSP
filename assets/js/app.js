@@ -1861,12 +1861,12 @@
   const VFLOW = { out: "We send data to them", in: "They send data to us", both: "Both ways", none: "No data exchanged" };
   const VCHK = [["soc", "SOC 2 or ISO 27001 evidence reviewed"], ["dpa", "DPA signed (personal data)"], ["audit", "Right to audit"], ["notice", "Breach notice within 6 hours"], ["exit", "Exit plan and data export"], ["local", "Indian law and courts"], ["fallback", "Tested fallback or second provider"]];
   const VEX = [
-    { name: "Payroll provider", service: "Monthly payroll and payslips", owner: "CHRO", parent: "India", data: ["hr", "fin"], flow: "out", access: "none", crit: 2, ck: { soc: 1, dpa: 1, exit: 1, local: 1 }, sanct: 0, give: "Payslips, bank transfer files, tax filings" },
-    { name: "Cloud email and collaboration suite", service: "Email, chat, documents", owner: "CIO", parent: "United States", data: ["internal", "cust", "hr"], flow: "both", access: "exec", crit: 3, ck: { soc: 1, dpa: 1 }, sanct: 1, give: "Email, file storage, video meetings" },
-    { name: "Hyperscale cloud (SIEM hosting)", service: "Hosts the SOC's SIEM and log storage", owner: "Head of SOC", parent: "United States", data: ["client"], flow: "out", access: "exec", crit: 3, ck: { soc: 1, dpa: 1, audit: 1, notice: 1 }, sanct: 1, give: "Compute, storage, the SIEM platform" },
-    { name: "Baggage system OEM", service: "Maintains airport baggage PLCs", owner: "Head of OT engineering", parent: "Germany", data: ["ot"], flow: "both", access: "ot", crit: 3, ck: { audit: 1, local: 1 }, sanct: 0, give: "Firmware updates, remote fault fixing" },
-    { name: "Website experimentation script", service: "A/B tests on the public website", owner: "Head of marketing", parent: "United States", data: ["cust"], flow: "in", access: "script", crit: 1, ck: { soc: 1 }, sanct: 0, give: "JavaScript that runs in visitors' browsers" },
-    { name: "Background verification agency", service: "Pre-joining checks", owner: "CHRO", parent: "India", data: ["hr"], flow: "out", access: "none", crit: 1, ck: { dpa: 1, local: 1 }, sanct: 0, give: "Verification reports" }
+    { name: "Payroll provider", service: "Monthly payroll and payslips", owner: "CHRO", parent: "India", data: ["hr", "fin"], flow: "out", access: "none", crit: 2, ck: { soc: 1, dpa: 1, exit: 1, local: 1 }, sanct: 0, give: "Payslips, bank transfer files, tax filings", rev: "2026-03-10" },
+    { name: "Cloud email and collaboration suite", service: "Email, chat, documents", owner: "CIO", parent: "United States", data: ["internal", "cust", "hr"], flow: "both", access: "exec", crit: 3, ck: { soc: 1, dpa: 1 }, sanct: 1, give: "Email, file storage, video meetings", rev: "2025-08-20" },
+    { name: "Hyperscale cloud (SIEM hosting)", service: "Hosts the SOC's SIEM and log storage", owner: "Head of SOC", parent: "United States", data: ["client"], flow: "out", access: "exec", crit: 3, ck: { soc: 1, dpa: 1, audit: 1, notice: 1 }, sanct: 1, give: "Compute, storage, the SIEM platform", rev: "2026-01-15" },
+    { name: "Baggage system OEM", service: "Maintains airport baggage PLCs", owner: "Head of OT engineering", parent: "Germany", data: ["ot"], flow: "both", access: "ot", crit: 3, ck: { audit: 1, local: 1 }, sanct: 0, give: "Firmware updates, remote fault fixing", rev: "" },
+    { name: "Website experimentation script", service: "A/B tests on the public website", owner: "Head of marketing", parent: "United States", data: ["cust"], flow: "in", access: "script", crit: 1, ck: { soc: 1 }, sanct: 0, give: "JavaScript that runs in visitors' browsers", rev: "" },
+    { name: "Background verification agency", service: "Pre-joining checks", owner: "CHRO", parent: "India", data: ["hr"], flow: "out", access: "none", crit: 1, ck: { dpa: 1, local: 1 }, sanct: 0, give: "Verification reports", rev: "2025-06-01" }
   ];
   const vList = () => (S.grcVendors = S.grcVendors || []);
   const vScore = v => {
@@ -1875,20 +1875,22 @@
   };
   const vRisks = v => {
     const sc = vScore(v), ck = v.ck || {}, R = [], has = k => v.data.includes(k), pers = has("hr") || has("cust");
-    const add = (sev, t, c) => R.push({ sev, t, c });
-    if (pers && !ck.dpa) add("high", "Processes personal data without a DPA: you stay liable under DPDP for what they do", ["PRV-01", "TPR-03"]);
-    if (sc.d >= 3 && !ck.soc) add("high", "No independent evidence that their controls work", ["TPR-02"]);
-    if (v.access === "exec" || v.access === "write") add(v.access === "exec" ? "high" : "med", "Their admin or write access could be misused or stolen", ["IAM-04", "IAM-03"]);
-    if (v.access === "ot") add("high", "Remote access into OT can stop a physical process", ["OT-02", "IAM-05"]);
-    if (v.access === "script") add("high", "Their code runs on our website; if they are hacked, our visitors are attacked (as in OPTIMJACK)", ["TPR-02", "CHG-01"]);
-    if (sc.d >= 3 && !ck.notice) add("med", "Slow breach notice could make us miss CERT-In's 6-hour reporting", ["INC-02", "TPR-03"]);
-    if (v.crit === 3 && !ck.fallback) add("high", "Single point of failure: no tested fallback for a critical service", ["BCM-01", "TPR-04"]);
-    if (v.sanct && v.crit >= 2) add("high", `Sanctions shadow: a ${esc(v.parent || "foreign")} parent could be forced to suspend service`, ["TPR-04", "BCM-01"]);
-    if (v.crit >= 2 && !ck.exit) add("med", "Lock-in: no exit plan or routine data export", ["TPR-04"]);
-    if (sc.tier === 1 && !ck.audit) add("med", "No right to audit a Tier 1 vendor", ["TPR-03"]);
-    if (v.sanct && !ck.local) add("med", "Disputes would be fought under foreign law and courts", ["TPR-03"]);
+    const add = (sev, t, c, cat, act) => R.push({ sev, t, c, cat, act });
+    if (pers && !ck.dpa) add("high", "Processes personal data without a DPA: you stay liable under DPDP for what they do", ["PRV-01", "TPR-03"], "Privacy", "Sign a DPA");
+    if (sc.d >= 3 && !ck.soc) add("high", "No independent evidence that their controls work", ["TPR-02"], "Assurance", "Get their SOC 2 Type II report or ISO 27001 certificate");
+    if (v.access === "exec" || v.access === "write") add(v.access === "exec" ? "high" : "med", "Their admin or write access could be misused or stolen", ["IAM-04", "IAM-03"], "Access", "Put their admin accounts under PAM and the quarterly access review");
+    if (v.access === "ot") add("high", "Remote access into OT can stop a physical process", ["OT-02", "IAM-05"], "Access", "Route their OT access through a recorded jump host with MFA and approval");
+    if (v.access === "script") add("high", "Their code runs on our website; if they are hacked, our visitors are attacked (as in OPTIMJACK)", ["TPR-02", "CHG-01"], "Access", "Add their script to the CSP allow-list with integrity checks and change monitoring");
+    if (sc.d >= 3 && !ck.notice) add("med", "Slow breach notice could make us miss CERT-In's 6-hour reporting", ["INC-02", "TPR-03"], "Contract", "Add a breach notice clause of 6 hours or less");
+    if (v.crit === 3 && !ck.fallback) add("high", "Single point of failure: no tested fallback for a critical service", ["BCM-01", "TPR-04"], "Continuity", "Set up and test a fallback");
+    if (v.sanct && v.crit >= 2) add("high", `Sanctions shadow: a ${esc(v.parent || "foreign")} parent could be forced to suspend service`, ["TPR-04", "BCM-01"], "Geopolitics", "Run a sanctions shadow assessment and automate data export");
+    if (v.crit >= 2 && !ck.exit) add("med", "Lock-in: no exit plan or routine data export", ["TPR-04"], "Continuity", "Write an exit plan and schedule data exports");
+    if (sc.tier === 1 && !ck.audit) add("med", "No right to audit a Tier 1 vendor", ["TPR-03"], "Contract", "Add a right-to-audit clause at renewal");
+    if (v.sanct && !ck.local) add("med", "Disputes would be fought under foreign law and courts", ["TPR-03"], "Contract", "Negotiate Indian law and courts, or arbitration seated in India");
     return R;
   };
+  const vDue = (v, tier) => v.rev ? ymd(addDays(parseD(v.rev), [0, 365, 730, 1095][tier])) : null;
+  const vRev = (v, tier) => { const d = vDue(v, tier), t = ymd(today()); return !d ? "never" : d < t ? "overdue" : d <= ymd(addDays(today(), 90)) ? "soon" : "ok"; };
   let vEdit = null, vFilter = "all";
   function vForm(v) {
     v = v || { name: "", service: "", owner: "", parent: "India", data: [], flow: "out", access: "none", crit: 2, ck: {}, sanct: 0, give: "" };
@@ -1901,10 +1903,46 @@
       <fieldset class="vd-set"><legend>Data they get or hold</legend>${VDATA.map(([k, t]) => `<label class="check"><input type="checkbox" name="data" value="${k}" ${v.data.includes(k) ? "checked" : ""}><span>${t}</span></label>`).join("")}</fieldset>
       <div class="form-row"><label style="flex:1;min-width:180px">Direction<select name="flow">${Object.entries(VFLOW).map(([k, t]) => `<option value="${k}" ${v.flow === k ? "selected" : ""}>${t}</option>`).join("")}</select></label>
         <label style="flex:1;min-width:180px">Access to our systems<select name="access">${VACC.map(([k, t]) => `<option value="${k}" ${v.access === k ? "selected" : ""}>${t}</option>`).join("")}</select></label></div>
+      <div class="form-row"><label style="flex:1;min-width:160px">Last reviewed<input type="date" name="rev" value="${esc(v.rev || "")}"></label></div>
       <label style="display:block">What they give us<input name="give" maxlength="160" value="${esc(v.give)}" placeholder="e.g. Payslips, tax filings"></label>
       <fieldset class="vd-set"><legend>What is in place</legend>${VCHK.map(([k, t]) => `<label class="check"><input type="checkbox" name="ck" value="${k}" ${(v.ck || {})[k] ? "checked" : ""}><span>${t}</span></label>`).join("")}
         <label class="check"><input type="checkbox" name="sanct" value="1" ${v.sanct ? "checked" : ""}><span>Parent could be bound by foreign sanctions (US, EU, UK) that India doesn't apply</span></label></fieldset>
       <div class="btn-row"><button class="btn primary small" type="submit">Save vendor</button><button class="btn small ghost" type="button" id="vdCancel">Cancel</button></div></form>`;
+  }
+  function vDash(rows) {
+    const n = rows.length, tc = [1, 2, 3].map(t => rows.filter(x => x.sc.tier === t).length);
+    const allR = rows.flatMap(x => x.R.map(r => Object.assign({ v: x.v, tier: x.sc.tier }, r)));
+    const cats = ["Privacy", "Assurance", "Access", "Contract", "Continuity", "Geopolitics"].map(c => ({ c, h: allR.filter(r => r.cat === c && r.sev === "high").length, m: allR.filter(r => r.cat === c && r.sev !== "high").length })).filter(x => x.h + x.m);
+    const maxC = Math.max(1, ...cats.map(x => x.h + x.m));
+    const appl = { dpa: x => x.v.data.includes("hr") || x.v.data.includes("cust"), soc: x => x.sc.d >= 3, notice: x => x.sc.d >= 3, audit: x => x.sc.tier === 1, exit: x => x.v.crit >= 2, fallback: x => x.v.crit === 3, local: () => true };
+    const cov = VCHK.map(([k, t]) => { const a = rows.filter(appl[k]), h = a.filter(x => (x.v.ck || {})[k]).length; return { k, t, a: a.length, h, p: a.length ? Math.round(h / a.length * 100) : null }; }).filter(x => x.a);
+    const covAll = cov.reduce((s, x) => s + x.h, 0), covN = cov.reduce((s, x) => s + x.a, 0);
+    const rv = rows.map(x => ({ x, st: vRev(x.v, x.sc.tier), due: vDue(x.v, x.sc.tier) }));
+    const late = rv.filter(r => r.st === "overdue" || r.st === "never").sort((a, b) => a.x.sc.tier - b.x.sc.tier);
+    const todo = allR.slice().sort((a, b) => (a.sev === "high" ? 0 : 1) - (b.sev === "high" ? 0 : 1) || a.tier - b.tier).slice(0, 5);
+    const TL = ["", "Tier 1 · critical", "Tier 2 · important", "Tier 3 · low"];
+    return `<section class="facts vd-kpi" style="border-top:1px solid var(--rule)">
+        <div class="fact"><b>${n}</b><span>vendors · ${tc[0]} Tier 1</span></div>
+        <div class="fact"><b>${allR.length}</b><span>open risks · ${allR.filter(r => r.sev === "high").length} high</span></div>
+        <div class="fact"><b>${covN ? Math.round(covAll / covN * 100) : 0}%</b><span>of needed controls in place</span></div>
+        <div class="fact"><b>${late.length}</b><span>reviews overdue</span></div>
+      </section>
+      <div class="vd-dash">
+        <div class="card vd-panel"><h3>Vendors by tier</h3>
+          <div class="vd-stack" role="img" aria-label="${tc.map((c, i) => `${TL[i + 1]}: ${c}`).join(", ")}">${tc.map((c, i) => c ? `<span class="t${i + 1}" style="flex:${c}" title="${TL[i + 1]}: ${c} vendor${c > 1 ? "s" : ""}"></span>` : "").join("")}</div>
+          <ul class="vd-legend">${tc.map((c, i) => `<li><i class="t${i + 1}"></i>${TL[i + 1]}<b>${c}</b></li>`).join("")}</ul>
+          <p class="hint">Tier 1 vendors get the deepest due diligence and a yearly review.</p></div>
+        <div class="card vd-panel"><h3>Open risks by type</h3>
+          ${cats.length ? `<div class="vd-bars">${cats.map(x => `<div class="vd-bar" title="${x.c}: ${x.h} high, ${x.m} medium"><span class="vd-bl">${x.c}</span><span class="vd-track"><i class="hi" style="width:${x.h / maxC * 100}%"></i><i class="me" style="width:${x.m / maxC * 100}%"></i></span><b>${x.h + x.m}</b></div>`).join("")}</div>
+          <ul class="vd-legend inline"><li><i class="hi"></i>High</li><li><i class="me"></i>Medium</li></ul>` : `<p class="okbox">No open risks.</p>`}</div>
+        <div class="card vd-panel"><h3>Controls in place</h3><p class="hint" style="margin-top:0">Share of the vendors that need each control and have it.</p>
+          <div class="vd-bars">${cov.map(x => `<div class="vd-bar" title="${x.t}: ${x.h} of ${x.a}"><span class="vd-bl">${x.t}</span><span class="vd-track"><i class="cv ${x.p < 50 ? "lo" : ""}" style="width:${x.p}%"></i></span><b>${x.h}/${x.a}</b></div>`).join("")}</div></div>
+        <div class="card vd-panel"><h3>Reviews</h3>
+          <div class="vd-rev"><div><b>${rv.filter(r => r.st === "overdue" || r.st === "never").length}</b><span>overdue or never done</span></div><div><b>${rv.filter(r => r.st === "soon").length}</b><span>due in 90 days</span></div><div><b>${rv.filter(r => r.st === "ok").length}</b><span>up to date</span></div></div>
+          ${late.length ? `<ul class="vd-late">${late.map(r => `<li><span>${esc(r.x.v.name)}</span><small>${r.st === "never" ? "never reviewed" : "due " + fmtD(r.due)} · Tier ${r.x.sc.tier}</small></li>`).join("")}</ul>` : ""}
+          <p class="hint">Tier 1 yearly, Tier 2 every two years, Tier 3 every three.</p></div>
+      </div>
+      ${todo.length ? `<div class="card vd-todo"><h3>Do next</h3><ol>${todo.map(r => `<li><span class="vd-sev ${r.sev}">${r.sev === "high" ? "High" : "Medium"}</span><span><b>${esc(r.act || r.t)}</b> · ${esc(r.v.name)} <small>(Tier ${r.tier})</small></span></li>`).join("")}</ol></div>` : ""}`;
   }
   function grcVendors() {
     const V = vList(), rows = V.map(v => ({ v, sc: vScore(v), R: vRisks(v) }));
@@ -1919,12 +1957,8 @@
       <div class="btn-row">${vEdit === null ? `<button class="btn primary small" id="vdAdd">Add a vendor</button>` : ""}${V.length ? "" : `<button class="btn small" id="vdEx">Load 6 example vendors</button>`}
         ${V.length ? `<button class="btn small" id="vdCsv">Download register (Excel)</button>` : ""}<button class="btn small ghost" id="vdTpl">Download blank template</button></div>
       ${vEdit !== null ? vForm(V.find(v => v.id === vEdit)) : ""}
-      ${V.length ? `<section class="facts" style="border-top:1px solid var(--rule)">
-        <div class="fact"><b>${V.length}</b><span>vendors</span></div>
-        <div class="fact"><b>${rows.filter(x => x.sc.tier === 1).length}</b><span>Tier 1 (critical)</span></div>
-        <div class="fact"><b>${openR}</b><span>open risks (${highR} high)</span></div>
-        <div class="fact"><b>${rows.filter(x => x.v.sanct && x.v.crit >= 2).length}</b><span>in a sanctions shadow</span></div>
-      </section>
+      ${V.length ? vDash(rows) : ""}
+      ${V.length ? `
       <h2 class="h-section">Who holds which data</h2>
       <div class="tbl-wrap"><table class="tbl vd-matrix"><thead><tr><th>Vendor</th><th>Tier</th>${dataCols.map(([k, t]) => `<th title="${t}">${({ hr: "HR", cust: "Customer", client: "Client logs", ot: "OT", fin: "Finance", code: "Code", internal: "Internal" })[k]}</th>`).join("")}<th>Direction</th><th>Access</th></tr></thead>
         <tbody>${rows.map(x => `<tr><td>${esc(x.v.name)}</td><td><span class="vz-tag c${5 - x.sc.tier}">Tier ${x.sc.tier}</span></td>${dataCols.map(([k]) => `<td class="dot">${x.v.data.includes(k) ? "●" : ""}</td>`).join("")}<td>${{ out: "→ out", in: "← in", both: "⇄ both", none: "-" }[x.v.flow]}</td><td>${esc((VACC.find(a => a[0] === x.v.access) || [, ""])[1])}</td></tr>`).join("")}</tbody></table></div>
@@ -1934,6 +1968,7 @@
         <div class="vd-io"><div><span class="kicker">They get</span><p>${x.v.data.length ? x.v.data.map(k => esc((VDATA.find(d => d[0] === k) || [, k])[1])).join(", ") : "No data"} <small>(${VFLOW[x.v.flow]})</small></p></div>
           <div><span class="kicker">They give us</span><p>${esc(x.v.give || "-")}</p></div>
           <div><span class="kicker">Access</span><p>${esc((VACC.find(a => a[0] === x.v.access) || [, ""])[1])}</p></div></div>
+        <p class="vd-revline">${(() => { const st = vRev(x.v, x.sc.tier), d = vDue(x.v, x.sc.tier); return st === "never" ? `<span class="vd-sev high">Review</span> never reviewed` : `Last reviewed ${fmtD(x.v.rev)} · next ${st === "overdue" ? `<span class="vd-sev high">overdue</span> since ` : ""}${fmtD(d)}`; })()}</p>
         <div class="vd-cks">${VCHK.map(([k, t]) => `<span class="vd-ck ${(x.v.ck || {})[k] ? "ok" : "no"}">${(x.v.ck || {})[k] ? "✓" : "✗"} ${t}</span>`).join("")}</div>
         ${x.R.length ? `<h4>Risks and the controls that treat them</h4><ul class="vd-risks">${x.R.map(r => `<li class="${r.sev}"><span class="vd-sev">${r.sev === "high" ? "High" : "Medium"}</span><span>${r.t}<small>${r.c.map(id => `<a href="#/grc/controls/${id}">${id} ${esc(cName(id))}</a>`).join(" · ")}</small></span></li>`).join("")}</ul>` : `<p class="okbox">No open risks from these answers. Review it again in a year.</p>`}
         <div class="btn-row"><button class="btn small" data-vedit="${esc(x.v.id)}">Edit</button><button class="btn small ghost" data-vdel="${esc(x.v.id)}">Remove</button></div>
@@ -1956,7 +1991,7 @@
     const f = $("#vdForm"); if (f) {
       f.addEventListener("submit", e => { e.preventDefault(); const fd = new FormData(f), id = f.dataset.id;
         const v = { id: id || "v" + Date.now(), name: String(fd.get("name") || "").trim(), service: String(fd.get("service") || "").trim(), owner: String(fd.get("owner") || "").trim(), parent: String(fd.get("parent") || "").trim(),
-          crit: +fd.get("crit") || 2, data: fd.getAll("data"), flow: fd.get("flow"), access: fd.get("access"), give: String(fd.get("give") || "").trim(), ck: {}, sanct: fd.get("sanct") ? 1 : 0 };
+          crit: +fd.get("crit") || 2, data: fd.getAll("data"), flow: fd.get("flow"), access: fd.get("access"), give: String(fd.get("give") || "").trim(), rev: String(fd.get("rev") || ""), ck: {}, sanct: fd.get("sanct") ? 1 : 0 };
         fd.getAll("ck").forEach(k => { v.ck[k] = 1; }); if (!v.name) return toast("Give the vendor a name");
         const L = vList(), at = L.findIndex(x => x.id === v.id); if (at >= 0) L[at] = v; else L.push(v); save(); vEdit = null; toast("Vendor saved"); rr(); });
       $("#vdCancel").addEventListener("click", () => { vEdit = null; rr(); });
