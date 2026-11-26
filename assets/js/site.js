@@ -9,7 +9,7 @@
 
   A.siteFooter = () => `<footer class="site-foot">
     <div class="sf-grid">
-      <div class="sf-brand"><a class="brand" href="#/landing"><span class="brand-mark">${shield}</span><span class="brand-text"><b>LearN<span>time</span></b><small>CISSP · read slowly, pass once</small></span></a>
+      <div class="sf-brand"><a class="brand" href="#/landing"><span class="brand-mark">${shield}</span><span class="brand-text"><b>LearN<span>time</span></b><small>learn anytime, as often as you need</small></span></a>
         <p>A calm, book-like way to prepare for the CISSP: clear chapters, small animations, a plan built around your date, and honest feedback on where you stand.</p></div>
       <div><h4>Product</h4><a href="#/features">Features</a><a href="#/pricing">Pricing</a><a href="#/faq">FAQ</a><a href="#/signup/gold">Get started</a></div>
       <div><h4>Learn</h4><a href="#/about">About the CISSP</a><a href="#/about/domains">The eight domains</a><a href="#/about/pathway">Path to certification</a><a href="resources/ISC2-Ultimate-Guide-to-the-CISSP.pdf" target="_blank" rel="noopener">ISC2 guide (PDF)</a></div>

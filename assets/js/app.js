@@ -309,6 +309,8 @@
   App.branch = () => { try { return localStorage.getItem("cissp.branch") === "grc" ? "grc" : "cissp"; } catch (e) { return "cissp"; } };
   App.setBranch = b => { try { localStorage.setItem("cissp.branch", b); } catch (e) {} };
   App.inGrc = r => r.page === "grc" || (SHARED.includes(r.page) && App.branch() === "grc" && App.isPrivileged());
+  // Which course a page belongs to: "cissp", "grc", or null for pages that belong to the whole site (choose, profile, privacy, admin, sign-in)
+  App.course = r => r.page === "grc" ? "grc" : CISSP_ONLY.includes(r.page) || ["revision", "notes", "tracker", "latest", "tactics"].includes(r.page) ? "cissp" : null;
   const noteBranch = r => { if (r.page === "grc") App.setBranch("grc"); else if (CISSP_ONLY.includes(r.page)) App.setBranch("cissp"); };
 
   /* ---------------- router ---------------- */
@@ -360,7 +362,7 @@
     }
     const exKey = r.page === "quiz" && r.a === "run" ? null : r.page === "tracker" ? "tracker" : r.page === "insights" && App.inGrc(r) ? "insights-grc" : r.page;
     if (exKey && !site) out = withExplain(out, exKey);
-    view.innerHTML = out + (site ? (App.siteFooter ? App.siteFooter() : "") : def.bare ? "" : footer());
+    view.innerHTML = out + (site ? (App.siteFooter ? App.siteFooter() : "") : def.bare ? "" : footer(r));
     App.stackTables(view);
     App.linkAbbr(view, App.inGrc(r) ? "grc" : "cissp");
     view.classList.remove("view-enter"); void view.offsetWidth; view.classList.add("view-enter");
@@ -492,7 +494,7 @@
     noteBranch(r);
     const grcMode = App.inGrc(r);
     $$(".mainnav").forEach(n => { n.hidden = n.classList.contains("grcnav") ? !grcMode : grcMode; });
-    const brand = $(".topbar .brand"); if (brand) { brand.setAttribute("href", grcMode ? "#/grc" : "#/"); const sm = brand.querySelector("small"); if (sm) sm.innerHTML = grcMode ? `<span class="bb">GRC</span><span class="bt"> · governance, risk, compliance</span>` : `<span class="bb">CISSP</span><span class="bt"> · read slowly, pass once</span>`; }
+    const brand = $(".topbar .brand"); if (brand) { brand.setAttribute("href", grcMode ? "#/grc" : "#/"); const sm = brand.querySelector("small"); if (sm) { const cs = App.course(r); sm.innerHTML = cs === "grc" ? `<span class="bb">GRC</span><span class="bt"> · governance, risk, compliance</span>` : cs === "cissp" ? `<span class="bb">CISSP</span><span class="bt"> · read slowly, pass once</span>` : `<span class="bt neutral">learn anytime, as often as you need</span>`; brand.setAttribute("href", cs === "grc" ? "#/grc" : cs === "cissp" ? "#/" : (App.profile && App.profile.onboarded ? "#/choose" : "#/")); } }
     document.body.classList.toggle("grc-mode", grcMode);
     const navKey = grcMode ? (!r.a ? "grc-home" : grcMod(r.a) ? "grc-" + r.a : "grc-" + r.a)
       : r.page === "domain" ? "read" : (document.querySelector(`.mainnav [data-nav="${r.page}"]`) ? r.page : key);
@@ -600,11 +602,38 @@
     return null;
   }
 
-  function footer() {
-    return `<footer class="foot">
-      <div class="foot-top"><a class="foot-brand" href="#/"><b>LearN<span>time</span></b><small>CISSP · read slowly, pass once</small></a>
-        <nav class="foot-links" aria-label="Footer"><a href="#/about">About CISSP</a><a href="#/faq">FAQ</a><a href="#/contact">Contact</a><a href="#/terms">Terms</a><a href="#/privacy">Privacy &amp; trust</a></nav></div>
-      <p class="foot-legal">© ${new Date().getFullYear()} LearNtime. Independent study material, not affiliated with ISC2. CISSP® is a registered mark of ISC2, Inc.</p>
+  function footer(r) {
+    const cs = r ? App.course(r) : null, y = new Date().getFullYear();
+    const brand = (sub) => `<a class="foot-brand" href="${cs === "grc" ? "#/grc" : cs === "cissp" ? "#/" : "#/choose"}"><b>LearN<span>time</span></b><small>${sub}</small></a>`;
+    const L = (h, t) => `<a href="${h}">${t}</a>`;
+    let top, legal;
+    if (cs === "grc") {
+      top = `${brand(`<span class="bb">Learn GRC</span> · governance, risk, compliance`)}
+        <nav class="foot-cols" aria-label="Learn GRC footer">
+          <div><h4>The course</h4>${L("#/grc", "GRC desk")}${L("#/grc/m1", "Ten modules")}${L("#/grc/rooms", "Scenario rooms")}${L("#/grc/labs", "Hands-on labs")}</div>
+          <div><h4>Reference</h4>${L("#/grc/library", "Library")}${L("#/grc/landscape", "Regulators and standards")}${L("#/grc/glossary", "GRC glossary")}${L("#/grc/briefings", "Briefings")}</div>
+          <div><h4>Tools</h4>${L("#/grc/controls", "Control workbench")}${L("#/grc/vendors", "Vendor register")}${L("#/grc/budget", "Budget planner")}${L("#/grc/spend", "CEO and CFO guide")}</div>
+          <div><h4>LearNtime</h4>${L("#/", "CISSP course")}${L("#/contact", "Contact")}${L("#/terms", "Terms")}${L("#/privacy", "Privacy &amp; trust")}</div></nav>`;
+      legal = `© ${y} LearNtime. Learn GRC is study material, not legal advice; check the official texts of laws and regulations before relying on them. ISO/IEC 27001 is published by ISO and IEC; SOC 2 is an AICPA framework; MITRE ATT&amp;CK® is a registered trademark of The MITRE Corporation. Third-party material is credited under its licence.`;
+    } else if (cs === "cissp") {
+      top = `${brand(`<span class="bb">CISSP course</span> · read slowly, pass once`)}
+        <nav class="foot-cols" aria-label="CISSP footer">
+          <div><h4>The course</h4>${L("#/", "Study desk")}${L("#/read", "Eight chapters")}${L("#/plan", "Your plan")}${L("#/mock", "Mock exam")}</div>
+          <div><h4>Practise</h4>${L("#/quiz", "Quizzes")}${L("#/flashcards", "Flashcards")}${L("#/glossary", "CISSP glossary")}${L("#/revision", "Revision sheets")}</div>
+          <div><h4>The exam</h4>${L("#/about", "About the CISSP")}${L("#/about/domains", "The eight domains")}${L("#/about/pathway", "Path to certification")}${L("#/faq", "FAQ")}</div>
+          <div><h4>LearNtime</h4>${App.isPrivileged() ? L("#/grc", "Learn GRC course") : ""}${L("#/contact", "Contact")}${L("#/terms", "Terms")}${L("#/privacy", "Privacy &amp; trust")}</div></nav>`;
+      legal = `© ${y} LearNtime. The CISSP course is independent study material, not affiliated with or endorsed by ISC2. CISSP® is a registered mark of ISC2, Inc.`;
+    } else {
+      top = `${brand("learn anytime, as often as you need")}
+        <nav class="foot-cols" aria-label="Footer">
+          <div><h4>Courses</h4>${L("#/", "CISSP course")}${App.isPrivileged() ? L("#/grc", "Learn GRC") : ""}</div>
+          <div><h4>Your account</h4>${L("#/profile", "Profile")}${L("#/privacy", "Privacy &amp; my data")}${L("#/plans", "Plans")}</div>
+          <div><h4>LearNtime</h4>${L("#/contact", "Contact")}${L("#/terms", "Terms")}${L("#/faq", "FAQ")}</div></nav>`;
+      legal = `© ${y} LearNtime. Independent study material. CISSP® is a registered mark of ISC2, Inc.; LearNtime is not affiliated with ISC2.`;
+    }
+    return `<footer class="foot foot-${cs || "site"}">
+      <div class="foot-top">${top}</div>
+      <p class="foot-legal">${legal}</p>
     </footer>
     <button class="back-top" id="backTop" aria-label="Back to top">↑</button>`;
   }
@@ -1435,11 +1464,11 @@
   function viewChoose() {
     return `<div class="auth wide">
       <h1 class="h-display" style="font-size:44px">Welcome back, <em>${esc(App.firstName())}</em></h1>
-      <p class="lede">What would you like to do?</p>
+      <p class="lede">Pick a course, or manage the site.</p>
       <div class="grid-2" style="margin-top:26px">
-        <button class="card focus choose" data-mode="study"><span class="kicker">Learner</span><h3>Study CISSP</h3><p>Your plan, chapters, quizzes, flashcards and mock exams.</p></button>
-        ${App.isPrivileged() ? `<button class="card focus choose" data-mode="grc" style="--dc:var(--gold-ink)"><span class="kicker" style="--kc:#8a6416">Second branch</span><h3>Learn GRC</h3><p>A full governance, risk and compliance course for your GRC Manager role, plus the field guide.</p></button>` : ""}
-        <button class="card focus choose" data-mode="admin" style="--dc:var(--d7)"><span class="kicker" style="--kc:var(--d7)">Administrator</span><h3>View admin console</h3><p>Learner analytics, audit trail, privacy requests and accounts.</p></button>
+        <button class="card focus choose" data-mode="study"><span class="kicker">Course</span><h3>CISSP</h3><p>Prepare for the CISSP exam: your plan, eight chapters, quizzes, flashcards and mock exams.</p></button>
+        ${App.isPrivileged() ? `<button class="card focus choose" data-mode="grc" style="--dc:var(--gold-ink)"><span class="kicker" style="--kc:var(--gold-ink)">Course</span><h3>Learn GRC</h3><p>Governance, risk and compliance for a GRC Manager role: ten modules, scenario rooms, tools and the field guide.</p></button>` : ""}
+        <button class="card focus choose" data-mode="admin" style="--dc:var(--d7)"><span class="kicker" style="--kc:var(--d7)">Site</span><h3>Admin console</h3><p>Learner analytics, audit trail, privacy requests and accounts.</p></button>
       </div>
       <p class="hint" style="text-align:center;margin-top:18px">You can switch any time from the menu under your initial.</p></div>`;
   }
@@ -1769,7 +1798,7 @@
       return [c.id, c.title, c.dom, c.owner, c.freq, c.scope, overall(c)].concat(c.risks.map((_, i) => RATE[t.s[i]] || "Not tested")).concat([t.note || "", t.at ? ymd(new Date(t.at)) : "", c.iso.join("; "), c.soc.join("; "), c.csf.join("; "), c.india.join("; "), c.iec.join("; ")]); })), "control-test-workpaper.csv"); db.logEvent("user.workpaper_download", {}); });
     const ec = $("#efCsv"); if (ec) ec.addEventListener("click", () => { dl([["Month", "Chase on", "Due", "Control ID", "Control", "Department", "Category", "Scope", "Cadence", "Evidence"]].concat(calItems().map(i => [MONTHS[i.m] + " " + i.y, ymd(i.chase), ymd(i.due), i.c.id, i.c.title, i.c.owner, i.c.dom, i.c.scope, ({ M: "Monthly", Q: "Quarterly", H: "Half-yearly", A: "Annual" })[i.c.ev], i.c.evidence])), "evidence-calendar.csv"); });
   }
-  /* second branch: Learn GRC (a full course) and the GRC Manager field guide, private to the owner's account */
+  /* the Learn GRC course and the GRC Manager field guide, private to the owner's account */
   let grcLoading = null;
   App.loadGrc = () => loadGrc();
   const loadGrc = () => window.GRC_COURSE && window.GRC_COURSE.length >= 10 && window.GRC_CONTROLS && window.ISO_2022 ? Promise.resolve() : (grcLoading = grcLoading || Promise.all(["grc-course-1", "grc-course-2", "grc-iso", "grc-controls-1", "grc-controls-2", "grc-oracle", "grc-visuals", "grc-briefings", "grc-landscape", "grc-budget", "grc-rooms", "grc-rooms-2", "grc-rooms-3", "grc-rooms-4"].map(f => new Promise((ok, no) => {
@@ -2245,7 +2274,7 @@
     const desk = await grcDesk();
     return `<div class="page grc-hub">${desk}
       <h2 class="h-section" id="course">The course</h2>
-      <header class="grc-head" hidden><div><span class="kicker">Second branch · private to you</span>
+      <header class="grc-head" hidden><div><span class="kicker">Course · Learn GRC</span>
         <h1 class="h-display">Learn <em>GRC</em></h1>
         <p class="lede">Governance, risk and compliance from zero to ready for a GRC Manager role. Ten modules, ${all} lessons with worked examples, a "remember" box and check questions on every page.</p></div>
         <div class="grc-ring"><b>${Math.round(done / all * 100)}%</b><small>${done} of ${all} lessons</small></div></header>
