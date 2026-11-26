@@ -1,7 +1,7 @@
 /* LearNtime - Scenario rooms: timed GRC situations with an inbox, a desk of evidence, decisions and a written reply.
    Original scenarios written for LearNtime. Companies and people are fictional. */
-window.GRC_ROOMS = [
-{ id: "six-hours", t: "The 6-hour clock", level: "Intermediate", mins: 25, mod: "m9",
+window.GRC_ROOMS = (window.GRC_ROOMS || []).concat([
+{ id: "six-hours", order: 1, topic: "Incidents", t: "The 6-hour clock", level: "Intermediate", mins: 25, mod: "m9",
   brief: "It is 02:10. The night shift has found data leaving a client's network. You are the GRC Manager at Kavach SOC, a managed security provider. Work out who must be told, by when, and what you say when the client asks awkward questions.",
   client: "Meridian Finance (an NBFC)",
   ticket: { ref: "INC-0412 · Severity 1", text: "Data is leaving a client network at night, and two regulatory clocks have already started.", owner: "you, with the incident lead" },
@@ -74,7 +74,7 @@ window.GRC_ROOMS = [
   debrief: ["The clock starts when an incident is noticed, not when it is convenient.", "The affected organisation owns its regulatory reports; the service provider makes them easy and on time.", "Personal data triggers DPDP duties on top of CERT-In and the sector regulator.", "A change made without approval (here, a disabled rule) is a control failure: record it, fix it, review similar changes."],
   links: [["How to report: CERT-In and the Data Protection Board, with sample filings", "#/grc/briefings/reporting"], ["Module 9: Incidents and continuity", "#/grc/m9"], ["Module 7: DPDP and CERT-In", "#/grc/m7"], ["INC-02 Incident logging and regulatory notification", "#/grc/controls/INC-02"], ["CHG-01 Change management", "#/grc/controls/CHG-01"]] },
 
-{ id: "friday-signing", t: "Signed by Friday", level: "Beginner", mins: 20, mod: "m6",
+{ id: "friday-signing", order: 2, topic: "Vendors", t: "Signed by Friday", level: "Beginner", mins: 20, mod: "m6",
   brief: "Marketing wants a new AI chatbot on the website by Friday. The contract is ready to sign. You have three days to decide whether it is safe, and on what terms.",
   client: "Kavach SOC (your own company)",
   ticket: { ref: "VEN-0219 · New vendor", text: "Marketing wants a chatbot that stores visitors' chats, live by Monday.", owner: "you, with the Head of Marketing as risk owner" },
@@ -134,7 +134,7 @@ window.GRC_ROOMS = [
   debrief: ["Tier by data and access, never by price.", "A SOC 2 Type I is a snapshot; ask for Type II or a bridge letter.", "The contract must let you meet your own deadlines (6-hour CERT-In, DPDP).", "When you can't fix everything, add compensating controls and get a named owner to accept what is left."],
   links: [["Module 6: Third-party risk", "#/grc/m6"], ["Vendor register", "#/grc/vendors"], ["TPR-03 Security clauses in supplier contracts", "#/grc/controls/TPR-03"], ["Briefing: OPTIMJACK", "#/grc/briefings/optimjack"]] },
 
-{ id: "audit-week", t: "Audit week", level: "Intermediate", mins: 20, mod: "m4",
+{ id: "audit-week", order: 3, topic: "Audit", t: "Audit week", level: "Intermediate", mins: 20, mod: "m4",
   brief: "Fieldwork for your SOC 2 Type II audit is under way. The auditor has tested leavers, and the results are not good. Handle the exception the way an experienced GRC Manager would.",
   client: "Kavach SOC (your own company)",
   ticket: { ref: "AUD-SOC2 · Exception", text: "The auditor found leavers who kept access, and one of them used it.", owner: "you, with the IT manager" },
@@ -181,7 +181,7 @@ window.GRC_ROOMS = [
       { t: "Management considers these exceptions immaterial.", good: false, why: "Not credible when one leads to a login and data download." }] },
   debrief: ["Never ask to change samples or leave things out; verify, then explain.", "An audit exception can uncover a real incident; route it through incident response.", "Find the design cause, not the person to blame.", "A good management response agrees with the facts, names the cause, and commits to dated fixes."],
   links: [["Module 4: SOC 1 and SOC 2", "#/grc/m4"], ["IAM-02 Leaver access removal", "#/grc/controls/IAM-02"], ["PBC list", "#/grc/pbc"], ["Mistakes log", "#/grc/log"]] }
-];
+]);
 
 window.GRC_FAVS_SEED = [
   { t: "GRC Engineer", u: "https://grcengineer.com/", n: "Ayoub Fandi's newsletter on GRC engineering. Start with: The GRC work CISOs would keep isn't the work you're doing.", a: "https://grcengineer.com/p/the-grc-work-cisos-would-keep-isn-t-the-work-you-re-doing/" },

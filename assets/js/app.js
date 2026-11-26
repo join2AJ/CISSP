@@ -1772,7 +1772,7 @@
   /* second branch: Learn GRC (a full course) and the GRC Manager field guide, private to the owner's account */
   let grcLoading = null;
   App.loadGrc = () => loadGrc();
-  const loadGrc = () => window.GRC_COURSE && window.GRC_COURSE.length >= 10 && window.GRC_CONTROLS && window.ISO_2022 ? Promise.resolve() : (grcLoading = grcLoading || Promise.all(["grc-course-1", "grc-course-2", "grc-iso", "grc-controls-1", "grc-controls-2", "grc-oracle", "grc-visuals", "grc-briefings", "grc-landscape", "grc-budget", "grc-rooms"].map(f => new Promise((ok, no) => {
+  const loadGrc = () => window.GRC_COURSE && window.GRC_COURSE.length >= 10 && window.GRC_CONTROLS && window.ISO_2022 ? Promise.resolve() : (grcLoading = grcLoading || Promise.all(["grc-course-1", "grc-course-2", "grc-iso", "grc-controls-1", "grc-controls-2", "grc-oracle", "grc-visuals", "grc-briefings", "grc-landscape", "grc-budget", "grc-rooms", "grc-rooms-2", "grc-rooms-3", "grc-rooms-4"].map(f => new Promise((ok, no) => {
     const sc = document.createElement("script"); sc.src = `assets/js/${f}.js?v=${(document.querySelector('script[src*="app.js"]').src.split("v=")[1] || "dev")}`; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc);
   }))).then(() => { (window.GRC_COURSE || []).sort((a, b) => a.n - b.n); }));   // the two course files can arrive in either order
   let libLoading = null;
@@ -2070,7 +2070,7 @@
   }
 
   /* ---------- Scenario rooms ---------- */
-  let run = null;   // { id, i, picks: [], phase: "step" | "reply" | "done", chosen: [] }
+  let run = null, roomTopic = "all";   // { id, i, picks: [], phase: "step" | "reply" | "done", chosen: [] }
   const roomRec = () => (S.grcRooms = S.grcRooms || {});
   const roomScore = (R, picks, chosen) => {
     const dec = picks.reduce((n, p, i) => n + R.steps[i].opts[p].s, 0), decMax = R.steps.length * 2;
@@ -2079,11 +2079,14 @@
   };
   const mixOrder = (R) => R.reply.parts.map((_, i) => i).sort((a, b) => ((a * 7 + R.id.length) % 5) - ((b * 7 + R.id.length) % 5) || a - b);
   function grcRooms(id) {
-    const RS = window.GRC_ROOMS || [], R = id && RS.find(x => x.id === id), rec = roomRec();
+    const RS = (window.GRC_ROOMS || []).slice().sort((a, b) => (a.order || 99) - (b.order || 99)), R = id && RS.find(x => x.id === id), rec = roomRec();
+    const topics = [...new Set(RS.map(x => x.topic || "Other"))], shown = RS.filter(x => roomTopic === "all" || (roomTopic === "todo" ? !rec[x.id] : (x.topic || "Other") === roomTopic));
     if (!R) return `<div class="page-narrow grc-rooms"><a class="kicker" href="#/grc">← Learn GRC</a>
       <h1 class="h-display">Scenario <em>rooms</em></h1>
       <p class="lede">Real GRC situations against the clock. Read the inbox, check what is on your desk, make the call, then write the reply. Every choice gets feedback, and your best score is kept. The companies and people are made up; the rules are real.</p>
-      <div class="rm-list">${RS.map(x => { const r = rec[x.id]; return `<a class="card rm-card" href="#/grc/rooms/${x.id}"><div class="rm-top"><span class="vz-tag ${x.level === "Beginner" ? "c1" : "c2"}">${x.level}</span><small>◷ ${x.mins} min · ${x.steps.length} decisions</small></div>
+      <div class="rm-stats mono">${RS.length} rooms · ${Object.keys(rec).filter(k => RS.some(x => x.id === k)).length} played · average best ${(() => { const b = RS.map(x => rec[x.id]).filter(Boolean); return b.length ? Math.round(b.reduce((n, r) => n + r.best, 0) / b.length) + "%" : "-"; })()}</div>
+      <div class="filters rm-filt">${[["all", `All (${RS.length})`], ["todo", "Not played yet"]].concat(topics.map(t => [t, `${t} (${RS.filter(x => (x.topic || "Other") === t).length})`])).map(([k, t]) => `<button class="chip ${roomTopic === k ? "on" : ""}" data-rmt="${esc(k)}">${esc(t)}</button>`).join("")}</div>
+      <div class="rm-list">${shown.map(x => { const r = rec[x.id]; return `<a class="card rm-card" href="#/grc/rooms/${x.id}"><div class="rm-top"><span><span class="vz-tag ${x.level === "Beginner" ? "c1" : x.level === "Advanced" ? "c3" : "c2"}">${x.level}</span> <span class="rm-topic mono">${esc(x.topic || "")}</span></span><small>◷ ${x.mins} min · ${x.steps.length} decisions</small></div>
         <h3>${esc(x.t)}</h3><p>${esc(x.brief)}</p><div class="rm-foot">${r ? `<span>Best: <b>${r.best}%</b> · played ${r.runs}×</span><span class="btn small">Play again →</span>` : `<span></span><span class="btn small primary">Start →</span>`}</div></a>`; }).join("")}</div>
       <p class="hint">Inspired by scenario practice sites such as <a href="https://grcplayground.com/" target="_blank" rel="noopener">GRC Playground</a>; these rooms are written for this course and India's rules.</p></div>`;
     if (!run || run.id !== R.id) run = { id: R.id, i: 0, picks: [], phase: "step", chosen: [], started: false };
@@ -2095,12 +2098,12 @@
     const goalsCard = () => `<div class="rm-ticket"><div class="rm-tk-top"><span class="mono">${esc(R.ticket.ref)}</span><span class="rm-pill ${run.phase === "done" ? "closed" : "open"}">${run.phase === "done" ? "closed" : "open"}</span></div>
       <div class="rm-tk-body"><div><p class="rm-tk-text">${esc(R.ticket.text)}</p><p class="mono rm-tk-own">Owner: ${esc(R.ticket.owner)}.</p>
         <div class="rm-tk-slots">${Array.from({ length: N }, (_, i) => `<span class="${i < doneN ? "done" : ""}">${i + 1 === N ? "✉" : pad(i + 1)}</span>`).join("")}</div></div>
-        <ul class="rm-goals">${R.goals.concat(["A reply you'd be happy to see quoted"]).map((g, i) => { const ok = i < run.picks.length ? R.steps[i].opts[run.picks[i]].s === 2 : i === R.steps.length && run.phase === "done";
+        <ul class="rm-goals">${(R.goals.length > R.steps.length ? R.goals : R.goals.concat(["A reply you'd be happy to see quoted"])).map((g, i) => { const ok = i < run.picks.length ? R.steps[i].opts[run.picks[i]].s === 2 : i === R.steps.length && run.phase === "done";
           const st2 = i < run.picks.length || (i === R.steps.length && run.phase === "done") ? (ok ? "done" : "partly") : "not yet"; return `<li><span>${esc(g)}</span><span class="rm-pill ${st2.replace(" ", "")}">${st2}</span></li>`; }).join("")}</ul></div></div>`;
     if (!run.started) return `<div class="page grc-room">${bar}
       <section class="rm-hero"><span class="mono rm-meta">Scenario · ${esc(R.level)} · about ${R.mins} min · ${R.steps.length} decisions and a written reply</span>
         <h1 class="rm-h1">${esc(R.t)}</h1><p class="rm-lede">${esc(R.brief)}</p>
-        <p class="mono rm-meta">You: GRC Manager, Kavach SOC · ${esc(R.client)}</p>
+        <p class="mono rm-meta">You: ${esc(R.you || "GRC Manager, Kavach SOC")} · ${esc(R.client)}</p>
         <div class="btn-row"><button class="btn primary" id="rmStart">Start the clock</button><a class="rm-skip" href="#/grc/rooms">Pick another room</a></div></section>
       ${goalsCard()}
       <figure class="rm-quote"><blockquote>“${esc(R.quote[0])}”</blockquote><figcaption class="mono">${esc(R.quote[1])}</figcaption></figure></div>`;
@@ -2133,6 +2136,7 @@
         <div class="btn-row" style="margin-top:18px"><button class="btn primary" id="rmAgain">Play again</button><a class="btn" href="#/grc/rooms">Other rooms</a></div></section></div>`;
   }
   function bindRooms(r) {
+    $$("[data-rmt]").forEach(b => b.addEventListener("click", () => { roomTopic = b.dataset.rmt; App.rerender(); }));
     const R = (window.GRC_ROOMS || []).find(x => x.id === r.b); if (!R || !run) return;
     const go = () => { App.rerender(); };
     const s0 = $("#rmStart"); if (s0) s0.addEventListener("click", () => { run.started = true; go(); });
