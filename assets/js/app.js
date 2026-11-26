@@ -529,8 +529,8 @@
       if (active && m) h += `<ol class="toc-sub">` + m.lessons.map((l, j) => `<li><a href="#/grc/${id}/${l.id}" class="${grcDone()[grcKey(id, l.id)] ? "read" : ""} ${r.b === l.id ? "active" : ""}">${i + 1}.${j + 1} ${esc(l.title)}</a></li>`).join("") + `</ol>`;
       h += `</li>`; });
     h += `</ol></details>`;
-    h += `<details class="toc-group" ${open(["", "insights", "notes", "log", "shelf"]) ? "open" : ""}><summary class="toc-head">You</summary><ol class="toc-list">${L("#/grc", "⌂", "GRC desk", !r.a)}${L("#/grc/insights", "◔", "Insights", r.a === "insights")}${L("#/grc/notes", "✎", "Notes", r.a === "notes")}${L("#/grc/log", "✗", "Mistakes log", r.a === "log")}${L("#/grc/shelf", "❏", "My shelf", r.a === "shelf")}</ol></details>`;
-    const G = (title, keys, inner) => `<details class="toc-group" ${open(keys) ? "open" : ""}><summary class="toc-head">${title}</summary>${inner}</details>`;
+    h += `<details class="toc-group" ${["insights", "notes", "log", "shelf"].includes(r.a || "") || window.innerWidth > 1000 ? "open" : ""}><summary class="toc-head">You</summary><ol class="toc-list">${L("#/grc", "⌂", "GRC desk", !r.a)}${L("#/grc/insights", "◔", "Insights", r.a === "insights")}${L("#/grc/notes", "✎", "Notes", r.a === "notes")}${L("#/grc/log", "✗", "Mistakes log", r.a === "log")}${L("#/grc/shelf", "❏", "My shelf", r.a === "shelf")}</ol></details>`;
+    const G = (title, keys, inner) => `<details class="toc-group" open><summary class="toc-head">${title}</summary>${inner}</details>`;
     const S = (t, items) => `<p class="toc-subhead">${t}</p><ol class="toc-list">${items}</ol>`;
     h += G("Learn", ["library", "reading", "briefings", "visuals", "glossary", "landscape"],
       S("Read", `${L("#/grc/library", "❏", "Library (46 documents)", r.a === "library")}${L("#/grc/briefings", "✦", "Briefings", r.a === "briefings")}${L("#/grc/reading", "❡", "Reading room", r.a === "reading")}`) +
