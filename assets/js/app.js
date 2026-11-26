@@ -1926,7 +1926,7 @@
         <div class="fact"><b>${rows.filter(x => x.v.sanct && x.v.crit >= 2).length}</b><span>in a sanctions shadow</span></div>
       </section>
       <h2 class="h-section">Who holds which data</h2>
-      <div class="tbl-wrap"><table class="tbl vd-matrix"><thead><tr><th>Vendor</th><th>Tier</th>${dataCols.map(([, t]) => `<th>${t}</th>`).join("")}<th>Direction</th><th>Access</th></tr></thead>
+      <div class="tbl-wrap"><table class="tbl vd-matrix"><thead><tr><th>Vendor</th><th>Tier</th>${dataCols.map(([k, t]) => `<th title="${t}">${({ hr: "HR", cust: "Customer", client: "Client logs", ot: "OT", fin: "Finance", code: "Code", internal: "Internal" })[k]}</th>`).join("")}<th>Direction</th><th>Access</th></tr></thead>
         <tbody>${rows.map(x => `<tr><td>${esc(x.v.name)}</td><td><span class="vz-tag c${5 - x.sc.tier}">Tier ${x.sc.tier}</span></td>${dataCols.map(([k]) => `<td class="dot">${x.v.data.includes(k) ? "●" : ""}</td>`).join("")}<td>${{ out: "→ out", in: "← in", both: "⇄ both", none: "-" }[x.v.flow]}</td><td>${esc((VACC.find(a => a[0] === x.v.access) || [, ""])[1])}</td></tr>`).join("")}</tbody></table></div>
       <div class="filters" style="margin-top:26px">${[["all", `All (${V.length})`], ["t1", "Tier 1"], ["gaps", "With open risks"], ["sanct", "Sanctions shadow"]].map(([k, t]) => `<button class="chip ${vFilter === k ? "on" : ""}" data-vf="${k}">${t}</button>`).join("")}</div>
       <div class="vd-list">${shown.map(x => `<article class="card vd-card">
