@@ -4,6 +4,10 @@ window.GRC_ROOMS = [
 { id: "six-hours", t: "The 6-hour clock", level: "Intermediate", mins: 25, mod: "m9",
   brief: "It is 02:10. The night shift has found data leaving a client's network. You are the GRC Manager at Kavach SOC, a managed security provider. Work out who must be told, by when, and what you say when the client asks awkward questions.",
   client: "Meridian Finance (an NBFC)",
+  ticket: { ref: "INC-0412 · Severity 1", text: "Data is leaving a client network at night, and two regulatory clocks have already started.", owner: "you, with the incident lead" },
+  goals: ["Incident opened and client told within 2 hours", "CERT-In deadline protected", "Every legal duty identified", "Initial report filed on time", "Board gets the truth, in writing"],
+  labels: [["02:10", "Night shift"], ["03:05", "The client calls back"], ["04:20", "Forensics"], ["06:40", "The draft"], ["Next day", "Before the Board"]],
+  quote: ["The clock doesn't start when you are ready. It starts when someone notices.", "Ravi Menon, SOC shift lead"],
   steps: [
     { at: "02:10", inbox: [
         { from: "Ravi, SOC shift lead", subj: "Possible exfiltration at Meridian Finance", body: "SIEM alert at 01:40: 4 GB uploaded from Meridian's file server to an unknown cloud storage site. Triaged at 01:55 and confirmed as unusual. EDR also shows a new local admin account created at 01:32. Contained the server at 02:05. What do we do now?" } ],
@@ -72,6 +76,10 @@ window.GRC_ROOMS = [
 { id: "friday-signing", t: "Signed by Friday", level: "Beginner", mins: 20, mod: "m6",
   brief: "Marketing wants a new AI chatbot on the website by Friday. The contract is ready to sign. You have three days to decide whether it is safe, and on what terms.",
   client: "Kavach SOC (your own company)",
+  ticket: { ref: "VEN-0219 · New vendor", text: "Marketing wants a chatbot that stores visitors' chats, live by Monday.", owner: "you, with the Head of Marketing as risk owner" },
+  goals: ["Vendor tiered correctly", "The finding that matters spotted", "A decision you can defend", "Leftover risk owned and recorded"],
+  labels: [["Tue 09:30", "The ask"], ["Wed 11:00", "The documents"], ["Thu 10:00", "Decision day"], ["Thu 16:00", "The last gap"]],
+  quote: ["A launch date is a deadline, not a control.", "Farah Iqbal, CISO, Kavach SOC"],
   steps: [
     { at: "Tuesday 09:30", inbox: [
         { from: "Neha, Head of Marketing", subj: "Quick sign-off needed", body: "We're adding ChatLeaf to the website so visitors can ask questions. It saves the chats to train answers. Legal says it's fine if security agrees. Can you approve by Friday?" } ],
@@ -128,6 +136,10 @@ window.GRC_ROOMS = [
 { id: "audit-week", t: "Audit week", level: "Intermediate", mins: 20, mod: "m4",
   brief: "Fieldwork for your SOC 2 Type II audit is under way. The auditor has tested leavers, and the results are not good. Handle the exception the way an experienced GRC Manager would.",
   client: "Kavach SOC (your own company)",
+  ticket: { ref: "AUD-SOC2 · Exception", text: "The auditor found leavers who kept access, and one of them used it.", owner: "you, with the IT manager" },
+  goals: ["Facts verified before explaining", "Possible incident handled as one", "Root cause found in the design", "Management response the client can trust"],
+  labels: [["Mon 15:10", "The finding"], ["Tue 10:00", "What IT found"], ["Wed 12:00", "The report"]],
+  quote: ["Auditors forgive exceptions. They don't forgive surprises.", "Priya Nair, external auditor"],
   steps: [
     { at: "Monday 15:10", inbox: [
         { from: "Priya, external auditor", subj: "Leaver testing: exceptions", body: "We sampled 25 leavers. For 3 of them, access to the client portal was removed 9, 17 and 40 days after their last day. Please explain." } ],
