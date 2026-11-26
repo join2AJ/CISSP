@@ -2145,3 +2145,35 @@ td.nowrap { white-space: nowrap; }
 @media (max-width: 900px) { .land-key { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 520px) { .land-key { grid-template-columns: 1fr; } }
 .cf-rated .ok { color: color-mix(in srgb, var(--good) 75%, var(--ink)); }
+
+/* GRC desk: extra panels */
+.gd-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+.gd-panel { padding: 16px 18px; }
+.gd-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+.gd-head h3 { margin: 0; font-size: 17px; } .gd-head a { font-size: 13.5px; color: var(--accent); text-decoration: none; font-weight: 600; }
+.gd-mods { grid-row: span 2; }
+.gd-mod { display: grid; grid-template-columns: 22px minmax(0, 1fr) 90px 38px 40px; gap: 8px; align-items: center; padding: 6px 4px; border-radius: 8px; text-decoration: none; font-size: 14px; }
+.gd-mod:hover { background: var(--paper-2); }
+.gd-mn { font-weight: 700; color: var(--gold-ink); text-align: right; } .gd-ml { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gd-mt { height: 8px; border-radius: 4px; background: var(--rule-2); overflow: hidden; } .gd-mt i { display: block; height: 100%; background: #b8892a; border-radius: 0 4px 4px 0; }
+.gd-mv { font-size: 13px; color: var(--ink-2); text-align: right; font-variant-numeric: tabular-nums; }
+.gd-ma { font-size: 12.5px; font-weight: 700; text-align: right; color: var(--muted); } .gd-ma.hi { color: color-mix(in srgb, var(--good) 75%, var(--ink)); } .gd-ma.mid { color: color-mix(in srgb, var(--gold-ink) 75%, var(--ink)); } .gd-ma.lo { color: var(--bad); }
+.gd-spark { display: grid; grid-template-columns: repeat(14, 1fr); gap: 4px; height: 90px; align-items: end; border-bottom: 1px solid var(--rule); }
+.gd-spark span { height: 100%; display: flex; align-items: flex-end; } .gd-spark i { display: block; width: 100%; background: var(--accent); border-radius: 4px 4px 0 0; }
+.gd-axis { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-top: 4px; }
+.gd-nums { display: grid; grid-template-columns: repeat(auto-fit, minmax(70px, 1fr)); gap: 8px; margin-top: 12px; }
+.gd-nums div { padding: 8px 10px; border-radius: 10px; background: var(--paper-2); } .gd-nums b { display: block; font-family: var(--display); font-size: 22px; } .gd-nums b.warn { color: var(--bad); } .gd-nums span { font-size: 12.5px; color: var(--ink-2); }
+.gd-split { display: flex; gap: 2px; height: 18px; border-radius: 6px; overflow: hidden; background: var(--rule-2); }
+.gd-split span { display: block; min-width: 4px; }
+.gd-split .ef, .gd-legend .ef { background: #4f9d6c; } .gd-split .pa, .gd-legend .pa { background: #c9a227; } .gd-split .in, .gd-legend .in { background: #c0392b; } .gd-split .ip, .gd-legend .ip { background: #2f6fb0; } .gd-split .nt, .gd-legend .nt { background: var(--rule); }
+.gd-legend { list-style: none; padding: 0 !important; margin: 10px 0 0 !important; display: grid; gap: 4px; font-size: 13.5px; }
+.gd-legend li { display: flex; align-items: center; gap: 8px; margin: 0; } .gd-legend li b { margin-left: auto; } .gd-legend i { width: 11px; height: 11px; border-radius: 3px; flex: none; }
+.gd-note { font-size: 14px; margin: 12px 0 0; } .gd-note a { color: var(--accent); font-weight: 600; }
+.gd-brief { display: block; margin-top: 12px; padding: 10px 12px; border-radius: 10px; border-left: 4px solid var(--gold-ink); background: var(--paper-2); text-decoration: none; }
+.gd-brief b { display: block; font-size: 14.5px; margin-top: 2px; }
+.gd-quick { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-top: 12px; }
+.gd-quick a { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--rule-2); background: var(--card); text-decoration: none; font-size: 14.5px; font-weight: 600; }
+.gd-quick a span { color: var(--gold-ink); font-weight: 400; width: 18px; text-align: center; }
+.gd-quick a:hover { border-color: var(--accent); }
+@media (max-width: 860px) { .gd-grid { grid-template-columns: 1fr; } .gd-mods { grid-row: auto; } }
+@media (max-width: 420px) { .gd-mod { grid-template-columns: 20px minmax(0, 1fr) 54px 34px 38px; gap: 6px; } }

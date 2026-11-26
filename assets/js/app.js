@@ -1774,7 +1774,7 @@
   App.loadGrc = () => loadGrc();
   const loadGrc = () => window.GRC_COURSE && window.GRC_COURSE.length >= 10 && window.GRC_CONTROLS && window.ISO_2022 ? Promise.resolve() : (grcLoading = grcLoading || Promise.all(["grc-course-1", "grc-course-2", "grc-iso", "grc-controls-1", "grc-controls-2", "grc-oracle", "grc-visuals", "grc-briefings", "grc-landscape"].map(f => new Promise((ok, no) => {
     const sc = document.createElement("script"); sc.src = `assets/js/${f}.js?v=${(document.querySelector('script[src*="app.js"]').src.split("v=")[1] || "dev")}`; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc);
-  }))));
+  }))).then(() => { (window.GRC_COURSE || []).sort((a, b) => a.n - b.n); }));   // the two course files can arrive in either order
   let libLoading = null;
   const loadLib = () => window.GRC_LIBRARY ? Promise.resolve() : (libLoading = libLoading || new Promise((ok, no) => {
     const sc = document.createElement("script"); sc.src = `assets/js/grc-library.js?v=${(document.querySelector('script[src*="app.js"]').src.split("v=")[1] || "dev")}`; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc);
@@ -2183,6 +2183,40 @@
     const score = Math.round(lessonsPct * .5 + (acc || 0) * .3 * Math.min(1, aN / 20) + prac * .2);
     return { C, all, done, lessonsPct, aN, aOk, acc, tested, prac, wrong, byMod, score };
   };
+  function grcDeskMore(st, T0) {
+    const C = st.C, ans = S.grcAns || {};
+    // module progress
+    const mods = C.map(m => { const p = grcProg(m), b = st.byMod.find(x => x.m === m); return { m, p, v: b ? b.v : null, n: b ? b.n : 0 }; });
+    // last 14 days of GRC time
+    const byDay = {}; T0.rows.forEach(r => { byDay[r.day] = (byDay[r.day] || 0) + r.seconds; });
+    const days = Array.from({ length: 14 }, (_, i) => { const d = ymd(addDays(today(), i - 13)); return [d, byDay[d] || 0]; });
+    const maxD = Math.max(600, ...days.map(x => x[1])), tot14 = days.reduce((n, x) => n + x[1], 0), act = days.filter(x => x[1] >= 300).length;
+    // control test results
+    const CC = window.GRC_CONTROLS ? ctrls() : [], res = ["Effective", "Partially effective", "Ineffective", "In progress", "Not tested"].map(k => [k, CC.filter(c => overall(c) === k).length]);
+    const cls = { "Effective": "ef", "Partially effective": "pa", "Ineffective": "in", "In progress": "ip", "Not tested": "nt" };
+    // vendors and evidence
+    const V = S.grcVendors || [], vRows = V.map(v => ({ v, sc: vScore(v), R: vRisks(v) })), vHigh = vRows.reduce((n, x) => n + x.R.filter(r => r.sev === "high").length, 0), vLate = vRows.filter(x => ["overdue", "never"].includes(vRev(x.v, x.sc.tier))).length;
+    const cal = CC.length ? calItems() : [], nx = cal[0], thisMonth = nx ? cal.filter(x => x.y === nx.y && x.m === nx.m) : [];
+    const B = (window.GRC_BRIEFINGS || [])[0];
+    return `<div class="gd-grid">
+      <section class="card gd-panel gd-mods" aria-label="Progress by module"><div class="gd-head"><h3>Course by module</h3><a href="#course">All modules →</a></div>
+        ${mods.map(x => `<a class="gd-mod" href="#/grc/${x.m.id}" title="${esc(x.m.title)}: ${x.p.d} of ${x.p.t} lessons${x.v != null ? `, ${x.v}% right first time` : ""}"><span class="gd-mn">${x.m.n}</span><span class="gd-ml">${esc(x.m.short || x.m.title)}</span><span class="gd-mt"><i style="width:${x.p.pct}%"></i></span><span class="gd-mv">${x.p.d}/${x.p.t}</span><span class="gd-ma ${x.v == null ? "" : x.v >= 80 ? "hi" : x.v >= 60 ? "mid" : "lo"}">${x.v == null ? "-" : x.v + "%"}</span></a>`).join("")}
+        <p class="hint">Bar: lessons done. Right: questions right first time.</p></section>
+      <section class="card gd-panel" aria-label="Last 14 days"><div class="gd-head"><h3>Last 14 days</h3><a href="#/grc/insights">Insights →</a></div>
+        <div class="gd-spark" role="img" aria-label="GRC study time per day for the last 14 days, ${fmtDur(tot14)} in total">${days.map(([d, v]) => `<span title="${fmtD(d)}: ${fmtDur(v)}"><i style="height:${v ? Math.max(6, Math.round(v / maxD * 100)) : 0}%"></i></span>`).join("")}</div>
+        <div class="gd-axis"><span>${fmtD(days[0][0])}</span><span>today</span></div>
+        <div class="gd-nums"><div><b>${fmtDur(tot14)}</b><span>studied</span></div><div><b>${act}</b><span>days with 5+ min</span></div><div><b>${App.streak()}</b><span>day streak</span></div></div></section>
+      <section class="card gd-panel" aria-label="Controls tested"><div class="gd-head"><h3>Controls tested</h3><a href="#/grc/controls">Workbench →</a></div>
+        <div class="gd-split" role="img" aria-label="${res.map(([k, n]) => `${k}: ${n}`).join(", ")}">${res.filter(([, n]) => n).map(([k, n]) => `<span class="${cls[k]}" style="flex:${n}" title="${k}: ${n}"></span>`).join("")}</div>
+        <ul class="gd-legend">${res.map(([k, n]) => `<li><i class="${cls[k]}"></i>${k}<b>${n}</b></li>`).join("")}</ul>
+        ${thisMonth.length ? `<p class="gd-note"><b>${thisMonth.length}</b> evidence items due by ${fmtD(ymd(thisMonth[0].due))}. <a href="#/grc/calendar">Calendar →</a></p>` : ""}</section>
+      <section class="card gd-panel" aria-label="Vendors"><div class="gd-head"><h3>Vendors</h3><a href="#/grc/vendors">Register →</a></div>
+        ${V.length ? `<div class="gd-nums"><div><b>${V.length}</b><span>vendors</span></div><div><b>${vRows.filter(x => x.sc.tier === 1).length}</b><span>Tier 1</span></div><div><b class="${vHigh ? "warn" : ""}">${vHigh}</b><span>high risks</span></div><div><b class="${vLate ? "warn" : ""}">${vLate}</b><span>reviews overdue</span></div></div>`
+          : `<p class="hint" style="margin-top:0">No vendors yet. Add your own, or load six examples to practise tiering and spotting gaps.</p><a class="btn small" href="#/grc/vendors">Open the vendor register</a>`}
+        ${B ? `<a class="gd-brief" href="#/grc/briefings/${B.id}"><span class="kicker">Latest briefing</span><b>${esc(B.t)}</b></a>` : ""}</section>
+    </div>
+    <nav class="gd-quick" aria-label="Quick links">${[["#/grc/controls", "◇", "Workbench"], ["#/grc/map/iso", "⊞", "Framework map"], ["#/grc/calendar", "▦", "Evidence calendar"], ["#/grc/vendors", "⇄", "Vendors"], ["#/grc/landscape", "⚖", "Regulators"], ["#/grc/spend", "₹", "CEO and CFO guide"], ["#/grc/labs", "◎", "Labs"], ["#/grc/glossary", "Aa", "Glossary"]].map(([h, i, t]) => `<a href="${h}"><span aria-hidden="true">${i}</span>${t}</a>`).join("")}</nav>`;
+  }
   async function grcDesk() {
     const st = App.grcStats(), T0 = await App.grcTime(), C = st.C;
     const wk = T0.rows.filter(r => r.day >= ymd(addDays(today(), -6))).reduce((n, r) => n + r.seconds, 0), allTime = T0.tracked + T0.est.total;
@@ -2240,6 +2274,7 @@
         ${tile({ k: "Mistakes to review", v: `${st.wrong.length}`, s: "questions you got wrong", pct: null, go: "Mistakes log", href: "#/grc/log" })}
         ${tile({ k: "Notes", v: `${notes}`, s: "lessons with your own note", pct: null, go: "GRC notes", href: "#/grc/notes" })}
       </div>
+      ${grcDeskMore(st, T0)}
       ${order.length ? `<h2 class="h-section">What to work on next</h2><p class="sub">Modules you have started come first, then the rest in course order.</p>
       <div class="card grc-order">${order.map(x => `<a class="grc-order-row" href="#/grc/${x.m.id}"><span class="grc-n">${String(x.m.n).padStart(2, "0")}</span><span><b>${esc(x.m.title)}</b><small>${x.p.d} of ${x.p.t} lessons${(() => { const b = st.byMod.find(y => y.m === x.m); return b && b.v != null ? ` · ${b.v}% right first time` : ""; })()}</small></span><span class="meter"><i style="width:${x.p.pct}%"></i></span><span class="tile-go">${x.p.d ? "Continue" : "Start"} →</span></a>`).join("")}</div>` : ""}`;
   }
