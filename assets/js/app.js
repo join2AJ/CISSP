@@ -535,10 +535,10 @@
     h += G("Learn", ["library", "reading", "briefings", "visuals", "glossary", "landscape"],
       S("Read", `${L("#/grc/library", "❏", "Library (46 documents)", r.a === "library")}${L("#/grc/briefings", "✦", "Briefings", r.a === "briefings")}${L("#/grc/reading", "❡", "Reading room", r.a === "reading")}`) +
       S("Understand", `${L("#/grc/landscape", "⚖", "Regulators and standards", r.a === "landscape")}${L("#/grc/visuals", "◇", "Diagrams", r.a === "visuals")}${L("#/grc/glossary", "Aa", "GRC glossary", r.a === "glossary")}`));
-    h += G("Tools", ["controls", "map", "calendar", "vendors", "pbc", "spend"],
+    h += G("Tools", ["controls", "map", "calendar", "vendors", "pbc", "spend", "budget"],
       S("Controls", `${L("#/grc/controls", "◇", "Control workbench", r.a === "controls")}${L("#/grc/map/iso", "⊞", "Framework map", r.a === "map")}${L("#/grc/calendar", "▦", "Evidence calendar", r.a === "calendar")}`) +
       S("Registers", `${L("#/grc/vendors", "⇄", "Vendor register", r.a === "vendors")}${L("#/grc/pbc", "☑", "PBC list", r.a === "pbc")}`) +
-      S("For leaders", `${L("#/grc/spend", "₹", "CEO and CFO guide", r.a === "spend")}`));
+      S("For leaders", `${L("#/grc/budget", "₹", "Budget planner", r.a === "budget")}${L("#/grc/spend", "❖", "CEO and CFO guide", r.a === "spend")}`));
     h += G("Practise", ["labs", "setup", "guide"], `<ol class="toc-list">${L("#/grc/labs", "◎", "Hands-on labs", r.a === "labs")}${L("#/grc/setup", "⚙", "Run CISO Assistant", r.a === "setup")}${L("#/grc/guide", "▤", "Field guide", r.a === "guide")}</ol>`);
     h += `<div class="toc-card"><b>${Math.round(done / all * 100)}%</b>of the GRC course · ${done} of ${all} lessons<div class="meter" style="margin-top:10px"><i style="width:${Math.round(done / all * 100)}%;background:#b8892a"></i></div></div>`;
     toc.innerHTML = h;
@@ -1772,7 +1772,7 @@
   /* second branch: Learn GRC (a full course) and the GRC Manager field guide, private to the owner's account */
   let grcLoading = null;
   App.loadGrc = () => loadGrc();
-  const loadGrc = () => window.GRC_COURSE && window.GRC_COURSE.length >= 10 && window.GRC_CONTROLS && window.ISO_2022 ? Promise.resolve() : (grcLoading = grcLoading || Promise.all(["grc-course-1", "grc-course-2", "grc-iso", "grc-controls-1", "grc-controls-2", "grc-oracle", "grc-visuals", "grc-briefings", "grc-landscape"].map(f => new Promise((ok, no) => {
+  const loadGrc = () => window.GRC_COURSE && window.GRC_COURSE.length >= 10 && window.GRC_CONTROLS && window.ISO_2022 ? Promise.resolve() : (grcLoading = grcLoading || Promise.all(["grc-course-1", "grc-course-2", "grc-iso", "grc-controls-1", "grc-controls-2", "grc-oracle", "grc-visuals", "grc-briefings", "grc-landscape", "grc-budget"].map(f => new Promise((ok, no) => {
     const sc = document.createElement("script"); sc.src = `assets/js/${f}.js?v=${(document.querySelector('script[src*="app.js"]').src.split("v=")[1] || "dev")}`; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc);
   }))).then(() => { (window.GRC_COURSE || []).sort((a, b) => a.n - b.n); }));   // the two course files can arrive in either order
   let libLoading = null;
@@ -2045,6 +2045,7 @@
       <a class="kicker" href="#/grc">← Learn GRC</a>
       <h1 class="h-display">Where to spend: a guide for the <em>CEO and CFO</em></h1>
       <p class="lede">What the GRC tools on this site are for, in business terms, and how to rank security and compliance spending: what is mandatory, what is essential, and what can wait.</p>
+      <a class="card grc-guide" href="#/grc/budget" style="margin:16px 0"><div><span class="kicker">Tool</span><h3>Security budget planner</h3><p>Describe your company and score the risks; see the spending range for a minimum, recommended or full programme, the loss it avoids, and the risk matrix before and after.</p></div><span class="start-arrow" aria-hidden="true">→</span></a>
       <h2 class="h-section">The tools, in one line each</h2>
       <div class="spend-tools">${P.tools.map(([t, h, what, q]) => `<a class="card spend-tool" href="${h}"><h3>${esc(t)} →</h3><p>${esc(what)}</p><p class="spend-q"><b>Answers:</b> ${esc(q)}</p></a>`).join("")}</div>
       <h2 class="h-section">Three levels of spending</h2>
@@ -2123,6 +2124,7 @@
     if (r.a === "vendors") return grcVendors();
     if (r.a === "landscape") return grcLandscape();
     if (r.a === "spend") return grcSpend();
+    if (r.a === "budget") return window.GRC_BUDGET ? window.GRC_BUDGET.view() : "";
     if (r.a === "briefings") return grcBriefings(r.b);
     if (r.a === "log") return grcLog();
     if (r.a === "shelf") return App.viewLibrary(true);
@@ -2215,7 +2217,7 @@
           : `<p class="hint" style="margin-top:0">No vendors yet. Add your own, or load six examples to practise tiering and spotting gaps.</p><a class="btn small" href="#/grc/vendors">Open the vendor register</a>`}
         ${B ? `<a class="gd-brief" href="#/grc/briefings/${B.id}"><span class="kicker">Latest briefing</span><b>${esc(B.t)}</b></a>` : ""}</section>
     </div>
-    <nav class="gd-quick" aria-label="Quick links">${[["#/grc/controls", "◇", "Workbench"], ["#/grc/map/iso", "⊞", "Framework map"], ["#/grc/calendar", "▦", "Evidence calendar"], ["#/grc/vendors", "⇄", "Vendors"], ["#/grc/landscape", "⚖", "Regulators"], ["#/grc/spend", "₹", "CEO and CFO guide"], ["#/grc/labs", "◎", "Labs"], ["#/grc/glossary", "Aa", "Glossary"]].map(([h, i, t]) => `<a href="${h}"><span aria-hidden="true">${i}</span>${t}</a>`).join("")}</nav>`;
+    <nav class="gd-quick" aria-label="Quick links">${[["#/grc/controls", "◇", "Workbench"], ["#/grc/map/iso", "⊞", "Framework map"], ["#/grc/calendar", "▦", "Evidence calendar"], ["#/grc/vendors", "⇄", "Vendors"], ["#/grc/landscape", "⚖", "Regulators"], ["#/grc/budget", "₹", "Budget planner"], ["#/grc/spend", "❖", "CEO and CFO guide"], ["#/grc/labs", "◎", "Labs"], ["#/grc/glossary", "Aa", "Glossary"]].map(([h, i, t]) => `<a href="${h}"><span aria-hidden="true">${i}</span>${t}</a>`).join("")}</nav>`;
   }
   async function grcDesk() {
     const st = App.grcStats(), T0 = await App.grcTime(), C = st.C;
@@ -2412,9 +2414,10 @@
       }
     }
     if (r.a === "vendors") bindVendors();
+    if (r.a === "budget" && window.GRC_BUDGET) window.GRC_BUDGET.bind();
     $$("[data-landf]").forEach(b => b.addEventListener("click", () => { landF = landF === b.dataset.landf ? "all" : b.dataset.landf; App.rerender(); }));
     $$("[data-glview]").forEach(b => b.addEventListener("click", () => { grcGview = b.dataset.glview; App.rerender(); }));
-    $$(".vz-mat").forEach(fig => { const L = +fig.dataset.l, I = +fig.dataset.i, g = fig.querySelector(".vz-grid"); let h = "";
+    $$(".vz-mat[data-l]").forEach(fig => { const L = +fig.dataset.l, I = +fig.dataset.i, g = fig.querySelector(".vz-grid"); let h = "";
       for (let l = 5; l >= 1; l--) { h += `<span class="vz-yl">${l}</span>`; for (let i = 1; i <= 5; i++) { const s = l * i, c = s >= 15 ? "c4" : s >= 10 ? "c3" : s >= 5 ? "c2" : "c1"; h += `<span class="vz-cell ${c} ${l === L && i === I ? "hit" : ""}">${l === L && i === I ? s : ""}</span>`; } }
       h += `<span></span>` + [1, 2, 3, 4, 5].map(i => `<span class="vz-xl">${i}</span>`).join(""); g.innerHTML = h; g.setAttribute("role", "img"); g.setAttribute("aria-label", `5 by 5 risk matrix, risk plotted at likelihood ${L}, impact ${I}, score ${L * I}`); });
     $$(".vz-sec").forEach(sec => { const t = sec.querySelector("h2").textContent; sec.querySelectorAll(".tbl-wrap").forEach((w, i) => w.setAttribute("aria-label", `${t}: table ${i + 1}`)); });
