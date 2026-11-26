@@ -530,14 +530,16 @@
       h += `</li>`; });
     h += `</ol></details>`;
     h += `<details class="toc-group" ${open(["", "insights", "notes", "log", "shelf"]) ? "open" : ""}><summary class="toc-head">You</summary><ol class="toc-list">${L("#/grc", "⌂", "GRC desk", !r.a)}${L("#/grc/insights", "◔", "Insights", r.a === "insights")}${L("#/grc/notes", "✎", "Notes", r.a === "notes")}${L("#/grc/log", "✗", "Mistakes log", r.a === "log")}${L("#/grc/shelf", "❏", "My shelf", r.a === "shelf")}</ol></details>`;
-    h += `<details class="toc-group" ${open(["library"]) ? "open" : ""}><summary class="toc-head">Library</summary><ol class="toc-list">
-      ${L("#/grc/library/iso-annex-a-2022", "§", "ISO 27001:2022 controls", r.b === "iso-annex-a-2022")}${L("#/grc/library/soc2-controls", "§", "SOC 2", r.b === "soc2-controls")}
-      ${L("#/grc/library/dpdp-sections-reference", "§", "DPDP Act and Rules", r.b === "dpdp-sections-reference")}${L("#/grc/library/tprm-lifecycle-and-monitoring", "§", "Third-party risk", r.b === "tprm-lifecycle-and-monitoring")}
-      ${L("#/grc/library", "❏", "All 46 documents", r.a === "library" && !r.b)}</ol></details>`;
-    h += `<details class="toc-group" ${open(["controls", "map", "calendar"]) ? "open" : ""}><summary class="toc-head">Controls</summary><ol class="toc-list">
-      ${L("#/grc/controls", "◇", "Control workbench", r.a === "controls")}${L("#/grc/map/iso", "⊞", "Framework map", r.a === "map")}${L("#/grc/calendar", "▦", "Evidence calendar", r.a === "calendar")}</ol></details>`;
-    h += `<details class="toc-group" ${open(["labs", "guide", "glossary", "pbc", "reading", "setup", "visuals", "vendors", "briefings"]) ? "open" : ""}><summary class="toc-head">Practise</summary><ol class="toc-list">
-      ${L("#/grc/labs", "◎", "Hands-on labs", r.a === "labs")}${L("#/grc/vendors", "⇄", "Vendor register", r.a === "vendors")}${L("#/grc/setup", "⚙", "Run CISO Assistant", r.a === "setup")}${L("#/grc/pbc", "☑", "PBC list", r.a === "pbc")}${L("#/grc/guide", "▤", "Field guide", r.a === "guide")}${L("#/grc/reading", "❡", "Reading room", r.a === "reading")}${L("#/grc/visuals", "◇", "Diagrams", r.a === "visuals")}${L("#/grc/briefings", "✦", "Briefings", r.a === "briefings")}${L("#/grc/glossary", "Aa", "GRC glossary", r.a === "glossary")}</ol></details>`;
+    const G = (title, keys, inner) => `<details class="toc-group" ${open(keys) ? "open" : ""}><summary class="toc-head">${title}</summary>${inner}</details>`;
+    const S = (t, items) => `<p class="toc-subhead">${t}</p><ol class="toc-list">${items}</ol>`;
+    h += G("Learn", ["library", "reading", "briefings", "visuals", "glossary", "landscape"],
+      S("Read", `${L("#/grc/library", "❏", "Library (46 documents)", r.a === "library")}${L("#/grc/briefings", "✦", "Briefings", r.a === "briefings")}${L("#/grc/reading", "❡", "Reading room", r.a === "reading")}`) +
+      S("Understand", `${L("#/grc/landscape", "⚖", "Regulators and standards", r.a === "landscape")}${L("#/grc/visuals", "◇", "Diagrams", r.a === "visuals")}${L("#/grc/glossary", "Aa", "GRC glossary", r.a === "glossary")}`));
+    h += G("Tools", ["controls", "map", "calendar", "vendors", "pbc", "spend"],
+      S("Controls", `${L("#/grc/controls", "◇", "Control workbench", r.a === "controls")}${L("#/grc/map/iso", "⊞", "Framework map", r.a === "map")}${L("#/grc/calendar", "▦", "Evidence calendar", r.a === "calendar")}`) +
+      S("Registers", `${L("#/grc/vendors", "⇄", "Vendor register", r.a === "vendors")}${L("#/grc/pbc", "☑", "PBC list", r.a === "pbc")}`) +
+      S("For leaders", `${L("#/grc/spend", "₹", "CEO and CFO guide", r.a === "spend")}`));
+    h += G("Practise", ["labs", "setup", "guide"], `<ol class="toc-list">${L("#/grc/labs", "◎", "Hands-on labs", r.a === "labs")}${L("#/grc/setup", "⚙", "Run CISO Assistant", r.a === "setup")}${L("#/grc/guide", "▤", "Field guide", r.a === "guide")}</ol>`);
     h += `<div class="toc-card"><b>${Math.round(done / all * 100)}%</b>of the GRC course · ${done} of ${all} lessons<div class="meter" style="margin-top:10px"><i style="width:${Math.round(done / all * 100)}%;background:#b8892a"></i></div></div>`;
     toc.innerHTML = h;
   }
@@ -1635,6 +1637,7 @@
     return `<div class="page grc-ccf">
       <a class="kicker" href="#/grc">← Learn GRC · Controls</a>
       <h1 class="h-display">Control <em>workbench</em></h1>
+      <p class="what-is"><b>In plain words:</b> the list of controls the company runs, who owns each, what evidence it leaves and whether it passed its test. It answers "are our controls actually working?" <a href="#/grc/spend">More for leaders</a></p>
       <p class="lede">One common set of controls for a managed SOC and critical-infrastructure provider. Each control meets requirements in several frameworks at once. Open a control to see what can go wrong, test each scenario and give it a rating. Your ratings are saved.</p>
       <div class="cf-stats">
         <div><b>${doms.length}</b><span>categories</span></div><div><b>${owners.length}</b><span>departments</span></div><div><b>${scopes.length}</b><span>scopes</span></div>
@@ -1697,6 +1700,7 @@
     return `<div class="page grc-map">
       <a class="kicker" href="#/grc/controls">← Control workbench</a>
       <h1 class="h-display">Framework <em>map</em></h1>
+      <p class="what-is"><b>In plain words:</b> one control usually satisfies several standards and regulators at once. The map shows which, so you build a control once and reuse it for ISO 27001, SOC 2, NIST, Indian rules and IEC 62443. <a href="#/grc/landscape">Which are mandatory?</a></p>
       <p class="lede">See any framework through the common controls. Pick a requirement to find the controls that meet it; open a control to see everything else it covers.</p>
       <div class="filters">${FWS.map(([k, l]) => `<a class="chip ${fw === k ? "on" : ""}" href="#/grc/map/${k}">${l}</a>`).join("")}</div>
       <p class="sub"><b>${covered} of ${total}</b> ${fw === "iso" ? "Annex A controls" : "requirements"} covered by at least one common control.</p>
@@ -1726,6 +1730,7 @@
     return `<div class="page grc-cal">
       <a class="kicker" href="#/grc/controls">← Control workbench</a>
       <h1 class="h-display">Evidence <em>calendar</em></h1>
+      <p class="what-is"><b>In plain words:</b> the evidence each department owes, month by month, so the audit isn't a last-minute scramble. Calm audits are shorter and cheaper. <a href="#/grc/spend">More for leaders</a></p>
       <p class="lede">Every control's evidence, planned for the next 12 months: monthly reports, quarterly reviews (March, June, September, December), half-yearly tests and annual reviews. Evidence is due on the 10th; chase the owner on the 3rd, a week before, not a month after.</p>
       <div class="cf-bar">${sel("owner", "Department", owners.map(o => [o, o]))}${sel("dom", "Category", doms.map(o => [o, o]))}${sel("scope", "Scope", scopes.map(o => [o, o]))}${sel("ev", "Cadence", [["M", "Monthly"], ["Q", "Quarterly"], ["H", "Half-yearly"], ["A", "Annual"]])}
         <button class="btn small" id="efCsv">Download the year plan</button></div>
@@ -1767,7 +1772,7 @@
   /* second branch: Learn GRC (a full course) and the GRC Manager field guide, private to the owner's account */
   let grcLoading = null;
   App.loadGrc = () => loadGrc();
-  const loadGrc = () => window.GRC_COURSE && window.GRC_COURSE.length >= 10 && window.GRC_CONTROLS && window.ISO_2022 ? Promise.resolve() : (grcLoading = grcLoading || Promise.all(["grc-course-1", "grc-course-2", "grc-iso", "grc-controls-1", "grc-controls-2", "grc-oracle", "grc-visuals", "grc-briefings"].map(f => new Promise((ok, no) => {
+  const loadGrc = () => window.GRC_COURSE && window.GRC_COURSE.length >= 10 && window.GRC_CONTROLS && window.ISO_2022 ? Promise.resolve() : (grcLoading = grcLoading || Promise.all(["grc-course-1", "grc-course-2", "grc-iso", "grc-controls-1", "grc-controls-2", "grc-oracle", "grc-visuals", "grc-briefings", "grc-landscape"].map(f => new Promise((ok, no) => {
     const sc = document.createElement("script"); sc.src = `assets/js/${f}.js?v=${(document.querySelector('script[src*="app.js"]').src.split("v=")[1] || "dev")}`; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc);
   }))));
   let libLoading = null;
@@ -2013,6 +2018,55 @@
       <p class="lede">Short, practical reads on what is happening now and how a GRC Manager should respond: the news, the risk, the controls, and what to tell the Board.</p>
       <div class="bf-list">${B.map(x => `<a class="card bf-card" href="#/grc/briefings/${x.id}"><span class="kicker">${esc(x.kicker)}</span><h3>${esc(x.t)}</h3><p>${esc(x.sum)}</p><small>◷ ${x.mins} min</small></a>`).join("")}</div></div>`;
   }
+
+  let landF = "all";
+  function grcLandscape() {
+    const L = window.GRC_LANDSCAPE || [], ST = window.GRC_STATUS || {};
+    const all = L.flatMap(g => g.items.map(x => x.concat(g.id)));
+    const count = k => all.filter(x => x[2] === k).length;
+    return `<div class="page grc-land">
+      <a class="kicker" href="#/grc">← Learn GRC</a>
+      <h1 class="h-display">Regulators and <em>standards</em></h1>
+      <p class="lede">Who regulates what in India, the laws that apply to everyone, the sector rule books, the standards clients ask for, and the foreign laws that can still reach an Indian company. Each one is tagged: mandatory by law, mandatory in a sector, required by clients, or voluntary.</p>
+      <div class="land-key">${Object.entries(ST).map(([k, [t, d]]) => `<button class="land-st ${k} ${landF === k ? "on" : ""}" data-landf="${k}" aria-pressed="${landF === k}"><b>${t}</b><span>${d}</span><small>${count(k)}</small></button>`).join("")}</div>
+      ${landF !== "all" ? `<p><button class="btn small ghost" data-landf="all">Show everything</button></p>` : ""}
+      <nav class="chips vz-chips" aria-label="Sections">${L.map(g => `<a class="chip" href="#/grc/landscape" data-jump="ld-${g.id}">${esc(g.t)}</a>`).join("")}</nav>
+      ${L.map(g => { const its = g.items.filter(x => landF === "all" || x[2] === landF); if (!its.length) return "";
+        return `<section class="land-sec" id="ld-${g.id}"><h2 class="h-section">${esc(g.t)}</h2><p class="sub">${esc(g.sub)}</p>
+        <div class="land-list">${its.map(([n, by, st, who, what, u]) => `<article class="card land-item"><div class="land-top"><h3>${esc(n)}</h3><span class="land-tag ${st}">${esc((ST[st] || [st])[0])}</span></div>
+          <p class="land-by">${esc(by)}</p><dl><dt>Applies to</dt><dd>${esc(who)}</dd><dt>What it asks</dt><dd>${esc(what)}</dd></dl>
+          ${u ? `<a class="rr-link" href="${esc(u)}" target="_blank" rel="noopener">Official site ↗</a>` : ""}</article>`).join("")}</div></section>`; }).join("")}
+      <p class="hint">A summary for learning, checked against public sources in November 2026. Rules change: confirm the current text with the regulator before relying on it. For what to spend on first, see <a href="#/grc/spend">the guide for the CEO and CFO</a>.</p>
+    </div>`;
+  }
+  function grcSpend() {
+    const P = window.GRC_SPEND; if (!P) return "";
+    return `<div class="page-narrow grc-spend">
+      <a class="kicker" href="#/grc">← Learn GRC</a>
+      <h1 class="h-display">Where to spend: a guide for the <em>CEO and CFO</em></h1>
+      <p class="lede">What the GRC tools on this site are for, in business terms, and how to rank security and compliance spending: what is mandatory, what is essential, and what can wait.</p>
+      <h2 class="h-section">The tools, in one line each</h2>
+      <div class="spend-tools">${P.tools.map(([t, h, what, q]) => `<a class="card spend-tool" href="${h}"><h3>${esc(t)} →</h3><p>${esc(what)}</p><p class="spend-q"><b>Answers:</b> ${esc(q)}</p></a>`).join("")}</div>
+      <h2 class="h-section">Three levels of spending</h2>
+      ${P.tiers.map((t, i) => `<section class="card spend-tier ${t.id}"><div class="spend-head"><span class="spend-n">${i + 1}</span><div><h3>${esc(t.t)}</h3><p class="sub">${esc(t.sub)}</p></div></div>
+        <div class="tbl-wrap"><table class="tbl"><thead><tr><th>What</th><th>What it involves</th><th>Why it matters</th></tr></thead><tbody>${t.items.map(([a, b, c]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td><td>${esc(c)}</td></tr>`).join("")}</tbody></table></div></section>`).join("")}
+      <h2 class="h-section">How much: rough planning ranges</h2>
+      <p class="sub">For a mid-sized Indian company of a few hundred people. These are rough ranges for planning only; real prices vary with scope, size and supplier, so get at least three quotes.</p>
+      <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Item</th><th>Typical range</th></tr></thead><tbody>${P.costs.map(([a, b]) => `<tr><td>${esc(a)}</td><td class="nowrap">${esc(b)}</td></tr>`).join("")}</tbody></table></div>
+      <h2 class="h-section">How to decide: a worked example</h2>
+      <div class="card spend-eg">
+        <p><b>Risk:</b> ransomware stops the SOC platform and client services.</p>
+        <p><b>Today:</b> likely about once in five years (20% a year). Impact about ₹5 crore (lost revenue, penalties, recovery). Expected loss: 20% × ₹5 crore = <b>₹1 crore a year</b>.</p>
+        <p><b>Proposal:</b> immutable backups, restore tests and EDR for ₹30 lakh a year cuts the likelihood to about 5%: expected loss ₹25 lakh a year.</p>
+        <p><b>Result:</b> ₹75 lakh of expected loss avoided for ₹30 lakh spent. Worth doing. A control that costs more than the loss it avoids usually isn't, unless a law requires it.</p>
+      </div>
+      <h2 class="h-section">The order to spend in</h2>
+      <ol class="spend-order"><li>Close gaps in anything <b>mandatory</b>.</li><li>Fund the <b>essential</b> basics that treat your top 5 risks.</li><li>Buy the certifications your clients and tenders actually ask for.</li><li>Then the good-to-haves, starting with whatever saves staff time.</li></ol>
+      <h2 class="h-section">Questions to ask your CISO or GRC Manager</h2>
+      <ul class="spend-qs"><li>Which mandatory requirements are we not meeting today, and what is the deadline?</li><li>What are our top five risks in rupees, before and after the controls we pay for?</li><li>Which controls have been tested this quarter, and which failed?</li><li>Which vendors could stop our business, and do we have a way out?</li><li>If we were breached tonight, could we report to CERT-In within 6 hours?</li><li>Which spending would you cut first if the budget fell by 20%, and what risk would that leave?</li></ul>
+      <p class="hint">See also: <a href="#/grc/landscape">Regulators and standards</a> · <a href="#/grc/visuals/matrix">Risk matrix before and after</a> · <a href="#/grc/vendors">Vendor register</a>. Penalty figures are from the DPDP Act schedule.</p>
+    </div>`;
+  }
   function grcVisuals(sec) {
     const V = window.GRC_VISUALS || [];
     return `<div class="page grc-visuals">
@@ -2067,6 +2121,8 @@
     if (r.a === "setup") return grcSetup();
     if (r.a === "visuals") return grcVisuals(r.b);
     if (r.a === "vendors") return grcVendors();
+    if (r.a === "landscape") return grcLandscape();
+    if (r.a === "spend") return grcSpend();
     if (r.a === "briefings") return grcBriefings(r.b);
     if (r.a === "log") return grcLog();
     if (r.a === "shelf") return App.viewLibrary(true);
@@ -2321,6 +2377,7 @@
       }
     }
     if (r.a === "vendors") bindVendors();
+    $$("[data-landf]").forEach(b => b.addEventListener("click", () => { landF = landF === b.dataset.landf ? "all" : b.dataset.landf; App.rerender(); }));
     $$("[data-glview]").forEach(b => b.addEventListener("click", () => { grcGview = b.dataset.glview; App.rerender(); }));
     $$(".vz-mat").forEach(fig => { const L = +fig.dataset.l, I = +fig.dataset.i, g = fig.querySelector(".vz-grid"); let h = "";
       for (let l = 5; l >= 1; l--) { h += `<span class="vz-yl">${l}</span>`; for (let i = 1; i <= 5; i++) { const s = l * i, c = s >= 15 ? "c4" : s >= 10 ? "c3" : s >= 5 ? "c2" : "c1"; h += `<span class="vz-cell ${c} ${l === L && i === I ? "hit" : ""}">${l === L && i === I ? s : ""}</span>`; } }
