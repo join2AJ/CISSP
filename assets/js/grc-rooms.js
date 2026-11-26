@@ -44,7 +44,8 @@ window.GRC_ROOMS = [
         { from: "Anita, CISO, Meridian Finance", subj: "Draft report?", body: "Okay, send me the draft. Keep it short." } ],
       desk: [
         { t: "What you know", d: "Times, affected server, the new admin account, the destination of the upload, containment at 02:05, data types involved." },
-        { t: "What you don't know yet", d: "How the attacker got in; whether other servers are affected." }],
+        { t: "What you don't know yet", d: "How the attacker got in; whether other servers are affected." },
+        { t: "CERT-In incident form", d: "Organisation, Point of Contact, incident type, time occurred and noticed, affected systems, symptoms, indicators, actions taken, others informed. A filled-in sample is in Briefings." }],
       q: "What goes into the initial CERT-In report?",
       opts: [
         { t: "Wait until the root cause is known so the report is complete", s: 0, fb: "That could take days. The rule is about speed; mark it initial and update later." },
@@ -71,7 +72,7 @@ window.GRC_ROOMS = [
       { t: "No SOC could have detected this attack any earlier.", good: false, why: "The disabled rule would have caught it 8 minutes earlier." },
       { t: "We suggest you don't tell customers until the investigation is finished.", good: false, why: "DPDP requires telling affected people; delay is a legal risk for Meridian." }] },
   debrief: ["The clock starts when an incident is noticed, not when it is convenient.", "The affected organisation owns its regulatory reports; the service provider makes them easy and on time.", "Personal data triggers DPDP duties on top of CERT-In and the sector regulator.", "A change made without approval (here, a disabled rule) is a control failure: record it, fix it, review similar changes."],
-  links: [["Module 9: Incidents and continuity", "#/grc/m9"], ["Module 7: DPDP and CERT-In", "#/grc/m7"], ["INC-02 Incident logging and regulatory notification", "#/grc/controls/INC-02"], ["CHG-01 Change management", "#/grc/controls/CHG-01"]] },
+  links: [["How to report: CERT-In and the Data Protection Board, with sample filings", "#/grc/briefings/reporting"], ["Module 9: Incidents and continuity", "#/grc/m9"], ["Module 7: DPDP and CERT-In", "#/grc/m7"], ["INC-02 Incident logging and regulatory notification", "#/grc/controls/INC-02"], ["CHG-01 Change management", "#/grc/controls/CHG-01"]] },
 
 { id: "friday-signing", t: "Signed by Friday", level: "Beginner", mins: 20, mod: "m6",
   brief: "Marketing wants a new AI chatbot on the website by Friday. The contract is ready to sign. You have three days to decide whether it is safe, and on what terms.",

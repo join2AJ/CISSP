@@ -1,6 +1,115 @@
 /* LearNtime - GRC briefings. Written for LearNtime in our own words. News facts are summarised from the linked reports;
    MITRE ATT&CK® is a registered trademark of The MITRE Corporation, used here with attribution under its terms of use. */
 window.GRC_BRIEFINGS = [
+{ id: "reporting", kicker: "Incident reporting · India", date: "2026-11-26", mins: 12,
+  t: "How to report: CERT-In and the Data Protection Board",
+  sum: "Who files what, by when, and what each filing looks like: a filled-in CERT-In report, the Data Protection Board intimation, the customer message and the 72-hour report, using the 6-hour clock case.",
+  html: `<p class="lede-s">When personal data is stolen in India, two different reports usually follow. CERT-In wants to know about the <b>cyber incident</b> within 6 hours. The Data Protection Board wants to know about the <b>personal data breach</b>, first straight away and then in detail within 72 hours. Different regulators, different clocks, different people filing. Below: who does what, the steps, and what each filing actually looks like, using the Meridian Finance case from the <a href="#/grc/rooms/six-hours">6-hour clock</a> room.</p>
+
+<h2>Who files what</h2>
+<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Who</th><th>Role in reporting</th></tr></thead><tbody>
+<tr><td>SOC analyst and incident lead</td><td>Detect, confirm, contain, and record the times: when the incident was noticed starts every clock.</td></tr>
+<tr><td><b>GRC Manager</b></td><td>Owns the reporting checklist: which regulators, which deadlines, who files. Starts the clock log, drafts the reports from the incident facts, chases approvals, makes sure each one is filed on time, and keeps the acknowledgements as evidence. Usually does <b>not</b> press "submit" personally.</td></tr>
+<tr><td>CISO, as CERT-In Point of Contact</td><td>Every organisation must give CERT-In a named Point of Contact. That person (often the CISO) sends the CERT-In report and answers CERT-In's follow-up questions.</td></tr>
+<tr><td>DPO or privacy lead</td><td>Sends the breach intimation to the Data Protection Board and the notices to affected people, on behalf of the Data Fiduciary.</td></tr>
+<tr><td>Legal</td><td>Reviews wording quickly. Legal review must fit inside the deadline, not delay it.</td></tr>
+<tr><td>CEO and Board</td><td>Told early; approve public statements and customer communication.</td></tr>
+<tr><td>Compliance (sector)</td><td>Reports to the sector regulator if there is one, for example the RBI for banks, NBFCs and payment operators, which also has a 6-hour expectation.</td></tr>
+</tbody></table></div>
+<div class="bf-case"><b>If you are the service provider, not the owner of the data.</b> Kavach SOC runs Meridian's monitoring, but the data and the customers are Meridian's. Meridian is the <b>Data Fiduciary</b>: it reports to CERT-In for its own systems and to the Data Protection Board. Kavach, as a <b>Data Processor</b>, tells Meridian at once (the contract said 2 hours), gives accurate facts, and helps draft. Agree in writing who files what so nothing is missed or filed twice.</div>
+
+<h2>The clocks, on one line</h2>
+<ol class="bf-time">
+<li><b>01:55</b><span>Incident noticed by the SOC. Every clock starts here.</span></li>
+<li><b>03:55</b><span>Contract deadline: Kavach tells Meridian (2 hours).</span></li>
+<li><b>07:55</b><span>CERT-In deadline (6 hours). Meridian files an initial report at 07:30.</span></li>
+<li><b>Same day</b><span>DPDP: intimation to the Data Protection Board and to affected customers "without delay".</span></li>
+<li><b>+72 hours</b><span>DPDP: detailed report to the Board (the Board can allow more time on request).</span></li>
+</ol>
+
+<h2>Filing with CERT-In: step by step</h2>
+<ol>
+<li><b>Check it is reportable.</b> The 2022 Directions list the incident types (for example targeted scans, compromise of systems, unauthorised access to data, data breach, data leak, ransomware, attacks on servers and cloud). Data taken from a file server is clearly in.</li>
+<li><b>Fill in CERT-In's Incident Reporting Form</b> (download it from cert-in.org.in). Mandatory fields first; add optional detail if you have it. Don't wait for the root cause.</li>
+<li><b>Send it</b> by email to <code>incident@cert-in.org.in</code>, through CERT-In's online incident reporting, or by phone or fax using the numbers on cert-in.org.in. The sender should be your registered Point of Contact.</li>
+<li><b>Keep the proof:</b> the sent email, time stamp, and CERT-In's acknowledgement or ticket number. File them with the incident record.</li>
+<li><b>Send updates</b> as you learn more, quoting the same reference, and answer CERT-In's questions on time. Logs must be available (the Directions require 180 days, kept in India).</li>
+</ol>
+
+<h3>Sample: CERT-In incident report (initial)</h3>
+<div class="bf-form" aria-label="Sample CERT-In incident report">
+<div class="bf-form-h"><b>Incident Reporting Form</b><span>Initial report · sent 07:30</span></div>
+<dl>
+<dt>Organisation</dt><dd>Meridian Finance Ltd (NBFC), Mumbai</dd>
+<dt>Sector</dt><dd>Finance: non-banking financial company</dd>
+<dt>Point of Contact</dt><dd>Anita Rao, CISO · anita.rao@meridian.example · +91 98200 00000</dd>
+<dt>Type of incident</dt><dd>Unauthorised access to IT systems and data; data breach (exfiltration)</dd>
+<dt>Date and time occurred</dt><dd>Unknown start; first malicious activity seen 01:32 IST (new local admin account)</dd>
+<dt>Date and time noticed</dt><dd>01:55 IST, by managed SOC provider (Kavach SOC)</dd>
+<dt>Affected systems</dt><dd>1 host: file server FS-02 (Windows Server 2019), 10.20.4.15. Number of hosts affected: 1 to 10</dd>
+<dt>Symptoms observed</dt><dd>New local administrator account; about 4 GB uploaded to an unknown cloud storage service between 01:36 and 01:52</dd>
+<dt>Indicators</dt><dd>Destination 203.0.113.45 (storage.example-files.net); account name "svc_bkp2"</dd>
+<dt>Data involved</dt><dd>KYC documents (PAN and Aadhaar scans, loan forms), about 12,000 customers. Under investigation</dd>
+<dt>Actions taken</dt><dd>Server isolated 02:05; account disabled; destination blocked at the firewall; logs and disk image preserved; password reset for privileged accounts in progress</dd>
+<dt>Others informed</dt><dd>RBI (being informed today); Data Protection Board and customers (being informed today)</dd>
+<dt>Status</dt><dd>Contained, investigation ongoing. Root cause not yet known. Update to follow within 24 hours.</dd>
+</dl></div>
+<p class="hint">Field names follow CERT-In's incident reporting form; download the current version before you use it, as CERT-In updates it. Names, numbers and addresses here are made up.</p>
+
+<h2>Telling the Data Protection Board</h2>
+<div class="bf-case"><b>When this applies.</b> The DPDP Rules were notified on 13 November 2025. The breach-reporting rule (Rule 7) comes into force on <b>13 May 2027</b>, 18 months later. Until then, CERT-In reporting and your contracts still apply, and building the process now is good practice: from May 2027 it is the law.</div>
+<ol>
+<li><b>Initial intimation, without delay:</b> as soon as you know personal data was breached, tell the Board what happened, how much, when and where, and the likely impact on people. Short and factual.</li>
+<li><b>Tell each affected person</b>, in plain language, through the usual channel (email, SMS, app): what happened, the likely consequences, what you are doing, what they can do to protect themselves, and who to contact.</li>
+<li><b>Detailed report within 72 hours:</b> updated facts, the circumstances and cause, what you have done to reduce the harm, what you know about who did it, steps to stop it happening again, and a report on the notices sent to people. Ask the Board in writing if you need more time.</li>
+<li><b>Keep everything:</b> drafts, approvals, what was sent and when.</li>
+</ol>
+
+<h3>Sample: initial intimation to the Data Protection Board</h3>
+<div class="bf-form" aria-label="Sample initial intimation to the Data Protection Board">
+<div class="bf-form-h"><b>Personal data breach: initial intimation</b><span>Sent the same day, 14:00</span></div>
+<dl>
+<dt>Data Fiduciary</dt><dd>Meridian Finance Ltd · contact: Data Protection Officer, dpo@meridian.example</dd>
+<dt>What happened</dt><dd>An attacker gained administrator access to one file server and uploaded files to an external cloud storage service.</dd>
+<dt>When</dt><dd>Between 01:32 and 01:52 IST on 25 November; noticed 01:55; contained 02:05.</dd>
+<dt>Where</dt><dd>File server in the Mumbai office data room.</dd>
+<dt>Extent</dt><dd>About 12,000 customers. KYC documents: PAN and Aadhaar card images, loan application forms (name, address, date of birth, income).</dd>
+<dt>Likely impact</dt><dd>Risk of identity fraud and loans taken in customers' names; phishing using their details.</dd>
+<dt>Next</dt><dd>Customers are being told today. Detailed report to follow within 72 hours.</dd>
+</dl></div>
+
+<h3>Sample: message to an affected customer</h3>
+<div class="bf-form bf-mail" aria-label="Sample message to an affected customer">
+<div class="bf-form-h"><b>Important: your KYC documents</b><span>SMS and email</span></div>
+<p>Dear Ms Sharma, on 25 November someone gained unauthorised access to one of our servers and copied files that included your PAN and Aadhaar card images and your loan application. We stopped it within half an hour and are working with the authorities.</p>
+<p>What this could mean: someone may try to use your details to apply for loans or to send you convincing fake messages.</p>
+<p>What you can do: check your credit report for loans you don't recognise; lock your Aadhaar biometrics in the mAadhaar app; never share OTPs. We will never ask for your OTP or password.</p>
+<p>Questions: call our helpline 1800 000 0000 (free, 8 am to 8 pm) or write to dpo@meridian.example. Meridian Finance.</p>
+</div>
+
+<h3>Sample: detailed report to the Board within 72 hours (headings)</h3>
+<ol class="bf-heads">
+<li><b>Updated facts:</b> two servers affected, not one; 12,412 customers confirmed.</li>
+<li><b>Circumstances and cause:</b> stolen VPN password of a vendor engineer without MFA; admin account created; monitoring rule for new admin accounts had been disabled.</li>
+<li><b>Measures to reduce harm:</b> credit-monitoring offer to all affected customers; fraud alert shared with credit bureaus; takedown request to the storage provider.</li>
+<li><b>Findings about the attacker:</b> indicators shared with CERT-In; investigation with the police cyber cell.</li>
+<li><b>Steps to prevent a repeat:</b> MFA for all remote access by 30 November; rule-change approval enforced; vendor access review.</li>
+<li><b>Notices to people:</b> 12,412 SMS and emails sent on 25 November; 2,110 helpline calls answered.</li>
+</ol>
+
+<h2>The GRC Manager's checklist</h2>
+<ul>
+<li>Clock log started, with the time noticed agreed by everyone.</li>
+<li>List of regulators and contracts that must be told, with deadlines.</li>
+<li>Owner named for each filing (CERT-In: PoC; Board and customers: DPO; sector regulator: compliance).</li>
+<li>Drafts ready from templates, legal review booked inside the deadline.</li>
+<li>Proof of every submission saved with the incident record.</li>
+<li>After the incident: lessons learned, control fixes, and the templates updated.</li>
+</ul>
+<p class="bf-try"><b>Practise it:</b> play the <a href="#/grc/rooms/six-hours">6-hour clock</a> room, then compare your choices with this page.</p>
+<p class="bf-src">Sources: <a href="https://www.cert-in.org.in/" target="_blank" rel="noopener">CERT-In</a> (Directions of 28 April 2022, FAQs and the incident reporting form) · <a href="https://www.meity.gov.in/data-protection-framework" target="_blank" rel="noopener">MeitY: DPDP Act and Rules</a> · <a href="https://www.dpdpa.com/dpdparules/rule7.html" target="_blank" rel="noopener">DPDP Rule 7 text</a> · <a href="https://www.taxmann.com/post/blog/personal-data-breach-intimation-rule-7-dpdp" target="_blank" rel="noopener">Taxmann on Rule 7</a> · <a href="https://www.dsci.in/files/content/knowledge-centre/2025/Insight-Brief-on-DPDP-Rules.pdf" target="_blank" rel="noopener">DSCI brief on the DPDP Rules</a> · <a href="https://nishithdesai.com/research-and-articles/hotline/technology-law-analysis/cert-in-releases-faqs-explaining-the-direction-on-cybersecurity-6139" target="_blank" rel="noopener">Nishith Desai on the CERT-In FAQs</a>. Check the official texts before relying on this page.</p>
+` },
+
 { id: "geopolitics", kicker: "Third-party risk · geopolitics", date: "2026-11-26", mins: 9,
   t: "What if your cloud vendor gets political?",
   sum: "Sanctions can switch off a service you pay for, even when your own company has done nothing wrong. How to find that exposure, check your contracts and build a way out before you need it.",
