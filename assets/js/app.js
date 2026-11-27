@@ -310,6 +310,10 @@
   App.setBranch = b => { try { localStorage.setItem("cissp.branch", b); } catch (e) {} };
   App.inGrc = r => r.page === "grc" || (SHARED.includes(r.page) && App.branch() === "grc" && App.isPrivileged());
   // Which course a page belongs to: "cissp", "grc", or null for pages that belong to the whole site (choose, profile, privacy, admin, sign-in)
+  // Tags: plain words, stored next to a file (never inside it)
+  App.parseTags = str => [...new Set(String(str || "").split(/[,#\n]+/).map(t => t.trim().replace(/\s+/g, " ").slice(0, 30)).filter(Boolean))].slice(0, 20);
+  App.editTags = (cur, name) => { const v = prompt(`Tags for ${name}\nSeparate tags with commas, e.g. SOC 2, Q3, access review`, (cur || []).join(", ")); return v === null ? null : App.parseTags(v); };
+  App.tagChips = (tags, attr) => (tags || []).map(t => `<button type="button" class="tagchip" ${attr}="${esc(t)}">#${esc(t)}</button>`).join("");
   App.course = r => r.page === "grc" ? "grc" : CISSP_ONLY.includes(r.page) || ["revision", "notes", "tracker", "latest", "tactics"].includes(r.page) ? "cissp" : null;
   const noteBranch = r => { if (r.page === "grc") App.setBranch("grc"); else if (CISSP_ONLY.includes(r.page)) App.setBranch("cissp"); };
 

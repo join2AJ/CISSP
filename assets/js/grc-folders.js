@@ -8,7 +8,8 @@
   const size = b => b < 1024 ? b + " B" : b < 1048576 ? (b / 1024).toFixed(1) + " KB" : b < 1073741824 ? (b / 1048576).toFixed(1) + " MB" : (b / 1073741824).toFixed(2) + " GB";
   const when = t => new Date(t).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
   const FMT = { zip: ["ZIP (.zip)", "application/zip", "zip"], tgz: ["tar.gz (.tar.gz)", "application/gzip", "tar.gz"] };
-  let idb = null, q = "", busy = "", fmt = "zip";
+  let idb = null, q = "", busy = "", fmt = "zip", ftag = "";
+  async function setTags(id, tags) { await tx(["files"], "readwrite", async t => { const s = t.objectStore("files"), f = await req(s.get(id)); if (f) { f.tags = tags; s.put(f); } }); }
 
   /* ---------- storage ---------- */
   const open = () => idb || (idb = new Promise((ok, no) => {
@@ -26,7 +27,10 @@
   async function touch(id) { await tx(["folders"], "readwrite", async t => { const s = t.objectStore("folders"), f = await req(s.get(id)); if (f) { f.updated = Date.now(); s.put(f); } }); }
   async function addBlobs(folderId, list) {   // list: [{ name, path, blob }]
     try { if (navigator.storage && navigator.storage.persist) await navigator.storage.persist(); } catch (e) {}
-    await tx(["files"], "readwrite", t => { const s = t.objectStore("files"); list.forEach(x => s.put({ id: uid(), folder: folderId, name: x.name, path: x.path || "", type: x.blob.type || "", size: x.blob.size, added: Date.now(), blob: x.blob })); });
+    const rows = [];
+    for (const x of list) { let sha = ""; try { sha = [...new Uint8Array(await crypto.subtle.digest("SHA-256", await x.blob.arrayBuffer()))].map(b => b.toString(16).padStart(2, "0")).join(""); } catch (e) {}
+      rows.push({ id: uid(), folder: folderId, name: x.name, path: x.path || "", type: x.blob.type || "", size: x.blob.size, added: Date.now(), sha, tags: x.tags || [], blob: x.blob }); }
+    await tx(["files"], "readwrite", t => { const s = t.objectStore("files"); rows.forEach(r => s.put(r)); });
     await touch(folderId);
   }
   async function delFolder(id) { const fs = await files(id); await tx(["files", "folders"], "readwrite", t => { fs.forEach(f => t.objectStore("files").delete(f.id)); t.objectStore("folders").delete(id); }); }
@@ -81,6 +85,9 @@
     const F = FMT[kind], base = folder.name.replace(/[^\w\- ]+/g, "_").trim() || "folder";
     const entries = [];
     for (const f of list) entries.push({ name: base + "/" + (f.path ? f.path.replace(/^\/+|\/+$/g, "") + "/" : "") + f.name, data: new Uint8Array(await f.blob.arrayBuffer()) });
+    const q = c => { c = String(c ?? ""); return /[",\n]/.test(c) ? `"${c.replace(/"/g, '""')}"` : c; };
+    const index = [["File", "Folder path", "Size (bytes)", "Added", "SHA-256", "Tags"]].concat(list.map(f => [f.name, f.path || "", f.size, new Date(f.added).toISOString(), f.sha || "", (f.tags || []).join("; ")])).map(r => r.map(q).join(",")).join("\r\n");
+    entries.push({ name: base + "/_index.csv", data: new TextEncoder().encode("\ufeff" + index) });
     const blob = kind === "tgz" ? await makeTgz(entries) : await makeZip(entries);
     return new File([blob], base + "." + F[2], { type: F[1] });
   }
@@ -99,7 +106,7 @@
       <p class="hint">${size(used)} used by your folders${est && est.quota ? ` · about ${size(Math.max(0, est.quota - est.usage))} free in this browser` : ""}. Clearing your browser's site data deletes these folders, so save anything important online or download it. To unpack an archive into a folder, use <a href="#/grc/unpack">Unpack archives</a>.</p></div>`;
     const f = F.find(x => x.id === id);
     if (!f) return `<div class="page-narrow"><a class="kicker" href="#/grc/folders">← My folders</a><h1 class="h-display">Folder not found</h1><p class="lede">It may have been deleted, or it was created in another browser.</p></div>`;
-    const fs = all.filter(x => x.folder === id).sort((a, b) => (a.path + a.name).localeCompare(b.path + b.name)), shown = fs.filter(x => !q || (x.path + x.name).toLowerCase().includes(q.toLowerCase())), tot = fs.reduce((n, x) => n + x.size, 0);
+    const fs = all.filter(x => x.folder === id).sort((a, b) => (a.path + a.name).localeCompare(b.path + b.name)), shown = fs.filter(x => (!q || (x.path + x.name + " " + (x.tags || []).join(" ")).toLowerCase().includes(q.toLowerCase())) && (!ftag || (x.tags || []).includes(ftag))), tot = fs.reduce((n, x) => n + x.size, 0);
     return `<div class="page grc-folders"><a class="kicker" href="#/grc/folders">← My folders</a>
       <div class="fd-head"><div><h1 class="h-display fd-title">${esc(f.name)}</h1><p class="sub">${fs.length} file${fs.length === 1 ? "" : "s"} · ${size(tot)} · created ${when(f.created)}</p></div>
         <div class="btn-row"><button class="btn small" id="fdRename">Rename</button><button class="btn small ghost" id="fdDel">Delete folder</button></div></div>
@@ -110,9 +117,10 @@
         <div class="form-row"><label>Format<select id="fdFmt">${Object.entries(FMT).map(([k, v]) => `<option value="${k}" ${fmt === k ? "selected" : ""}>${v[0]}</option>`).join("")}</select></label></div>
         <div class="btn-row"><button class="btn primary small" id="fdZipDl">Compress and download</button><button class="btn small" id="fdZipSave" ${db.mode === "cloud" && db.user ? "" : "disabled title='Sign in to save online'"}>Compress and save online</button></div>
         <p class="hint">ZIP opens on any computer or phone; tar.gz is common on Linux. Online copies go to <a href="#/grc/shelf">My shelf</a> (up to 50 MB), where you can delete them later.</p></section>` : ""}
-      ${fs.length ? `<input type="search" id="fdQ" class="grc-libq" placeholder="Search this folder" value="${esc(q)}" aria-label="Search this folder">
+      ${fs.length ? `<input type="search" id="fdQ" class="grc-libq" placeholder="Search names and tags" value="${esc(q)}" aria-label="Search this folder">
+      ${(() => { const T = [...new Set(fs.flatMap(x => x.tags || []))].sort(); return T.length ? `<div class="tag-bar"><span class="sub">Tags:</span>${T.map(t => `<button type="button" class="tagchip ${ftag === t ? "on" : ""}" data-fdtag="${esc(t)}" aria-pressed="${ftag === t}">#${esc(t)}</button>`).join("")}${ftag ? `<button type="button" class="tag-edit" data-fdtag="">Show all</button>` : ""}</div>` : ""; })()}
       <div class="tbl-wrap"><table class="tbl up-tbl"><thead><tr><th>File</th><th>Size</th><th>Added</th><th>Actions</th></tr></thead><tbody>
-        ${shown.map(x => `<tr><td class="up-name"><b>${esc(x.name)}</b>${x.path ? `<small>${esc(x.path)}</small>` : ""}</td><td class="num">${size(x.size)}</td><td>${when(x.added)}</td>
+        ${shown.map(x => `<tr><td class="up-name"><b>${esc(x.name)}</b>${x.path ? `<small>${esc(x.path)}</small>` : ""}${x.sha ? `<small title="SHA-256 ${x.sha}">SHA-256 ${x.sha.slice(0, 12)}…</small>` : ""}<div class="tag-row">${(x.tags || []).map(t => `<button type="button" class="tagchip" data-fdtag="${esc(t)}">#${esc(t)}</button>`).join("")}<button type="button" class="tag-edit" data-fdtagedit="${x.id}">${(x.tags || []).length ? "Edit tags" : "+ Add tags"}</button></div></td><td class="num">${size(x.size)}</td><td>${when(x.added)}</td>
           <td class="up-act"><button class="btn small" data-fddl="${x.id}">Download</button><button class="btn small ghost" data-fdrm="${x.id}" aria-label="Remove ${esc(x.name)}">Remove</button></td></tr>`).join("")}</tbody></table></div>` : `<p class="sub">This folder is empty. Add files above.</p>`}
     </div>`;
   }
@@ -130,6 +138,8 @@
     const rn = $("#fdRename"); if (rn) rn.addEventListener("click", async () => { const cur = $(".fd-title").textContent, n = prompt("New name for this folder", cur); if (n && n.trim()) { await rename(id, n.trim()); rr(); } });
     const dl0 = $("#fdDel"); if (dl0) dl0.addEventListener("click", async () => { if (confirm("Delete this folder and every file in it? This can't be undone.")) { await delFolder(id); location.hash = "#/grc/folders"; } });
     const qi = $("#fdQ"); if (qi) qi.addEventListener("input", () => { q = qi.value; clearTimeout(qi._t); qi._t = setTimeout(() => { rr(); setTimeout(() => { const n = $("#fdQ"); if (n) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); } }, 30); }, 250); });
+    $$("[data-fdtag]").forEach(b => b.addEventListener("click", () => { ftag = ftag === b.dataset.fdtag ? "" : b.dataset.fdtag; rr(); }));
+    $$("[data-fdtagedit]").forEach(b => b.addEventListener("click", async () => { const fs = await files(id), x = fs.find(y => y.id === b.dataset.fdtagedit); if (!x) return; const t = A.editTags(x.tags, x.name); if (t === null) return; await setTags(x.id, t); A.toast(t.length ? "Tags saved" : "Tags removed"); rr(); }));
     $$("[data-fddl]").forEach(b => b.addEventListener("click", async () => { const fs = await files(id), x = fs.find(y => y.id === b.dataset.fddl); if (x) dl(x.blob, x.name); }));
     $$("[data-fdrm]").forEach(b => b.addEventListener("click", async () => { const fs = await files(id), x = fs.find(y => y.id === b.dataset.fdrm); if (x && confirm(`Remove ${x.name} from this folder?`)) { await delFile(x.id); await touch(id); rr(); } }));
     const fm = $("#fdFmt"); if (fm) fm.addEventListener("change", () => { fmt = fm.value; });
@@ -144,5 +154,5 @@
     const zd = $("#fdZipDl"); if (zd) zd.addEventListener("click", () => run(false));
     const zs = $("#fdZipSave"); if (zs) zs.addEventListener("click", () => run(true));
   }
-  window.GRC_FOLDERS = { view, bind, addFolder, addBlobs };
+  window.GRC_FOLDERS = { view, bind, addFolder, addBlobs, list: async () => { const [F, all] = await Promise.all([folders(), allFiles()]); return { folders: F, files: all }; } };
 })();

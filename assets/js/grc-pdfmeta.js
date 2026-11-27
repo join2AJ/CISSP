@@ -4,7 +4,13 @@
 (function () {
   "use strict";
   const A = window.App, { esc, $, $$ } = A;
-  let pdfjs = null, docs = [], busy = "";
+  let pdfjs = null, docs = [], busy = "", saved = null;
+  async function savedList() {
+    const out = [];
+    try { if (A.db && A.db.mode === "cloud" && A.db.user) (await A.db.resources()).filter(r => r.kind === "file" && /\.pdf$/i.test(r.storage_path || r.title || "")).forEach(r => out.push({ key: "s:" + r.id, src: "online", name: r.title, tags: r.tags || [], r })); } catch (e) {}
+    try { if (window.GRC_FOLDERS) { const { folders, files } = await window.GRC_FOLDERS.list(); files.filter(f => /\.pdf$/i.test(f.name)).forEach(f => out.push({ key: "f:" + f.id, src: (folders.find(x => x.id === f.folder) || { name: "folder" }).name, name: f.name, tags: f.tags || [], f })); } } catch (e) {}
+    return out;
+  }
   const load = async () => { if (!pdfjs) { pdfjs = await import(new URL("assets/vendor/pdfjs/pdf.min.mjs", location.href).href); pdfjs.GlobalWorkerOptions.workerSrc = new URL("assets/vendor/pdfjs/pdf.worker.min.mjs", location.href).href; } return pdfjs; };
   const size = b => b < 1024 ? b + " B" : b < 1048576 ? (b / 1024).toFixed(1) + " KB" : (b / 1048576).toFixed(1) + " MB";
   // PDF dates look like D:20261027101500+05'30'
@@ -55,7 +61,7 @@
 
   const ROWS = [
     ["File", d => d.name], ["Size", d => size(d.size)], ["SHA-256", d => d.sha.slice(0, 16) + "…", d => d.sha], ["PDF version", d => d.info.PDFFormatVersion || d.scan.header],
-    ["Pages", d => d.pages || "-"], ["Page size", d => d.pageSize || "-"], ["Title", d => d.info.Title || "-"], ["Author", d => d.info.Author || "-"], ["Subject", d => d.info.Subject || "-"],
+    ["Source", d => d.from || "This device"], ["Tags", d => (d.tags || []).map(t => "#" + t).join(" ") || "-"], ["Pages", d => d.pages || "-"], ["Page size", d => d.pageSize || "-"], ["Title", d => d.info.Title || "-"], ["Author", d => d.info.Author || "-"], ["Subject", d => d.info.Subject || "-"],
     ["Keywords", d => d.info.Keywords || "-"], ["Creator (app)", d => d.info.Creator || d.xmp["xmp:creatortool"] || "-"], ["Producer", d => d.info.Producer || d.xmp["pdf:producer"] || "-"],
     ["Created", d => showDate(d.created)], ["Modified", d => showDate(d.modified)], ["Saved over (incremental updates)", d => d.scan.incr],
     ["Digital signatures", d => d.scan.sigs || "none"], ["Form fields", d => d.scan.forms ? "yes" : "no"], ["JavaScript", d => d.scan.js ? "yes" : "no"], ["Attached files", d => d.scan.embedded ? "yes" : "no"],
@@ -63,11 +69,15 @@
     ["XMP document ID", d => d.xmp["xmpmm:documentid"] || "-"], ["XMP instance ID", d => d.xmp["xmpmm:instanceid"] || "-"]
   ];
 
-  function view() {
+  async function view() {
+    if (saved === null) saved = await savedList();
     return `<div class="page grc-pdfmeta"><a class="kicker" href="#/grc">← Learn GRC · Tools</a>
       <h1 class="h-display">PDF <em>metadata check</em></h1>
       <p class="lede">See what a PDF says about itself: which app made it, when it was created and modified, whether it was saved over afterwards, signatures, and a fingerprint (SHA-256) for your evidence records. Load several PDFs to compare them side by side. Read-only: files stay on your device and aren't changed.</p>
       <label class="up-drop" id="pmDrop"><input type="file" id="pmFiles" accept="application/pdf,.pdf" multiple hidden><span class="up-ico" aria-hidden="true">⌕</span><b>Choose PDFs</b><span>one to inspect, two or more to compare</span></label>
+      ${saved.length ? `<details class="card pm-saved" ${docs.length ? "" : "open"}><summary>Or pick from your saved files (${saved.length} PDF${saved.length > 1 ? "s" : ""})</summary>
+        <div class="pm-list">${saved.map(x => `<label class="check"><input type="checkbox" data-pmpick="${esc(x.key)}"><span><b>${esc(x.name)}</b><small>${x.src === "online" ? "Saved online" : "My folders · " + esc(x.src)}${x.tags.length ? " · " + x.tags.map(t => "#" + esc(t)).join(" ") : ""}</small></span></label>`).join("")}</div>
+        <button class="btn small primary" id="pmPickGo">Check selected</button></details>` : ""}
       ${busy ? `<p class="up-busy" role="status">${esc(busy)}</p>` : ""}
       ${docs.length ? `<div class="btn-row"><button class="btn small" id="pmCsv">Download comparison (Excel)</button><button class="btn small ghost" id="pmClear">Clear all</button></div>
       <h2 class="h-section">${docs.length > 1 ? "Side by side" : "Details"}</h2>
@@ -92,7 +102,13 @@
     const fi = $("#pmFiles"); if (fi) fi.addEventListener("change", () => add(fi.files));
     const dr = $("#pmDrop"); if (dr) { ["dragenter", "dragover"].forEach(ev => dr.addEventListener(ev, e => { e.preventDefault(); dr.classList.add("over"); })); ["dragleave", "drop"].forEach(ev => dr.addEventListener(ev, e => { e.preventDefault(); dr.classList.remove("over"); })); dr.addEventListener("drop", e => add(e.dataTransfer.files)); }
     $$("[data-pmrm]").forEach(b => b.addEventListener("click", () => { docs.splice(+b.dataset.pmrm, 1); rr(); }));
-    const cl = $("#pmClear"); if (cl) cl.addEventListener("click", () => { docs = []; rr(); });
+    const cl = $("#pmClear"); if (cl) cl.addEventListener("click", () => { docs = []; saved = null; rr(); });
+    const pg = $("#pmPickGo"); if (pg) pg.addEventListener("click", async () => { const keys = $$("[data-pmpick]").filter(c => c.checked).map(c => c.dataset.pmpick); if (!keys.length) return A.toast("Tick at least one file.");
+      for (let i = 0; i < keys.length; i++) { const x = saved.find(y => y.key === keys[i]); busy = `Reading ${x.name} (${i + 1} of ${keys.length})…`; rr();
+        try { let blob; if (x.f) blob = x.f.blob; else { const url = await A.db.fileUrl(x.r.storage_path, 120); const res = await fetch(url); if (!res.ok) throw new Error("download"); blob = await res.blob(); }
+          const d = await analyse(new File([blob], x.name, { type: "application/pdf" })); d.tags = x.tags; d.from = x.src === "online" ? "Saved online" : "My folders"; docs.push(d); }
+        catch (e) { A.toast(`Couldn't read ${x.name}.`); } }
+      busy = ""; rr(); });
     const cs = $("#pmCsv"); if (cs) cs.addEventListener("click", () => {
       const q = c => { c = String(c ?? ""); return /[",\n]/.test(c) ? `"${c.replace(/"/g, '""')}"` : c; };
       const rows = ROWS.map(([k, f, full]) => [k].concat(docs.map(d => full ? full(d) : f(d))));

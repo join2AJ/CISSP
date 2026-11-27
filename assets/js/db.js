@@ -162,6 +162,10 @@
       }
       must(await sb.from("resources").insert(Object.assign({ user_id: uid(), storage_path }, r)));
     },
+    async setTags(r, tags) {
+      if (!cloud) { const all = L.get("resources", []); const x = all.find(y => y.id === r.id); if (x) x.tags = tags; L.set("resources", all); return; }
+      must(await sb.from("resources").update({ tags }).eq("id", r.id).eq("user_id", uid()));
+    },
     async deleteResource(r) {
       if (!cloud) { L.set("resources", L.get("resources", []).filter(x => x.id !== r.id)); return; }
       if (r.storage_path) await sb.storage.from("learner-files").remove([r.storage_path]);

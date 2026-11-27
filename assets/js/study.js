@@ -498,7 +498,7 @@
     list = list.filter(r => grc ? isGrcRes(r) : !isGrcRes(r));
     A._lib = list;
     if (grc) return viewShelf(list);
-    const shown = list.filter(r => libFilter === "all" || r.domain === libFilter || (libFilter === "none" && !r.domain));
+    const shown = list.filter(r => (libFilter === "all" || r.domain === libFilter || (libFilter === "none" && !r.domain)) && (!tagFilter || (r.tags || []).includes(tagFilter)));
     return `<div class="page-narrow">
       <div class="kicker">My library</div>${A.branchTabs("cissp", "#/library", "#/grc/shelf")}
       <h1 class="h-display">Your own <em>shelf</em></h1>
@@ -509,7 +509,7 @@
           <label style="flex:2;min-width:220px">Title<input id="rTitle" maxlength="200" placeholder="e.g. Kerberos explained in 10 minutes"></label>
           <label>Domain<select id="rDom"><option value="">Any</option>${D.map(d => `<option value="${d.id}">D${d.n} ${esc(d.short)}</option>`).join("")}</select></label>
         </div>
-        <div class="seg-tabs" role="tablist"><button class="on" data-rk="link">Link or YouTube</button><button data-rk="file" ${db.mode === "cloud" ? "" : "disabled title='Needs the online database'"}>Upload a file</button></div>
+        <div class="seg-tabs" role="group" aria-label="What to add"><button class="on" data-rk="link">Link or YouTube</button><button data-rk="file" ${db.mode === "cloud" ? "" : "disabled title='Needs the online database'"}>Upload a file</button></div>
         <div class="form-row" id="rLinkRow"><label style="flex:1">URL<input id="rUrl" type="url" placeholder="https://www.youtube.com/watch?v=…"></label></div>
         <div class="form-row" id="rFileRow" hidden><label style="flex:1">File (PDF, Word, PowerPoint, Excel, images, text · max 20 MB)<input id="rFile" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.png,.jpg,.jpeg,.webp,.txt,.md"></label></div>
         <div class="form-row"><label style="flex:1">Note (optional)<textarea id="rNote" maxlength="1000" placeholder="Why it helps, which minutes to watch…"></textarea></label></div>
@@ -517,21 +517,25 @@
         <p class="hint">Only upload material you have the right to share. Don’t upload personal data about other people.</p>
       </div>
       <div class="filters" style="margin-top:30px"><button class="chip ${libFilter === "all" ? "on" : ""}" data-lf="all">All (${list.length})</button>${D.map(d => `<button class="chip ${libFilter === d.id ? "on" : ""}" data-lf="${d.id}" style="${dc(d)}"><i></i>D${d.n}</button>`).join("")}</div>
+      ${tagBar(list)}
       <div class="lib-list">${shown.length ? shown.map(r => {
         const y = r.kind === "video" ? ytId(r.url) : null, d = r.domain && byId[r.domain];
         return `<div class="lib-item" style="${d ? dc(d) : ""}">
           ${y ? `<button class="yt" data-yt="${y}" aria-label="Play video"><img src="https://i.ytimg.com/vi/${y}/hqdefault.jpg" alt="" loading="lazy"><span>▶</span></button>` : `<div class="res-ico">${r.kind === "file" ? "▤" : "↗"}</div>`}
           <div class="lib-body"><div class="lib-meta">${d ? `<span class="toc-dot" style="display:inline-block;background:var(--${d.id})"></span> D${d.n} · ` : ""}${r.kind === "file" ? "Document" : r.kind === "video" ? "Video" : "Link"} · ${fmtD(r.created_at)}</div>
             <h4>${r.kind === "file" ? `<a href="#" data-open="${esc(r.storage_path)}">${esc(r.title)}</a>` : `<a href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">${esc(r.title)} ↗</a>`}</h4>
-            ${r.note ? `<p>${esc(r.note)}</p>` : ""}</div>
+            ${r.note ? `<p>${esc(r.note)}</p>` : ""}
+            <div class="tag-row">${A.tagChips(r.tags, "data-tagf")}<button type="button" class="tag-edit" data-tagedit="${esc(r.id)}">${(r.tags || []).length ? "Edit tags" : "+ Add tags"}</button>${r.kind === "file" && /\.pdf$/i.test(r.storage_path || r.title || "") ? `<a class="tag-edit" href="#/grc/pdfmeta">Check metadata</a>` : ""}</div></div>
           <button class="del" data-rdel="${esc(r.id)}" aria-label="Delete">×</button></div>`;
       }).join("") : `<p class="sub">Nothing here yet. Add the video that finally made subnetting click.</p>`}</div>
     </div>`;
   }
-  let shelfFilter = "all";
+  let shelfFilter = "all", tagFilter = "";
+  const tagBar = list => { const all = [...new Set(list.flatMap(r => r.tags || []))].sort((a, b) => a.localeCompare(b));
+    return all.length ? `<div class="tag-bar"><span class="sub">Tags:</span>${all.map(t => `<button type="button" class="tagchip ${tagFilter === t ? "on" : ""}" data-tagf="${esc(t)}" aria-pressed="${tagFilter === t}">#${esc(t)} <small>${list.filter(r => (r.tags || []).includes(t)).length}</small></button>`).join("")}${tagFilter ? `<button type="button" class="tag-edit" data-tagf="">Show all</button>` : ""}</div>` : ""; };
   function viewShelf(list) {
     const C = window.GRC_COURSE || [], name = d => { const m = C.find(x => "grc-" + x.id === d); return m ? `${m.n}. ${m.short || m.title}` : "General"; };
-    const shown = list.filter(r => shelfFilter === "all" || r.domain === shelfFilter);
+    const shown = list.filter(r => (shelfFilter === "all" || r.domain === shelfFilter) && (!tagFilter || (r.tags || []).includes(tagFilter)));
     return `<div class="page-narrow">
       <div class="kicker">My shelf · GRC</div>${A.branchTabs("grc", "#/library", "#/grc/shelf")}
       <h1 class="h-display">Your GRC <em>shelf</em></h1>
@@ -542,7 +546,7 @@
           <label style="flex:2;min-width:220px">Title<input id="rTitle" maxlength="200" placeholder="e.g. A good SOC 2 readiness checklist"></label>
           <label>Module<select id="rDom"><option value="grc">General</option>${C.map(m => `<option value="grc-${m.id}">${m.n}. ${esc(m.short || m.title)}</option>`).join("")}</select></label>
         </div>
-        <div class="seg-tabs" role="tablist"><button class="on" data-rk="link">Link or YouTube</button><button data-rk="file" ${db.mode === "cloud" ? "" : "disabled title='Needs the online database'"}>Upload a file</button></div>
+        <div class="seg-tabs" role="group" aria-label="What to add"><button class="on" data-rk="link">Link or YouTube</button><button data-rk="file" ${db.mode === "cloud" ? "" : "disabled title='Needs the online database'"}>Upload a file</button></div>
         <div class="form-row" id="rLinkRow"><label style="flex:1">URL<input id="rUrl" type="url" placeholder="https://…"></label></div>
         <div class="form-row" id="rFileRow" hidden><label style="flex:1">File (PDF, Word, PowerPoint, Excel, images, text · max 20 MB)<input id="rFile" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.png,.jpg,.jpeg,.webp,.txt,.md"></label></div>
         <div class="form-row"><label style="flex:1">Note (optional)<textarea id="rNote" maxlength="1000" placeholder="Why it helps, which part to read…"></textarea></label></div>
@@ -550,18 +554,23 @@
         <p class="hint">Only upload material you have the right to share. Don’t upload real client evidence or personal data.</p>
       </div>
       <div class="filters" style="margin-top:30px"><button class="chip ${shelfFilter === "all" ? "on" : ""}" data-sf="all">All (${list.length})</button>${["grc"].concat(C.map(m => "grc-" + m.id)).filter(d => list.some(r => r.domain === d)).map(d => `<button class="chip ${shelfFilter === d ? "on" : ""}" data-sf="${d}">${esc(name(d))}</button>`).join("")}</div>
+      ${tagBar(list)}
       <div class="lib-list">${shown.length ? shown.map(r => { const y = r.kind === "video" ? ytId(r.url) : null;
         return `<div class="lib-item">
           ${y ? `<button class="yt" data-yt="${y}" aria-label="Play video"><img src="https://i.ytimg.com/vi/${y}/hqdefault.jpg" alt="" loading="lazy"><span>▶</span></button>` : `<div class="res-ico">${r.kind === "file" ? "▤" : "↗"}</div>`}
           <div class="lib-body"><div class="lib-meta">${esc(name(r.domain))} · ${r.kind === "file" ? "Document" : r.kind === "video" ? "Video" : "Link"} · ${fmtD(r.created_at)}</div>
             <h4>${r.kind === "file" ? `<a href="#" data-open="${esc(r.storage_path)}">${esc(r.title)}</a>` : `<a href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">${esc(r.title)} ↗</a>`}</h4>
-            ${r.note ? `<p>${esc(r.note)}</p>` : ""}</div>
+            ${r.note ? `<p>${esc(r.note)}</p>` : ""}
+            <div class="tag-row">${A.tagChips(r.tags, "data-tagf")}<button type="button" class="tag-edit" data-tagedit="${esc(r.id)}">${(r.tags || []).length ? "Edit tags" : "+ Add tags"}</button>${r.kind === "file" && /\.pdf$/i.test(r.storage_path || r.title || "") ? `<a class="tag-edit" href="#/grc/pdfmeta">Check metadata</a>` : ""}</div></div>
           <button class="del" data-rdel="${esc(r.id)}" aria-label="Delete">×</button></div>`; }).join("") : `<p class="sub">Nothing here yet. Add the template or article you keep going back to.</p>`}</div>
     </div>`;
   }
   A.viewLibrary = viewLibrary;
   A.bindLibrary = (grc) => bindLibrary(grc);
   function bindLibrary(grc) {
+    $$("[data-tagf]").forEach(b => b.addEventListener("click", () => { tagFilter = tagFilter === b.dataset.tagf ? "" : b.dataset.tagf; A.rerender(); }));
+    $$("[data-tagedit]").forEach(b => b.addEventListener("click", async () => { const r = (A._lib || []).find(x => String(x.id) === b.dataset.tagedit); if (!r) return;
+      const t = A.editTags(r.tags, r.title); if (t === null) return; try { await db.setTags(r, t); A.toast(t.length ? "Tags saved" : "Tags removed"); A.rerender(); } catch (e) { A.toast(A.errMsg(e)); } }));
     $$("[data-sf]").forEach(b => b.addEventListener("click", () => { shelfFilter = b.dataset.sf; A.rerender(); }));
     let kind = "link";
     $$("[data-rk]").forEach(b => b.addEventListener("click", () => { kind = b.dataset.rk; $$("[data-rk]").forEach(x => x.classList.toggle("on", x === b)); $("#rLinkRow").hidden = kind !== "link"; $("#rFileRow").hidden = kind !== "file"; }));
