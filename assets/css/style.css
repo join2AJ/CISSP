@@ -2363,3 +2363,8 @@ td.nowrap { white-space: nowrap; }
 .pm-saved { margin: 8px 0 14px; } .pm-saved summary { cursor: pointer; font-weight: 600; min-height: 32px; }
 .pm-list { display: grid; gap: 4px; margin: 10px 0; max-height: 320px; overflow: auto; }
 .pm-list .check { display: flex; gap: 10px; align-items: flex-start; padding: 8px 4px; border-bottom: 1px solid var(--rule-2); } .pm-list b { display: block; font-size: 14px; word-break: break-all; } .pm-list small { color: var(--ink-2); font-size: 12.5px; }
+
+.pm-all { display: flex; gap: 10px; align-items: center; padding: 8px 4px; border-bottom: 1px solid var(--rule-2); margin-top: 8px; }
+.pm-list-tbl td, .pm-list-tbl th { white-space: nowrap; } .pm-list-tbl td.pm-fn { white-space: normal; min-width: 180px; font-weight: 600; } .pm-list-tbl td.pm-fn small { display: block; font-weight: 400; color: var(--ink-2); }
+.pm-flag { display: inline-grid; place-items: center; min-width: 24px; height: 24px; border-radius: 999px; background: color-mix(in srgb, #c9a227 35%, transparent); font-weight: 700; font-size: 12.5px; }
+.pm-one { margin-top: 8px; }
