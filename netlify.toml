@@ -46,3 +46,13 @@
   for = "/resources/*.pdf"
   [headers.values]
     Content-Type = "application/pdf"
+
+[[headers]]
+  for = "/assets/vendor/pdfjs/*.mjs"
+  [headers.values]
+    Content-Type = "text/javascript; charset=utf-8"
+
+[[headers]]
+  for = "/assets/vendor/libarchive/*.wasm"
+  [headers.values]
+    Content-Type = "application/wasm"

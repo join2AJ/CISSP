@@ -67,3 +67,7 @@ they are credited anyway.
 `assets/vendor/libarchive/` is libarchive.js 2.0.2 by Nika Begiashvili, MIT licence (see `licenses/libarchive.js-MIT.txt`).
 It bundles a WebAssembly build of libarchive (BSD 2-Clause, the libarchive project) and Comlink (Apache License 2.0, Google LLC).
 Unchanged from the npm package.
+
+## PDF.js (PDF metadata check)
+
+`assets/vendor/pdfjs/` is PDF.js 4.10.38 (pdfjs-dist) by Mozilla, Apache License 2.0 (see `licenses/pdf.js-APACHE-2.0.txt`). Unchanged.

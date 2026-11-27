@@ -2342,3 +2342,13 @@ td.nowrap { white-space: nowrap; }
 .fd-drop { padding: 26px 16px; margin: 16px 0 8px; }
 .fd-zip { margin: 18px 0; border-top: 4px solid var(--accent); } .fd-zip h2 { font-family: var(--display); font-size: 20px; margin: 0 0 10px; } .fd-zip label { font-size: 14px; }
 .grc-folders .grc-libq { margin: 8px 0 10px; width: 100%; }
+
+/* PDF metadata check */
+.pm-tbl th, .pm-tbl td { font-size: 13.5px; vertical-align: top; overflow-wrap: anywhere; } .pm-tbl tbody th { font-weight: 600; white-space: nowrap; text-align: left; }
+.pm-tbl td.pm-diff { background: color-mix(in srgb, #c9a227 22%, transparent); font-weight: 600; }
+.pm-x { margin-left: 6px; border: 1px solid var(--rule); border-radius: 6px; background: var(--card); min-width: 28px; min-height: 28px; }
+.pm-sig { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; } .pm-sig h3 { font-size: 16px; margin: 0 0 8px; word-break: break-all; }
+.pm-sig ul { list-style: none; padding: 0 !important; margin: 0 0 10px !important; display: grid; gap: 6px; } .pm-sig li { margin: 0; padding: 8px 10px; border-radius: 8px; background: var(--paper-2); font-size: 14px; line-height: 1.45; border-left: 4px solid var(--rule); }
+.pm-sig li.warn { border-left-color: #c9a227; } .pm-sig li.good { border-left-color: var(--good); } .pm-sig li.info { border-left-color: var(--accent); }
+.pm-hash { font-size: 12px; word-break: break-all; } .pm-xmp { display: grid; grid-template-columns: minmax(120px, 35%) 1fr; gap: 4px 10px; font-size: 12.5px; margin: 8px 0 0; } .pm-xmp dt { color: var(--ink-2); word-break: break-all; } .pm-xmp dd { margin: 0; word-break: break-all; }
+.pm-how { margin-top: 20px; } .pm-how ul { font-size: 14.5px; line-height: 1.6; padding-left: 20px; }
