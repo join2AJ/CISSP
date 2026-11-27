@@ -2332,3 +2332,13 @@ td.nowrap { white-space: nowrap; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
 @media (max-width: 600px) { .up-act { white-space: normal; } }
 .up-warn { margin-top: 12px; border-left: 4px solid var(--gold-ink); font-size: 15px; line-height: 1.55; }
+
+/* My folders */
+.fd-new { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; margin: 18px 0; } .fd-new label { flex: 1; min-width: 220px; font-size: 14px; } .fd-new input { width: 100%; }
+.fd-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.fd-card { display: grid; gap: 2px; text-decoration: none; } .fd-card b { font-size: 16px; word-break: break-word; } .fd-card small { color: var(--ink-2); font-size: 13px; }
+.fd-ico { font-size: 26px; color: var(--gold-ink); }
+.fd-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; } .fd-head .sub { margin: 4px 0 0; } .fd-title { word-break: break-word; }
+.fd-drop { padding: 26px 16px; margin: 16px 0 8px; }
+.fd-zip { margin: 18px 0; border-top: 4px solid var(--accent); } .fd-zip h2 { font-family: var(--display); font-size: 20px; margin: 0 0 10px; } .fd-zip label { font-size: 14px; }
+.grc-folders .grc-libq { margin: 8px 0 10px; width: 100%; }

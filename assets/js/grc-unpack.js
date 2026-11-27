@@ -36,7 +36,7 @@
           <li>${online() ? "Saved files go to your private folder (max 50 MB each) and appear in <a href=\"#/grc/shelf\">My shelf</a>, where you can delete them." : "Saving online needs you to be signed in; downloading works anyway."}</li></ul>`
       : `<section class="card up-head"><div><span class="kicker">Open archive</span><h2>${esc(cur.name)}</h2>
           <p class="sub">${size(cur.size)} · ${cur.entries.length} file${cur.entries.length === 1 ? "" : "s"} · ${size(total)} unpacked${cur.enc ? " · password protected" : ""}</p></div>
-          <div class="btn-row"><button class="btn small" id="upSaveArc" ${online() && cur.size <= MAX_ONLINE ? "" : "disabled"} title="${cur.size > MAX_ONLINE ? "Over 50 MB" : ""}">Save the archive online</button><button class="btn small ghost" id="upClose">Close</button></div></section>
+          <div class="btn-row"><button class="btn small primary" id="upToFolder" ${cur.enc && /^(7z|rar)$/.test(ext(cur.name)) ? "disabled" : ""}>Copy all into a new folder</button><button class="btn small" id="upSaveArc" ${online() && cur.size <= MAX_ONLINE ? "" : "disabled"} title="${cur.size > MAX_ONLINE ? "Over 50 MB" : ""}">Save the archive online</button><button class="btn small ghost" id="upClose">Close</button></div></section>
         ${cur.enc && /^(7z|rar)$/.test(ext(cur.name)) ? `<div class="card up-warn" role="status"><b>This ${ext(cur.name).toUpperCase()} file is password protected.</b> The browser engine can list its files but can't decrypt ${ext(cur.name).toUpperCase()} encryption. Open it with 7-Zip on your computer, or ask the sender for a password-protected ZIP instead. You can still save the archive online as it is.</div>` : cur.enc && !cur.pw ? `<form class="card up-pw" id="upPw"><label>Password for this archive<input type="password" id="upPwIn" autocomplete="off" required></label><button class="btn primary small">Unlock</button><p class="hint">The password is used only in your browser and isn't stored.</p></form>` : ""}
         ${busy ? `<p class="up-busy" role="status">${esc(busy)}</p>` : ""}
         <div class="up-tools"><input type="search" id="upQ" class="grc-libq" placeholder="Search files" value="${esc(q)}" aria-label="Search files in the archive">
@@ -103,6 +103,13 @@
     $("#upSaveSel").addEventListener("click", async () => { const list = [...sel].filter(i => typeOf(cur.entries[i].name) && (cur.entries[i].size || 0) <= MAX_ONLINE), skipped = sel.size - list.length;
       let n = 0; for (const i of list) { busy = `Saving ${n + 1} of ${list.length}…`; rr(); try { if (!cur.entries[i].saved) await saveOnline(i); n++; } catch (e) { A.toast(A.errMsg ? A.errMsg(e) : "Couldn't save one of the files."); break; } }
       busy = ""; sel = new Set(); rr(); A.toast(`Saved ${n} file${n === 1 ? "" : "s"} to My shelf${skipped ? `; ${skipped} skipped (type or size)` : ""}.`); });
+    $("#upToFolder").addEventListener("click", async () => {
+      if (!window.GRC_FOLDERS) return A.toast("Folders aren't available here.");
+      const n = cur.entries.length; let done = 0; const out = [];
+      try { for (let i = 0; i < n; i++) { busy = `Unpacking ${i + 1} of ${n}…`; if (i % 5 === 0) rr(); const b = await extract(i); out.push({ name: cur.entries[i].name, path: cur.entries[i].path.replace(/\/+$/, ""), blob: b }); done++; }
+        const f = await window.GRC_FOLDERS.addFolder(cur.name.replace(/\.(7z|zip|rar|tar|gz|tgz|bz2|tbz2|xz|txz|cab|iso)$/i, "").replace(/\.tar$/i, ""));
+        await window.GRC_FOLDERS.addBlobs(f.id, out); busy = ""; A.toast(`Copied ${done} files into a new folder`); location.hash = "#/grc/folders/" + f.id; }
+      catch (e) { busy = ""; rr(); fail(); } });
     $("#upSaveArc").addEventListener("click", async e => { const b = e.target, t = typeOf(cur.name) || "application/octet-stream"; b.disabled = true; b.textContent = "Saving…";
       try { await db.addResource({ title: cur.name.slice(0, 200), kind: "file", domain: "grc", note: `Archive, ${cur.entries.length} files` }, new File([cur.file], cur.name, { type: t })); A.toast("Archive saved to My shelf"); b.textContent = "Saved ✓"; }
       catch (x) { b.disabled = false; b.textContent = "Save the archive online"; A.toast(A.errMsg ? A.errMsg(x) : "Couldn't save the archive."); } });
