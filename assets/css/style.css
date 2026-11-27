@@ -2368,3 +2368,6 @@ td.nowrap { white-space: nowrap; }
 .pm-list-tbl td, .pm-list-tbl th { white-space: nowrap; } .pm-list-tbl td.pm-fn { white-space: normal; min-width: 180px; font-weight: 600; } .pm-list-tbl td.pm-fn small { display: block; font-weight: 400; color: var(--ink-2); }
 .pm-flag { display: inline-grid; place-items: center; min-width: 24px; height: 24px; border-radius: 999px; background: color-mix(in srgb, #c9a227 35%, transparent); font-weight: 700; font-size: 12.5px; }
 .pm-one { margin-top: 8px; }
+
+.pm-failed td { color: var(--ink-2); } .pm-bad { color: var(--bad) !important; font-weight: 600; white-space: normal !important; min-width: 180px; }
+.tbl-wrap { position: relative; }

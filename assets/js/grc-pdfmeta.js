@@ -4,7 +4,10 @@
 (function () {
   "use strict";
   const A = window.App, { esc, $, $$ } = A;
-  let pdfjs = null, docs = [], busy = "", saved = null, focus = -1;
+  let pdfjs = null, docs = [], busy = "", saved = null, focus = -1, autoRan = false;
+  // a row for a file that couldn't be read, so it still shows in the table
+  const failedDoc = (x, reason) => ({ key: x.key, name: x.name, size: 0, sha: "", failed: true, error: reason, info: {}, xmp: {}, pages: 0, pageSize: "",
+    scan: { header: "-", eofs: 0, xrefs: 0, sigs: 0, js: false, embedded: false, forms: false, encrypted: false, incr: 0 }, tags: x.tags, uploaded: x.up, from: x.src === "online" ? "Saved online" : "My folders · " + x.src });
   async function savedList() {
     const out = [];
     try { if (A.db && A.db.mode === "cloud" && A.db.user) (await A.db.resources()).filter(r => r.kind === "file" && /\.pdf$/i.test(r.storage_path || r.title || "")).forEach(r => out.push({ key: "s:" + r.id, src: "online", name: r.title, tags: r.tags || [], up: r.created_at ? new Date(r.created_at) : null, r })); } catch (e) {}
@@ -30,6 +33,7 @@
     const scan = { header: head, eofs: count(/%%EOF/g), xrefs: count(/startxref/g), sigs: count(/\/ByteRange\s*\[/g), js: count(/\/(JavaScript|JS)\b/g) > 0,
       embedded: count(/\/EmbeddedFile\b/g) > 0, forms: /\/AcroForm\b/.test(raw), encrypted: /\/Encrypt\b/.test(raw), incr: Math.max(0, count(/%%EOF/g) - 1) };
     const out = { name: file.name, size: file.size, sha, scan, info: {}, xmp: {}, pages: 0, pageSize: "", error: "" };
+    if (head === "?") return Object.assign(out, { failed: true, error: u8.length ? "Not a PDF file (no PDF header)" : "The file is empty", scan: Object.assign(scan, { header: "-" }) });
     try {
       const { getDocument } = await load();
       const doc = await getDocument({ data: u8.slice(), isEvalSupported: false, stopAtErrors: false }).promise;
@@ -46,6 +50,7 @@
   }
 
   function signals(d) {
+    if (d.failed) return [["warn", "Couldn't be read: " + d.error]];
     const s = [], gap = d.created && d.modified ? (d.modified - d.created) / 60000 : 0;
     if (d.scan.incr > 0) s.push(["warn", `Saved over ${d.scan.incr} time${d.scan.incr > 1 ? "s" : ""} after it was first written (incremental updates). Common after form filling, signing or editing.`]);
     if (gap > 2) s.push(["warn", `Modified ${gap > 1440 ? Math.round(gap / 1440) + " days" : gap > 60 ? Math.round(gap / 60) + " hours" : Math.round(gap) + " minutes"} after it was created.`]);
@@ -60,12 +65,12 @@
   }
 
   const ROWS = [
-    ["File", d => d.name], ["Size", d => size(d.size)], ["SHA-256", d => d.sha.slice(0, 16) + "…", d => d.sha], ["PDF version", d => d.info.PDFFormatVersion || d.scan.header],
+    ["File", d => d.name], ["Status", d => d.failed ? "Couldn't read: " + d.error : d.error ? "Partly read: " + d.error : "Read"], ["Size", d => d.failed ? "-" : size(d.size)], ["SHA-256", d => d.sha ? d.sha.slice(0, 16) + "…" : "-", d => d.sha || "-"], ["PDF version", d => d.info.PDFFormatVersion || d.scan.header],
     ["Source", d => d.from || "This device"], ["Uploaded to LearNtime", d => d.uploaded ? showDate(d.uploaded) : "Not saved (checked from this device)"], ["Date on your device", d => d.deviceDate ? showDate(d.deviceDate) : "-"], ["Tags", d => (d.tags || []).map(t => "#" + t).join(" ") || "-"], ["Pages", d => d.pages || "-"], ["Page size", d => d.pageSize || "-"], ["Title", d => d.info.Title || "-"], ["Author", d => d.info.Author || "-"], ["Subject", d => d.info.Subject || "-"],
     ["Keywords", d => d.info.Keywords || "-"], ["Creator (app)", d => d.info.Creator || d.xmp["xmp:creatortool"] || "-"], ["Producer", d => d.info.Producer || d.xmp["pdf:producer"] || "-"],
-    ["Created", d => showDate(d.created)], ["Modified", d => showDate(d.modified)], ["Saved over (incremental updates)", d => d.scan.incr],
-    ["Digital signatures", d => d.scan.sigs || "none"], ["Form fields", d => d.scan.forms ? "yes" : "no"], ["JavaScript", d => d.scan.js ? "yes" : "no"], ["Attached files", d => d.scan.embedded ? "yes" : "no"],
-    ["Encrypted", d => d.scan.encrypted ? "yes" : "no"], ["Linearized (web-optimised)", d => d.info.IsLinearized ? "yes" : "no"],
+    ["Created", d => showDate(d.created)], ["Modified", d => showDate(d.modified)], ["Saved over (incremental updates)", d => d.failed ? "-" : d.scan.incr],
+    ["Digital signatures", d => d.failed ? "-" : d.scan.sigs || "none"], ["Form fields", d => d.failed ? "-" : d.scan.forms ? "yes" : "no"], ["JavaScript", d => d.failed ? "-" : d.scan.js ? "yes" : "no"], ["Attached files", d => d.failed ? "-" : d.scan.embedded ? "yes" : "no"],
+    ["Encrypted", d => d.failed ? "-" : d.scan.encrypted ? "yes" : "no"], ["Linearized (web-optimised)", d => d.failed ? "-" : d.info.IsLinearized ? "yes" : "no"],
     ["XMP document ID", d => d.xmp["xmpmm:documentid"] || "-"], ["XMP instance ID", d => d.xmp["xmpmm:instanceid"] || "-"]
   ];
 
@@ -73,7 +78,7 @@
       <tbody>${ROWS.slice(1).map(([k, f, full]) => `<tr><th scope="row">${k}</th><td ${full ? `title="${esc(full(d))}"` : ""}>${esc(String(f(d)))}</td></tr>`).join("")}</tbody></table></div>
     <h2 class="h-section">What stands out</h2>${sigCard(d, i)}`;
   const sigCard = (d, i) => `<section class="card pm-one"><h3>${i + 1}. ${esc(d.name)}</h3>${d.error ? `<p class="hint">${esc(d.error)}</p>` : ""}<ul>${signals(d).map(([t, x]) => `<li class="${t}">${esc(x)}</li>`).join("")}</ul>
-      <details><summary>Full SHA-256 and XMP data</summary><p class="mono pm-hash">${d.sha}</p>${Object.keys(d.xmp).length ? `<dl class="pm-xmp">${Object.entries(d.xmp).slice(0, 60).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(typeof v === "string" ? v : JSON.stringify(v))}</dd>`).join("")}</dl>` : `<p class="hint">No XMP data.</p>`}</details></section>`;
+      <details><summary>Full SHA-256 and XMP data</summary><p class="mono pm-hash">${d.sha || "-"}</p>${Object.keys(d.xmp).length ? `<dl class="pm-xmp">${Object.entries(d.xmp).slice(0, 60).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(typeof v === "string" ? v : JSON.stringify(v))}</dd>`).join("")}</dl>` : `<p class="hint">No XMP data.</p>`}</details></section>`;
   function results() {
     const head = `<div class="btn-row"><button class="btn small" id="pmCsv">Download table (Excel)</button><button class="btn small ghost" id="pmClear">Clear all</button></div>`;
     if (focus >= 0 && docs[focus]) return `${head}<p><button class="btn small" id="pmBack">← Back to all ${docs.length} PDFs</button></p><h2 class="h-section">${esc(docs[focus].name)}</h2>${detail(docs[focus], focus)}`;
@@ -83,14 +88,16 @@
       <tbody>${ROWS.slice(1).map(([k, f, full]) => { const v = docs.map(d => String(f(d))); return `<tr><th scope="row">${k}</th>${v.map((x, i) => `<td class="${i > 0 && x !== v[0] ? "pm-diff" : ""}" ${full ? `title="${esc(full(docs[i]))}"` : ""}>${esc(x)}</td>`).join("")}</tr>`; }).join("")}</tbody></table></div>
       <h2 class="h-section">What stands out</h2><div class="pm-sig">${docs.map(sigCard).join("")}</div>`;
     // many files: one row per PDF; unusual values highlighted
-    const most = key => { const c = {}; docs.forEach(d => { const v = key(d); c[v] = (c[v] || 0) + 1; }); return Object.entries(c).sort((a, b) => b[1] - a[1])[0][0]; };
+    const ok = docs.filter(d => !d.failed), bad = docs.length - ok.length;
+    const most = key => { const c = {}; (ok.length ? ok : docs).forEach(d => { const v = key(d); c[v] = (c[v] || 0) + 1; }); return Object.entries(c).sort((a, b) => b[1] - a[1])[0][0]; };
     const prod = d => d.info.Producer || d.xmp["pdf:producer"] || "-", crea = d => d.info.Creator || d.xmp["xmp:creatortool"] || "-", ver = d => d.info.PDFFormatVersion || d.scan.header;
     const mp = most(prod), mc = most(crea), mv = most(ver);
     const flag = d => signals(d).filter(x => x[0] === "warn").length;
-    return `${head}<h2 class="h-section">All ${docs.length} PDFs</h2><p class="sub">One row per PDF. Highlighted cells are unusual for this set: a different producer, app or PDF version from most files, a file saved over after it was made, or modified after it was created. Tap View for one file's full details.</p>
-      <div class="tbl-wrap"><table class="tbl pm-tbl pm-list-tbl"><thead><tr><th>#</th><th>File</th><th>Uploaded to LearNtime</th><th>Created</th><th>Modified</th><th>Creator (app)</th><th>Producer</th><th>PDF</th><th>Pages</th><th>Saved over</th><th>Signatures</th><th>SHA-256</th><th>Flags</th><th><span class="sr-only">Actions</span></th></tr></thead>
+    return `${head}<h2 class="h-section">All ${docs.length} PDFs${bad ? ` <small class="sub">· ${bad} couldn't be read</small>` : ""}</h2><p class="sub">One row per PDF. Highlighted cells are unusual for this set: a different producer, app or PDF version from most files, a file saved over after it was made, or modified after it was created. Tap View for one file's full details.</p>
+      <div class="tbl-wrap"><table class="tbl pm-tbl pm-list-tbl"><thead><tr><th>#</th><th>File</th><th>Status</th><th>Uploaded to LearNtime</th><th>Created</th><th>Modified</th><th>Creator (app)</th><th>Producer</th><th>PDF</th><th>Pages</th><th>Saved over</th><th>Signatures</th><th>SHA-256</th><th>Flags</th><th><span class="sr-only">Actions</span></th></tr></thead>
       <tbody>${docs.map((d, i) => { const gap = d.created && d.modified && (d.modified - d.created) > 120000;
-        return `<tr><td>${i + 1}</td><td class="pm-fn">${esc(d.name)}${(d.tags || []).length ? `<small>${d.tags.map(t => "#" + esc(t)).join(" ")}</small>` : ""}</td><td>${d.uploaded ? showDate(d.uploaded) : "Not saved"}</td>
+        if (d.failed) return `<tr class="pm-failed"><td>${i + 1}</td><td class="pm-fn">${esc(d.name)}${(d.tags || []).length ? `<small>${d.tags.map(t => "#" + esc(t)).join(" ")}</small>` : ""}</td><td class="pm-bad">Couldn't read: ${esc(d.error)}</td><td>${d.uploaded ? showDate(d.uploaded) : "Not saved"}</td>${"<td>-</td>".repeat(9)}<td>-</td><td><button class="pm-x" data-pmrm="${i}" aria-label="Remove ${esc(d.name)}">×</button></td></tr>`;
+        return `<tr><td>${i + 1}</td><td class="pm-fn">${esc(d.name)}${(d.tags || []).length ? `<small>${d.tags.map(t => "#" + esc(t)).join(" ")}</small>` : ""}</td><td>${d.error ? "Partly read" : "Read"}</td><td>${d.uploaded ? showDate(d.uploaded) : "Not saved"}</td>
           <td>${showDate(d.created)}</td><td class="${gap ? "pm-diff" : ""}">${showDate(d.modified)}</td><td class="${crea(d) !== mc ? "pm-diff" : ""}">${esc(crea(d))}</td><td class="${prod(d) !== mp ? "pm-diff" : ""}">${esc(prod(d))}</td>
           <td class="${ver(d) !== mv ? "pm-diff" : ""}">${esc(ver(d))}</td><td>${d.pages || "-"}</td><td class="${d.scan.incr ? "pm-diff" : ""}">${d.scan.incr}</td><td>${d.scan.sigs || "none"}</td>
           <td class="mono" title="${d.sha}">${d.sha.slice(0, 10)}…</td><td>${flag(d) ? `<span class="pm-flag">${flag(d)}</span>` : "-"}</td>
@@ -98,6 +105,7 @@
   }
   async function view() {
     if (saved === null) saved = await savedList();
+    if (saved.length && !docs.length && !autoRan && !busy) busy = `Loading your ${saved.length} saved PDFs…`;
     return `<div class="page grc-pdfmeta"><a class="kicker" href="#/grc">← Learn GRC · Tools</a>
       <h1 class="h-display">PDF <em>metadata check</em></h1>
       <p class="lede">See what a PDF says about itself: which app made it, when it was created and modified, whether it was saved over afterwards, signatures, and a fingerprint (SHA-256) for your evidence records. Load several PDFs to compare them side by side. Read-only: files stay on your device and aren't changed.</p>
@@ -129,12 +137,15 @@
     const cl = $("#pmClear"); if (cl) cl.addEventListener("click", () => { docs = []; saved = null; focus = -1; rr(); });
     const pickRun = async keys => { if (!keys.length) return A.toast("Tick at least one file."); docs = docs.filter(d => !keys.includes(d.key)); focus = -1;
       for (let i = 0; i < keys.length; i++) { const x = saved.find(y => y.key === keys[i]); busy = `Reading ${x.name} (${i + 1} of ${keys.length})…`; rr();
-        try { let blob; if (x.f) blob = x.f.blob; else { const url = await A.db.fileUrl(x.r.storage_path, 120); const res = await fetch(url); if (!res.ok) throw new Error("download"); blob = await res.blob(); }
+        try { let blob; if (x.f) blob = x.f.blob; else { if (!x.r.storage_path) throw new Error("No stored file: this entry is a link"); let url; try { url = await A.db.fileUrl(x.r.storage_path, 300); } catch (e) { throw new Error("The stored file wasn't found"); }
+            let res; try { res = await fetch(url); } catch (e) { throw new Error("Download blocked or offline"); } if (!res.ok) throw new Error(`Download failed (HTTP ${res.status})`); blob = await res.blob(); }
+          if (!blob.size) throw new Error("The file is empty");
           const d = await analyse(new File([blob], x.name, { type: "application/pdf" })); d.key = x.key; d.tags = x.tags; d.uploaded = x.up; d.from = x.src === "online" ? "Saved online" : "My folders · " + x.src; docs.push(d); }
-        catch (e) { A.toast(`Couldn't read ${x.name}.`); } }
+        catch (e) { docs.push(failedDoc(x, (e && e.message) || "Couldn't open the file")); } }
       busy = ""; if (docs.length === 1) focus = -1; rr(); };
     const pg = $("#pmPickGo"); if (pg) pg.addEventListener("click", () => pickRun($$("[data-pmpick]").filter(c => c.checked).map(c => c.dataset.pmpick)));
     const pa = $("#pmPickAll"); if (pa) pa.addEventListener("click", () => pickRun(saved.map(x => x.key)));
+    if (saved && saved.length && !docs.length && !autoRan) { autoRan = true; pickRun(saved.map(x => x.key)); }
     const cs = $("#pmCsv"); if (cs) cs.addEventListener("click", () => {
       const q = c => { c = String(c ?? ""); return /[",\n]/.test(c) ? `"${c.replace(/"/g, '""')}"` : c; };
       const rows = [ROWS.map(r => r[0])].concat(docs.map(d => ROWS.map(([, f, full]) => full ? full(d) : f(d))));
