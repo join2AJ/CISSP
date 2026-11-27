@@ -2316,3 +2316,19 @@ td.nowrap { white-space: nowrap; }
 .brand-text .bt.neutral { letter-spacing: .02em; }
 @media (max-width: 860px) { .foot-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; } }
 .pm-now .pm-h small { color: var(--ink-2); }
+
+/* Unpack archives */
+.up-drop { display: grid; justify-items: center; gap: 6px; margin: 22px 0 12px; padding: 40px 20px; border: 2px dashed var(--rule); border-radius: 18px; background: var(--card); cursor: pointer; text-align: center; }
+.up-drop:hover, .up-drop.over, .up-drop:focus-within { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 6%, var(--card)); }
+.up-drop b { font-size: 18px; } .up-drop span:not(.up-ico) { color: var(--ink-2); font-size: 14px; } .up-ico { font-size: 34px; color: var(--accent); }
+.up-notes { font-size: 14.5px; color: var(--ink-2); line-height: 1.6; padding-left: 20px; }
+.up-head { display: flex; justify-content: space-between; gap: 14px; align-items: flex-start; flex-wrap: wrap; margin-top: 16px; } .up-head h2 { margin: 2px 0 4px; font-size: 20px; word-break: break-all; } .up-head .sub { margin: 0; }
+.up-pw { margin-top: 12px; display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; } .up-pw label { flex: 1; min-width: 220px; font-size: 14px; } .up-pw input { width: 100%; } .up-pw .hint { flex-basis: 100%; margin: 0; }
+.up-busy { margin: 12px 0; padding: 10px 14px; border-radius: 10px; background: var(--paper-2); font-weight: 600; }
+.up-tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin: 16px 0 10px; } .up-tools .grc-libq { flex: 1 1 220px; margin: 0; }
+.up-tbl td { vertical-align: middle; font-size: 14px; } .up-tbl input[type=checkbox] { width: 20px; height: 20px; }
+.up-name b { display: block; word-break: break-all; font-weight: 600; } .up-name small { display: block; color: var(--ink-2); font: 12px var(--mono); word-break: break-all; }
+.up-act { white-space: nowrap; } .up-act .btn { margin: 2px 4px 2px 0; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+@media (max-width: 600px) { .up-act { white-space: normal; } }
+.up-warn { margin-top: 12px; border-left: 4px solid var(--gold-ink); font-size: 15px; line-height: 1.55; }

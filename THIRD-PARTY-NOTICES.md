@@ -61,3 +61,9 @@ Probo (MIT), Netflix riskquant (Apache-2.0) and Cybersecurity-Projects (AGPL-3.0
 Two library documents are copied from lists dedicated to the public domain under CC0 1.0:
 grcengineering/awesome-grcengineering and getprobo/awesome-compliance. No permission is needed;
 they are credited anyway.
+
+## libarchive.js (archive tool)
+
+`assets/vendor/libarchive/` is libarchive.js 2.0.2 by Nika Begiashvili, MIT licence (see `licenses/libarchive.js-MIT.txt`).
+It bundles a WebAssembly build of libarchive (BSD 2-Clause, the libarchive project) and Comlink (Apache License 2.0, Google LLC).
+Unchanged from the npm package.

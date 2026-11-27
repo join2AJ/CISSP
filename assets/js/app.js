@@ -537,9 +537,10 @@
     h += G("Learn", ["library", "reading", "briefings", "visuals", "glossary", "landscape"],
       S("Read", `${L("#/grc/library", "❏", "Library (46 documents)", r.a === "library")}${L("#/grc/briefings", "✦", "Briefings", r.a === "briefings")}${L("#/grc/reading", "❡", "Reading room", r.a === "reading")}`) +
       S("Understand", `${L("#/grc/landscape", "⚖", "Regulators and standards", r.a === "landscape")}${L("#/grc/visuals", "◇", "Diagrams", r.a === "visuals")}${L("#/grc/glossary", "Aa", "GRC glossary", r.a === "glossary")}`));
-    h += G("Tools", ["controls", "map", "calendar", "vendors", "pbc", "spend", "budget"],
+    h += G("Tools", ["controls", "map", "calendar", "vendors", "pbc", "spend", "budget", "unpack"],
       S("Controls", `${L("#/grc/controls", "◇", "Control workbench", r.a === "controls")}${L("#/grc/map/iso", "⊞", "Framework map", r.a === "map")}${L("#/grc/calendar", "▦", "Evidence calendar", r.a === "calendar")}`) +
       S("Registers", `${L("#/grc/vendors", "⇄", "Vendor register", r.a === "vendors")}${L("#/grc/pbc", "☑", "PBC list", r.a === "pbc")}`) +
+      S("Files", `${L("#/grc/unpack", "⇩", "Unpack archives", r.a === "unpack")}`) +
       S("For leaders", `${L("#/grc/budget", "₹", "Budget planner", r.a === "budget")}${L("#/grc/spend", "❖", "CEO and CFO guide", r.a === "spend")}`));
     h += G("Practise", ["labs", "setup", "guide", "rooms"], `<ol class="toc-list">${L("#/grc/rooms", "⏱", "Scenario rooms", r.a === "rooms")}${L("#/grc/labs", "◎", "Hands-on labs", r.a === "labs")}${L("#/grc/setup", "⚙", "Run CISO Assistant", r.a === "setup")}${L("#/grc/guide", "▤", "Field guide", r.a === "guide")}</ol>`);
     h += `<div class="toc-card"><b>${Math.round(done / all * 100)}%</b>of the GRC course · ${done} of ${all} lessons<div class="meter" style="margin-top:10px"><i style="width:${Math.round(done / all * 100)}%;background:#b8892a"></i></div></div>`;
@@ -1801,7 +1802,7 @@
   /* the Learn GRC course and the GRC Manager field guide, private to the owner's account */
   let grcLoading = null;
   App.loadGrc = () => loadGrc();
-  const loadGrc = () => window.GRC_COURSE && window.GRC_COURSE.length >= 10 && window.GRC_CONTROLS && window.ISO_2022 ? Promise.resolve() : (grcLoading = grcLoading || Promise.all(["grc-course-1", "grc-course-2", "grc-iso", "grc-controls-1", "grc-controls-2", "grc-oracle", "grc-visuals", "grc-briefings", "grc-landscape", "grc-budget", "grc-rooms", "grc-rooms-2", "grc-rooms-3", "grc-rooms-4"].map(f => new Promise((ok, no) => {
+  const loadGrc = () => window.GRC_COURSE && window.GRC_COURSE.length >= 10 && window.GRC_CONTROLS && window.ISO_2022 ? Promise.resolve() : (grcLoading = grcLoading || Promise.all(["grc-course-1", "grc-course-2", "grc-iso", "grc-controls-1", "grc-controls-2", "grc-oracle", "grc-visuals", "grc-briefings", "grc-landscape", "grc-budget", "grc-rooms", "grc-rooms-2", "grc-rooms-3", "grc-rooms-4", "grc-unpack"].map(f => new Promise((ok, no) => {
     const sc = document.createElement("script"); sc.src = `assets/js/${f}.js?v=${(document.querySelector('script[src*="app.js"]').src.split("v=")[1] || "dev")}`; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc);
   }))).then(() => { (window.GRC_COURSE || []).sort((a, b) => a.n - b.n); }));   // the two course files can arrive in either order
   let libLoading = null;
@@ -2255,6 +2256,7 @@
     if (r.a === "landscape") return grcLandscape();
     if (r.a === "spend") return grcSpend();
     if (r.a === "rooms") return grcRooms(r.b);
+    if (r.a === "unpack") return window.GRC_UNPACK ? window.GRC_UNPACK.view() : "";
     if (r.a === "favourites") return grcFavourites();
     if (r.a === "budget") return window.GRC_BUDGET ? window.GRC_BUDGET.view() : "";
     if (r.a === "briefings") return grcBriefings(r.b);
@@ -2548,6 +2550,7 @@
     if (r.a === "vendors") bindVendors();
     if (r.a === "budget" && window.GRC_BUDGET) window.GRC_BUDGET.bind();
     if (r.a === "rooms") bindRooms(r);
+    if (r.a === "unpack" && window.GRC_UNPACK) window.GRC_UNPACK.bind();
     if (r.a === "favourites") bindFavourites();
     $$("[data-landf]").forEach(b => b.addEventListener("click", () => { landF = landF === b.dataset.landf ? "all" : b.dataset.landf; App.rerender(); }));
     $$("[data-glview]").forEach(b => b.addEventListener("click", () => { grcGview = b.dataset.glview; App.rerender(); }));
